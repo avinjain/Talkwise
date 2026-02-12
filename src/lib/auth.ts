@@ -6,6 +6,7 @@ import { createUser, getUserByEmail } from './db';
 // Allowed emails (only these can sign up or log in)
 const ALLOWED_EMAILS = [
   'demotrial@demo.com',
+  'baba@demo.com',
 ];
 
 export const authOptions: NextAuthOptions = {
