@@ -45,16 +45,19 @@ export async function POST(req: Request) {
   try {
     const userId = await getAuthUserId();
     if (!userId) {
-      return Response.json({ error: 'Authentication required' }, { status: 401 });
+      console.error('Personas POST: auth failed, no userId. NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+      return Response.json({ error: 'Authentication required. Please sign out and sign back in.' }, { status: 401 });
     }
 
     const body = await req.json();
     const id = crypto.randomUUID();
 
+    console.log('Creating persona for user:', userId, 'name:', body.name);
+
     savePersona({
       id,
       user_id: userId,
-      name: body.name || '',
+      name: body.name || 'Unnamed Persona',
       goal: body.goal || '',
       scenario: body.scenario || '',
       difficulty_level: body.difficultyLevel ?? 5,
@@ -68,12 +71,14 @@ export async function POST(req: Request) {
     const rows = getUserPersonas(userId);
     const created = rows.find((r) => r.id === id);
     if (!created) {
-      return Response.json({ error: 'Failed to create persona' }, { status: 500 });
+      console.error('Personas POST: insert succeeded but row not found. id:', id);
+      return Response.json({ error: 'Persona was saved but could not be retrieved.' }, { status: 500 });
     }
 
     return Response.json(rowToPersona(created), { status: 201 });
   } catch (error) {
     console.error('Personas POST error:', error);
-    return Response.json({ error: 'Failed to create persona' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to create persona';
+    return Response.json({ error: message }, { status: 500 });
   }
 }
