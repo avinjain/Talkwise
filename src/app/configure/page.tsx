@@ -83,20 +83,28 @@ export default function ConfigurePage() {
         socialPresence: config.socialPresence,
       };
 
+      let res: Response;
       if (editPersonaId) {
         // Update existing
-        await fetch(`/api/personas/${editPersonaId}`, {
+        res = await fetch(`/api/personas/${editPersonaId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
       } else {
         // Create new
-        await fetch('/api/personas', {
+        res = await fetch('/api/personas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to save persona. Please try again.');
+        setSaving(false);
+        return;
       }
 
       sessionStorage.setItem('personaConfig', JSON.stringify(config));
@@ -104,6 +112,7 @@ export default function ConfigurePage() {
       router.push('/chat');
     } catch (err) {
       console.error('Failed to save persona:', err);
+      alert('Failed to save persona. Please try again.');
     } finally {
       setSaving(false);
     }

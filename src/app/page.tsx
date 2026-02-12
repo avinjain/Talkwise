@@ -36,6 +36,27 @@ export default function LandingPage() {
     }
   }, [session, fetchPersonas]);
 
+  // Re-fetch personas when the page becomes visible (e.g., navigating back)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && session) {
+        fetchPersonas();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Also re-fetch on focus (covers back-navigation within the app)
+    const handleFocus = () => {
+      if (session) fetchPersonas();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [session, fetchPersonas]);
+
   const handleDeletePersona = async (id: string) => {
     if (!confirm('Delete this persona?')) return;
     setDeleting(id);
