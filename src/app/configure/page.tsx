@@ -12,6 +12,8 @@ import {
 export default function ConfigurePage() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
+  const [editPersonaId, setEditPersonaId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const [config, setConfig] = useState<PersonaConfig>({
     name: '',
@@ -32,18 +34,79 @@ export default function ConfigurePage() {
       return;
     }
     setUserName(stored);
+
+    // Check if editing an existing persona
+    const personaId = sessionStorage.getItem('editPersonaId');
+    if (personaId) {
+      setEditPersonaId(personaId);
+    }
+
+    // Load pre-filled config if available
+    const storedConfig = sessionStorage.getItem('personaConfig');
+    if (storedConfig) {
+      try {
+        const parsed = JSON.parse(storedConfig);
+        setConfig(parsed);
+      } catch {
+        // ignore parse errors
+      }
+    }
   }, [router]);
 
   const handleSliderChange = (key: string, value: number) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleStartWithoutSaving = (e: React.FormEvent) => {
     e.preventDefault();
     if (!config.name.trim() || !config.userGoal) return;
 
     sessionStorage.setItem('personaConfig', JSON.stringify(config));
+    sessionStorage.removeItem('editPersonaId');
     router.push('/chat');
+  };
+
+  const handleSaveAndStart = async () => {
+    if (!config.name.trim() || !config.userGoal) return;
+    setSaving(true);
+
+    try {
+      const body = {
+        name: config.name,
+        goal: config.userGoal,
+        scenario: config.scenario,
+        difficultyLevel: config.difficultyLevel,
+        decisionOrientation: config.decisionOrientation,
+        communicationStyle: config.communicationStyle,
+        authorityPosture: config.authorityPosture,
+        temperamentStability: config.temperamentStability,
+        socialPresence: config.socialPresence,
+      };
+
+      if (editPersonaId) {
+        // Update existing
+        await fetch(`/api/personas/${editPersonaId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } else {
+        // Create new
+        await fetch('/api/personas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+
+      sessionStorage.setItem('personaConfig', JSON.stringify(config));
+      sessionStorage.removeItem('editPersonaId');
+      router.push('/chat');
+    } catch (err) {
+      console.error('Failed to save persona:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const isValid = config.name.trim() && config.userGoal;
@@ -63,15 +126,24 @@ export default function ConfigurePage() {
         </div>
 
         <h1 className="text-3xl font-bold text-slate-900 mb-2">
-          Hey <span className="text-gradient">{userName}</span>, set up your
-          conversation
+          {editPersonaId ? (
+            <>
+              Edit <span className="text-gradient">{config.name || 'Persona'}</span>
+            </>
+          ) : (
+            <>
+              Hey <span className="text-gradient">{userName}</span>, set up your
+              conversation
+            </>
+          )}
         </h1>
         <p className="text-slate-500 mb-10">
-          Choose who you want to talk to, what the conversation is about, and
-          how challenging you want it to be.
+          {editPersonaId
+            ? 'Adjust the settings below and start the conversation.'
+            : 'Choose who you want to talk to, what the conversation is about, and how challenging you want it to be.'}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleStartWithoutSaving} className="space-y-8">
           {/* ── Who do you want to talk to ── */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -220,14 +292,29 @@ export default function ConfigurePage() {
             </div>
           </div>
 
-          {/* ── Submit ── */}
-          <button
-            type="submit"
-            disabled={!isValid}
-            className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 text-lg shadow-lg shadow-brand-500/25 hover:shadow-brand-500/35"
-          >
-            Start Simulation
-          </button>
+          {/* ── Action Buttons ── */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={handleSaveAndStart}
+              disabled={!isValid || saving}
+              className="flex-1 py-4 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 text-lg shadow-lg shadow-brand-500/25 hover:shadow-brand-500/35"
+            >
+              {saving
+                ? 'Saving...'
+                : editPersonaId
+                ? 'Save Changes & Start'
+                : 'Save & Start'}
+            </button>
+
+            <button
+              type="submit"
+              disabled={!isValid}
+              className="flex-1 py-4 rounded-xl font-semibold text-slate-700 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 text-lg"
+            >
+              Start Without Saving
+            </button>
+          </div>
         </form>
       </div>
     </div>

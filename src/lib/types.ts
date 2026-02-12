@@ -10,6 +10,22 @@ export interface PersonaConfig {
   socialPresence: number;
 }
 
+export interface SavedPersona {
+  id: string;
+  userId: string;
+  name: string;
+  goal: string;
+  scenario: string;
+  difficultyLevel: number;
+  decisionOrientation: number;
+  communicationStyle: number;
+  authorityPosture: number;
+  temperamentStability: number;
+  socialPresence: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
