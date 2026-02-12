@@ -82,23 +82,36 @@ function initTables(db: Database.Database) {
   `);
 
   // ── Migration: add new columns to existing saved_personas table ──
-  const cols = db.pragma('table_info(saved_personas)') as { name: string }[];
-  const colNames = new Set(cols.map((c) => c.name));
+  try {
+    const cols = db.pragma('table_info(saved_personas)') as { name: string }[];
+    const colNames = new Set(cols.map((c) => c.name));
 
-  const migrations: [string, string][] = [
-    ['track',                "ALTER TABLE saved_personas ADD COLUMN track TEXT DEFAULT 'professional'"],
-    ['interest_level',       'ALTER TABLE saved_personas ADD COLUMN interest_level INTEGER DEFAULT 5'],
-    ['flirtatiousness',      'ALTER TABLE saved_personas ADD COLUMN flirtatiousness INTEGER DEFAULT 5'],
-    ['communication_effort', 'ALTER TABLE saved_personas ADD COLUMN communication_effort INTEGER DEFAULT 5'],
-    ['emotional_openness',   'ALTER TABLE saved_personas ADD COLUMN emotional_openness INTEGER DEFAULT 5'],
-    ['humor_style',          'ALTER TABLE saved_personas ADD COLUMN humor_style INTEGER DEFAULT 5'],
-    ['pickiness',            'ALTER TABLE saved_personas ADD COLUMN pickiness INTEGER DEFAULT 5'],
-  ];
+    const migrations: [string, string][] = [
+      ['track',                "ALTER TABLE saved_personas ADD COLUMN track TEXT DEFAULT 'professional'"],
+      ['interest_level',       'ALTER TABLE saved_personas ADD COLUMN interest_level INTEGER DEFAULT 5'],
+      ['flirtatiousness',      'ALTER TABLE saved_personas ADD COLUMN flirtatiousness INTEGER DEFAULT 5'],
+      ['communication_effort', 'ALTER TABLE saved_personas ADD COLUMN communication_effort INTEGER DEFAULT 5'],
+      ['emotional_openness',   'ALTER TABLE saved_personas ADD COLUMN emotional_openness INTEGER DEFAULT 5'],
+      ['humor_style',          'ALTER TABLE saved_personas ADD COLUMN humor_style INTEGER DEFAULT 5'],
+      ['pickiness',            'ALTER TABLE saved_personas ADD COLUMN pickiness INTEGER DEFAULT 5'],
+    ];
 
-  for (const [col, sql] of migrations) {
-    if (!colNames.has(col)) {
-      db.exec(sql);
+    for (const [col, sql] of migrations) {
+      if (!colNames.has(col)) {
+        try {
+          db.exec(sql);
+          console.log(`Migration: added column '${col}' to saved_personas`);
+        } catch (err) {
+          // Column might already exist (race condition); ignore "duplicate column" errors
+          const msg = err instanceof Error ? err.message : '';
+          if (!msg.includes('duplicate column')) {
+            console.error(`Migration failed for column '${col}':`, err);
+          }
+        }
+      }
     }
+  } catch (err) {
+    console.error('Migration check failed:', err);
   }
 }
 

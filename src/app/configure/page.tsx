@@ -28,6 +28,7 @@ export default function ConfigurePage() {
   const [userName, setUserName] = useState('');
   const [editPersonaId, setEditPersonaId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [track, setTrack] = useState<Track>('professional');
 
   const [name, setName] = useState('');
@@ -69,6 +70,7 @@ export default function ConfigurePage() {
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
+    setSaveError(null);
 
     try {
       const body = {
@@ -76,38 +78,32 @@ export default function ConfigurePage() {
         name: name.trim(),
         goal: '',
         scenario: '',
-        difficultyLevel: traits.difficultyLevel,
-        decisionOrientation: traits.decisionOrientation,
-        communicationStyle: traits.communicationStyle,
-        authorityPosture: traits.authorityPosture,
-        temperamentStability: traits.temperamentStability,
-        socialPresence: traits.socialPresence,
-        interestLevel: traits.interestLevel,
-        flirtatiousness: traits.flirtatiousness,
-        communicationEffort: traits.communicationEffort,
-        emotionalOpenness: traits.emotionalOpenness,
-        humorStyle: traits.humorStyle,
-        pickiness: traits.pickiness,
+        difficultyLevel: traits.difficultyLevel ?? 5,
+        decisionOrientation: traits.decisionOrientation ?? 5,
+        communicationStyle: traits.communicationStyle ?? 5,
+        authorityPosture: traits.authorityPosture ?? 5,
+        temperamentStability: traits.temperamentStability ?? 5,
+        socialPresence: traits.socialPresence ?? 5,
+        interestLevel: traits.interestLevel ?? 5,
+        flirtatiousness: traits.flirtatiousness ?? 5,
+        communicationEffort: traits.communicationEffort ?? 5,
+        emotionalOpenness: traits.emotionalOpenness ?? 5,
+        humorStyle: traits.humorStyle ?? 5,
+        pickiness: traits.pickiness ?? 5,
       };
 
-      let res: Response;
-      if (editPersonaId) {
-        res = await fetch(`/api/personas/${editPersonaId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      } else {
-        res = await fetch('/api/personas', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      }
+      const url = editPersonaId ? `/api/personas/${editPersonaId}` : '/api/personas';
+      const method = editPersonaId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Failed to save persona. Please try again.');
+        const err = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
+        setSaveError(err.error || `Failed to save persona (${res.status})`);
         setSaving(false);
         return;
       }
@@ -117,7 +113,7 @@ export default function ConfigurePage() {
       router.push('/');
     } catch (err) {
       console.error('Failed to save persona:', err);
-      alert('Failed to save persona. Please try again.');
+      setSaveError(err instanceof Error ? err.message : 'Network error. Please check your connection.');
     } finally {
       setSaving(false);
     }
@@ -273,12 +269,19 @@ export default function ConfigurePage() {
           </div>
         </div>
 
+        {/* Error message */}
+        {saveError && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            {saveError}
+          </div>
+        )}
+
         {/* Save Button */}
         <button
           type="button"
           onClick={handleSave}
           disabled={!name.trim() || saving}
-          className="w-full mt-6 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
+          className="w-full mt-4 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
         >
           {saving
             ? 'Saving...'
