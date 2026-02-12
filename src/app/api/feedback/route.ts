@@ -30,13 +30,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages, personaConfig } = (await req.json()) as {
+    const { messages, personaConfig, userName } = (await req.json()) as {
       messages: ChatMessage[];
       personaConfig: PersonaConfig;
+      userName?: string;
     };
 
     const model = process.env.GPT_MODEL || 'gpt-4o';
-    const prompt = buildFeedbackPrompt(personaConfig, messages);
+    const prompt = buildFeedbackPrompt(personaConfig, messages, userName);
 
     const response = await getOpenAI().chat.completions.create({
       model,

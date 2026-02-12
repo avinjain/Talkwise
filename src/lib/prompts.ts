@@ -41,12 +41,16 @@ RULES — follow these strictly:
 
 export function buildFeedbackPrompt(
   config: PersonaConfig,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  userName?: string
 ): string {
+  const speakerName = userName || 'You';
+  const personaName = config.name;
+
   const transcript = messages
     .map(
       (m) =>
-        `${m.role === 'user' ? 'User' : config.name}: ${m.content}`
+        `${m.role === 'user' ? speakerName : personaName}: ${m.content}`
     )
     .join('\n\n');
 
@@ -54,13 +58,13 @@ export function buildFeedbackPrompt(
     (attr) => `- ${attr.label}: ${config[attr.key]}/10`
   ).join('\n');
 
-  return `You are an expert communication coach. Analyze the following conversation transcript between a user and a simulated AI persona.
+  return `You are an expert communication coach. Analyze the following conversation transcript between ${speakerName} and ${personaName}.
 
-USER'S GOAL: ${config.userGoal}
+${speakerName.toUpperCase()}'S GOAL: ${config.userGoal}
 
 SCENARIO: ${config.scenario || 'A standard professional meeting.'}
 
-PERSONA TRAITS:
+${personaName.toUpperCase()}'S PERSONALITY TRAITS:
 ${traitSummary}
 
 TRANSCRIPT:
@@ -70,21 +74,23 @@ ${transcript}
 
 Provide a detailed, constructive analysis. Be specific — reference actual quotes from the transcript. Be honest but encouraging.
 
+IMPORTANT: Always refer to the participants by their actual names — use "${speakerName}" (not "the user") and "${personaName}" (not "the persona"). This makes the feedback feel personal and direct.
+
 You MUST respond with valid JSON matching this exact schema (no markdown, no code fences, just raw JSON):
 
 {
   "confidenceScore": <number 0-100>,
-  "confidenceNotes": "<2-3 sentences analyzing the user's confidence level, referencing specific moments>",
+  "confidenceNotes": "<2-3 sentences analyzing ${speakerName}'s confidence level, referencing specific moments>",
   "articulationFeedback": ["<specific feedback point>", "..."],
-  "personaReactionSummary": "<2-3 sentences describing how the persona likely perceived the user's approach>",
+  "personaReactionSummary": "<2-3 sentences describing how ${personaName} likely perceived ${speakerName}'s approach>",
   "alternativeSuggestions": [
     {
-      "original": "<exact quote from user>",
+      "original": "<exact quote from ${speakerName}>",
       "suggestion": "<better phrasing>",
       "rationale": "<why this is better>"
     }
   ]
 }
 
-Include 2-5 items in articulationFeedback and 2-4 items in alternativeSuggestions. Reference specific quotes from the transcript.`;
+Include 2-5 items in articulationFeedback and 2-4 items in alternativeSuggestions. Reference specific quotes from the transcript. Always use "${speakerName}" and "${personaName}" by name.`;
 }

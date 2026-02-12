@@ -14,6 +14,7 @@ export default function FeedbackPage() {
   useEffect(() => {
     const configStr = sessionStorage.getItem('personaConfig');
     const messagesStr = sessionStorage.getItem('chatMessages');
+    const storedUserName = sessionStorage.getItem('userName');
 
     if (!configStr || !messagesStr) {
       router.push('/');
@@ -23,19 +24,20 @@ export default function FeedbackPage() {
     const personaConfig: PersonaConfig = JSON.parse(configStr);
     const messages: ChatMessage[] = JSON.parse(messagesStr);
 
-    fetchFeedback(personaConfig, messages);
+    fetchFeedback(personaConfig, messages, storedUserName || undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchFeedback = async (
     personaConfig: PersonaConfig,
-    messages: ChatMessage[]
+    messages: ChatMessage[],
+    userName?: string
   ) => {
     try {
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personaConfig, messages }),
+        body: JSON.stringify({ personaConfig, messages, userName }),
       });
 
       if (!response.ok) {
@@ -56,7 +58,7 @@ export default function FeedbackPage() {
 
   const handleNewSession = () => {
     sessionStorage.removeItem('chatMessages');
-    router.push('/configure');
+    router.push('/');
   };
 
   // ── Loading state ──
