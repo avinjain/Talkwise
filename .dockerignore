@@ -1,0 +1,12 @@
+node_modules
+.next
+.env
+.env.local
+.env*.local
+*.db
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
+test_openai.py

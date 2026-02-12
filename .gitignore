@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.production
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test / dev files
+test_openai.py
+test_talkwise.py
+talkwise_config.txt
+Person_1.json
+manager_personality.json
+.env.local.example
