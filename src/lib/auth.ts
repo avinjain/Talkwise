@@ -7,6 +7,7 @@ import { createUser, getUserByEmail } from './db';
 const ALLOWED_EMAILS = [
   'demotrial@demo.com',
   'baba@demo.com',
+  'aditi@demo.com',
 ];
 
 export const authOptions: NextAuthOptions = {
