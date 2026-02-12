@@ -3,6 +3,11 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { createUser, getUserByEmail } from './db';
 
+// Allowed emails (only these can sign up or log in)
+const ALLOWED_EMAILS = [
+  'demotrial@demo.com',
+];
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -21,6 +26,11 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.toLowerCase().trim();
         const password = credentials.password;
         const mode = credentials.mode || 'login';
+
+        // ── Allowlist check ──
+        if (!ALLOWED_EMAILS.includes(email)) {
+          throw new Error('Access restricted. This email is not authorized.');
+        }
 
         if (mode === 'signup') {
           // ── Sign up ──
