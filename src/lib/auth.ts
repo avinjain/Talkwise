@@ -70,5 +70,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'talkwise-dev-secret-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET,
 };
