@@ -75,10 +75,26 @@ function initTables(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS profile_results (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      assertiveness REAL DEFAULT 0,
+      empathy REAL DEFAULT 0,
+      confidence REAL DEFAULT 0,
+      adaptability REAL DEFAULT 0,
+      emotional_intelligence REAL DEFAULT 0,
+      social_energy REAL DEFAULT 0,
+      raw_answers TEXT DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_usage_created ON usage_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_user ON saved_personas(user_id);
+    CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
   `);
 
   // ── Migration: add new columns to existing saved_personas table ──
@@ -299,6 +315,70 @@ export function updatePersona(id: string, userId: string, updates: Partial<Omit<
 export function deletePersona(id: string, userId: string) {
   const db = getDb();
   db.prepare('DELETE FROM saved_personas WHERE id = ? AND user_id = ?').run(id, userId);
+}
+
+// ── Profile Results ──
+
+export interface ProfileResultRow {
+  id: string;
+  user_id: string;
+  assertiveness: number;
+  empathy: number;
+  confidence: number;
+  adaptability: number;
+  emotional_intelligence: number;
+  social_energy: number;
+  raw_answers: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function getProfileResult(userId: string): ProfileResultRow | undefined {
+  const db = getDb();
+  return db.prepare(
+    'SELECT * FROM profile_results WHERE user_id = ?'
+  ).get(userId) as ProfileResultRow | undefined;
+}
+
+export function saveProfileResult(
+  userId: string,
+  scores: {
+    assertiveness: number;
+    empathy: number;
+    confidence: number;
+    adaptability: number;
+    emotionalIntelligence: number;
+    socialEnergy: number;
+  },
+  rawAnswers: Record<number, number>
+) {
+  const db = getDb();
+  const existing = getProfileResult(userId);
+
+  if (existing) {
+    db.prepare(
+      `UPDATE profile_results SET
+        assertiveness = ?, empathy = ?, confidence = ?,
+        adaptability = ?, emotional_intelligence = ?, social_energy = ?,
+        raw_answers = ?, updated_at = datetime('now')
+       WHERE user_id = ?`
+    ).run(
+      scores.assertiveness, scores.empathy, scores.confidence,
+      scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
+      JSON.stringify(rawAnswers), userId
+    );
+  } else {
+    const id = crypto.randomUUID();
+    db.prepare(
+      `INSERT INTO profile_results (id, user_id, assertiveness, empathy, confidence, adaptability, emotional_intelligence, social_energy, raw_answers)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      id, userId,
+      scores.assertiveness, scores.empathy, scores.confidence,
+      scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
+      JSON.stringify(rawAnswers)
+    );
+  }
 }
 
 export default getDb;

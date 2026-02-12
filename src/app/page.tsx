@@ -185,7 +185,13 @@ export default function LandingPage() {
       <header className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
         <Logo size={36} />
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500">{session.user?.email}</span>
+          <button
+            onClick={() => router.push('/profile')}
+            className="text-sm text-slate-500 hover:text-brand-600 font-medium transition-colors"
+          >
+            My Profile
+          </button>
+          <span className="text-sm text-slate-400">{session.user?.email}</span>
           <button
             onClick={() => signOut()}
             className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
