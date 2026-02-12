@@ -8,6 +8,7 @@ const ALLOWED_EMAILS = [
   'demotrial@demo.com',
   'baba@demo.com',
   'aditi@demo.com',
+  'parul@demo.com',
 ];
 
 export const authOptions: NextAuthOptions = {
