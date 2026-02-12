@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { SavedPersona, Track } from '@/lib/types';
+import { SavedPersona, Track, getPersonaAttributes } from '@/lib/types';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -149,24 +149,25 @@ export default function LandingPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Logo size={120} />
+          <Logo size={200} />
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-1 text-gradient">
+          <h1 className="text-5xl md:text-6xl font-extrabold text-center mb-2 text-gradient">
             TalkWise
           </h1>
 
-          <p className="text-xs font-medium tracking-widest uppercase text-slate-400 mb-6">
+          <p className="text-sm font-medium tracking-widest uppercase text-slate-400 mb-4">
             Communication Training Platform
           </p>
 
-          <p className="text-sm text-slate-500 text-center max-w-md mb-8 leading-relaxed">
-            Simulate high-stakes conversations with AI personas. Build
-            confidence before the real thing.
+          <p className="text-base md:text-lg text-slate-500 text-center max-w-lg mb-8 leading-relaxed">
+            Simulate high-stakes conversations with AI personas. Practice
+            articulation, build confidence, and master your communication —
+            before the real thing.
           </p>
 
           <button
             onClick={() => router.push('/auth')}
-            className="px-8 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25"
+            className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-lg"
           >
             Get Started
           </button>
@@ -195,123 +196,250 @@ export default function LandingPage() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 px-6 py-6">
+      <div className="flex-1 px-6 py-8">
         <div className="max-w-3xl mx-auto">
-          {/* Greeting + Track tabs row */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-            <h1 className="text-xl font-bold text-slate-900">
-              Hi, <span className="text-gradient">{userName}</span>
-            </h1>
-            <div className="flex items-center gap-3">
-              <div className="flex bg-slate-100 rounded-lg p-0.5">
-                <button
-                  onClick={() => setActiveTrack('professional')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    activeTrack === 'professional'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  💼 Professional
-                </button>
-                <button
-                  onClick={() => setActiveTrack('personal')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    activeTrack === 'personal'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  💬 Personal
-                </button>
+          {/* Greeting */}
+          <h1 className="text-2xl font-bold text-slate-900 mb-6">
+            Welcome back, <span className="text-gradient">{userName}</span>
+          </h1>
+
+          {/* ── Track Selector Cards ── */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {/* Professional */}
+            <button
+              onClick={() => setActiveTrack('professional')}
+              className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                activeTrack === 'professional'
+                  ? 'border-brand-500 bg-gradient-to-br from-brand-50 to-accent-50 shadow-md shadow-brand-500/10'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                  activeTrack === 'professional'
+                    ? 'bg-gradient-to-br from-brand-500 to-accent-500 shadow-sm'
+                    : 'bg-slate-100'
+                }`}>
+                  <span>{activeTrack === 'professional' ? '💼' : '💼'}</span>
+                </div>
+                <div>
+                  <h3 className={`text-sm font-bold ${
+                    activeTrack === 'professional' ? 'text-slate-900' : 'text-slate-600'
+                  }`}>
+                    Professional
+                  </h3>
+                  <p className={`text-xs ${
+                    activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
+                    Workplace conversations
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={handleCreateNew}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
-              >
-                + New
-              </button>
-            </div>
+              <p className={`text-xs leading-relaxed ${
+                activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
+              }`}>
+                Negotiations, reviews, feedback, conflict resolution
+              </p>
+              {activeTrack === 'professional' && (
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-brand flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+
+            {/* Personal */}
+            <button
+              onClick={() => setActiveTrack('personal')}
+              className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                activeTrack === 'personal'
+                  ? 'border-pink-400 bg-gradient-to-br from-pink-50 to-orange-50 shadow-md shadow-pink-400/10'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                  activeTrack === 'personal'
+                    ? 'bg-gradient-to-br from-pink-400 to-orange-400 shadow-sm'
+                    : 'bg-slate-100'
+                }`}>
+                  <span>💬</span>
+                </div>
+                <div>
+                  <h3 className={`text-sm font-bold ${
+                    activeTrack === 'personal' ? 'text-slate-900' : 'text-slate-600'
+                  }`}>
+                    Personal
+                  </h3>
+                  <p className={`text-xs ${
+                    activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
+                    Dating & social
+                  </p>
+                </div>
+              </div>
+              <p className={`text-xs leading-relaxed ${
+                activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
+              }`}>
+                First messages, banter, getting to know people
+              </p>
+              {activeTrack === 'personal' && (
+                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* ── Personas Section ── */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-700">
+              {activeTrack === 'personal' ? 'Your Dating Personas' : 'Your Professional Personas'}
+            </h2>
+            <button
+              onClick={handleCreateNew}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
+            >
+              + Create New
+            </button>
           </div>
 
           {/* Persona grid */}
           {loading ? (
-            <div className="text-center py-12 text-slate-400 text-sm">
-              Loading...
+            <div className="text-center py-16 text-slate-400">
+              Loading personas...
             </div>
           ) : filteredPersonas.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
-              <p className="text-sm text-slate-400 mb-4">
-                No {activeTrack === 'personal' ? 'dating' : 'professional'} personas yet.
+            <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
+              <div className="text-4xl mb-3">
+                {activeTrack === 'personal' ? '💬' : '💼'}
+              </div>
+              <h3 className="text-lg font-semibold text-slate-700 mb-1">
+                No personas yet
+              </h3>
+              <p className="text-sm text-slate-400 mb-5">
+                Create your first {activeTrack === 'personal' ? 'dating' : 'professional'} persona to start practicing.
               </p>
               <button
                 onClick={handleCreateNew}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-md"
               >
-                Create First Persona
+                Create Your First Persona
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredPersonas.map((persona) => (
-                <div
-                  key={persona.id}
-                  onClick={() => handleSelectPersona(persona)}
-                  className="group relative p-4 rounded-xl border border-slate-200 bg-white hover:border-brand-400 hover:shadow-md transition-all cursor-pointer"
-                >
-                  {/* Action buttons */}
-                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditPersona(persona);
-                      }}
-                      className="w-6 h-6 rounded-full bg-slate-100 hover:bg-brand-100 text-slate-400 hover:text-brand-600 flex items-center justify-center transition-colors"
-                      title="Edit"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePersona(persona.id);
-                      }}
-                      disabled={deleting === persona.id}
-                      className="w-6 h-6 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors"
-                      title="Delete"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredPersonas.map((persona) => {
+                const attrs = getPersonaAttributes(persona.track || 'professional');
+                const isPersonal = persona.track === 'personal';
+                const accentBorder = isPersonal ? 'border-l-pink-400' : 'border-l-brand-500';
 
-                  <h3 className="text-sm font-semibold text-slate-900 truncate pr-14 mb-1.5">
-                    {persona.name}
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
-                      {persona.track === 'personal'
-                        ? `Interest ${persona.interestLevel}/10`
-                        : `Difficulty ${persona.difficultyLevel}/10`}
-                    </span>
-                    <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
-                      {persona.track === 'personal'
-                        ? `Flirty ${persona.flirtatiousness}/10`
-                        : `Direct ${persona.communicationStyle}/10`}
-                    </span>
+                return (
+                  <div
+                    key={persona.id}
+                    onClick={() => handleSelectPersona(persona)}
+                    className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${accentBorder} overflow-hidden hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-200 cursor-pointer`}
+                  >
+                    {/* Card header */}
+                    <div className="px-5 pt-4 pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2.5 min-w-0 pr-16">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
+                            isPersonal
+                              ? 'bg-pink-50 text-pink-500'
+                              : 'bg-brand-50 text-brand-600'
+                          }`}>
+                            {isPersonal ? '💬' : '💼'}
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-900 truncate">
+                            {persona.name}
+                          </h3>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEditPersona(persona); }}
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-brand-100 text-slate-400 hover:text-brand-600 flex items-center justify-center transition-colors"
+                            title="Edit"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeletePersona(persona.id); }}
+                            disabled={deleting === persona.id}
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                            title="Delete"
+                          >
+                            {deleting === persona.id ? (
+                              <span className="text-xs">...</span>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trait mini-bars */}
+                    <div className="px-5 pb-3">
+                      <div className="grid grid-cols-3 gap-x-4 gap-y-1.5">
+                        {attrs.slice(0, 3).map((attr) => {
+                          const value = (persona as unknown as Record<string, number>)[attr.key] ?? 5;
+                          const traitName = attr.traitNames[value];
+                          const barColor = isPersonal ? 'bg-pink-400' : 'bg-brand-500';
+                          return (
+                            <div key={attr.key}>
+                              <div className="flex items-center justify-between mb-0.5">
+                                <span className="text-[10px] text-slate-400 truncate">{attr.label}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${barColor}`}
+                                    style={{ width: `${(value / 10) * 100}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-medium text-slate-500 w-14 text-right truncate">
+                                  {traitName}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Card footer */}
+                    <div className={`px-5 py-2.5 border-t border-slate-100 ${
+                      isPersonal
+                        ? 'bg-gradient-to-r from-pink-50/50 to-transparent'
+                        : 'bg-gradient-to-r from-brand-50/50 to-transparent'
+                    }`}>
+                      <span className={`text-xs font-semibold group-hover:translate-x-1 transition-transform inline-block ${
+                        isPersonal ? 'text-pink-500' : 'text-brand-600'
+                      }`}>
+                        Start conversation &rarr;
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-xs text-brand-600 font-medium group-hover:translate-x-0.5 transition-transform">
-                    Start &rarr;
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       </div>
+
+      <footer className="text-center py-4 text-slate-400 text-xs">
+        Built with OpenAI &middot; Talk wisely, talk confidently
+      </footer>
     </div>
   );
 }

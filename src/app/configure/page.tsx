@@ -136,10 +136,10 @@ export default function ConfigurePage() {
           >
             &larr; Back
           </button>
-          <Logo size={36} />
+          <Logo size={48} />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">
           {editPersonaId ? (
             <>Edit <span className="text-gradient">{name || 'Persona'}</span></>
           ) : (
@@ -154,26 +154,64 @@ export default function ConfigurePage() {
 
         {/* Track selector (new personas only) */}
         {!editPersonaId && (
-          <div className="flex bg-slate-100 rounded-lg p-0.5 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-6">
             <button
               onClick={() => setTrack('professional')}
-              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+              className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
                 track === 'professional'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'border-brand-500 bg-brand-50/50'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              💼 Professional
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+                track === 'professional' ? 'bg-gradient-to-br from-brand-500 to-accent-500' : 'bg-slate-100'
+              }`}>
+                💼
+              </div>
+              <div>
+                <span className={`text-sm font-semibold ${track === 'professional' ? 'text-slate-900' : 'text-slate-600'}`}>
+                  Professional
+                </span>
+                <p className={`text-[10px] ${track === 'professional' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Workplace
+                </p>
+              </div>
+              {track === 'professional' && (
+                <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-gradient-brand flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
             </button>
             <button
               onClick={() => setTrack('personal')}
-              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+              className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
                 track === 'personal'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'border-pink-400 bg-pink-50/50'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
               }`}
             >
-              💬 Personal / Dating
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+                track === 'personal' ? 'bg-gradient-to-br from-pink-400 to-orange-400' : 'bg-slate-100'
+              }`}>
+                💬
+              </div>
+              <div>
+                <span className={`text-sm font-semibold ${track === 'personal' ? 'text-slate-900' : 'text-slate-600'}`}>
+                  Personal
+                </span>
+                <p className={`text-[10px] ${track === 'personal' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Dating & social
+                </p>
+              </div>
+              {track === 'personal' && (
+                <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
             </button>
           </div>
         )}

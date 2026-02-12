@@ -65,15 +65,17 @@ export default function FeedbackPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Logo size={60} className="mx-auto mb-4 animate-pulse" />
-          <div className="inline-flex items-center gap-2 text-brand-600 text-sm mb-2">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <div className="mb-6 flex justify-center">
+            <Logo size={80} className="animate-pulse" />
+          </div>
+          <div className="inline-flex items-center gap-2 text-brand-600 mb-4">
+            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             Analyzing your conversation...
           </div>
-          <p className="text-slate-400 text-xs">This may take a few seconds</p>
+          <p className="text-slate-400 text-sm">This may take a few seconds</p>
         </div>
       </div>
     );
@@ -118,9 +120,16 @@ export default function FeedbackPage() {
     <div className="min-h-screen py-8 px-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-lg font-bold text-slate-900">Session Feedback</h1>
-          <Logo size={36} />
+        <div className="text-center mb-10">
+          <div className="flex justify-center mb-4">
+            <Logo size={64} />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            Session Feedback
+          </h1>
+          <p className="text-slate-500">
+            Here&apos;s how you did — and how to improve.
+          </p>
         </div>
 
         {/* Confidence Score */}

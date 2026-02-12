@@ -71,12 +71,12 @@ export default function StartPage() {
           >
             &larr; Back
           </button>
-          <Logo size={36} />
+          <Logo size={48} />
         </div>
 
         {/* Persona name + trait toggle */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">
+          <h1 className="text-3xl font-bold text-slate-900 mb-1">
             Talk to <span className="text-gradient">{personaName}</span>
           </h1>
           <button
