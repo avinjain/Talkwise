@@ -22,12 +22,19 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       name: body.name,
       goal: body.goal,
       scenario: body.scenario,
+      track: body.track,
       difficulty_level: body.difficultyLevel,
       decision_orientation: body.decisionOrientation,
       communication_style: body.communicationStyle,
       authority_posture: body.authorityPosture,
       temperament_stability: body.temperamentStability,
       social_presence: body.socialPresence,
+      interest_level: body.interestLevel,
+      flirtatiousness: body.flirtatiousness,
+      communication_effort: body.communicationEffort,
+      emotional_openness: body.emotionalOpenness,
+      humor_style: body.humorStyle,
+      pickiness: body.pickiness,
     });
 
     const updated = getPersonaById(params.id, userId);
@@ -38,6 +45,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return Response.json({
       id: updated.id,
       userId: updated.user_id,
+      track: updated.track || 'professional',
       name: updated.name,
       goal: updated.goal,
       scenario: updated.scenario,
@@ -47,6 +55,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       authorityPosture: updated.authority_posture,
       temperamentStability: updated.temperament_stability,
       socialPresence: updated.social_presence,
+      interestLevel: updated.interest_level ?? 5,
+      flirtatiousness: updated.flirtatiousness ?? 5,
+      communicationEffort: updated.communication_effort ?? 5,
+      emotionalOpenness: updated.emotional_openness ?? 5,
+      humorStyle: updated.humor_style ?? 5,
+      pickiness: updated.pickiness ?? 5,
       createdAt: updated.created_at,
       updatedAt: updated.updated_at,
     });

@@ -1,27 +1,47 @@
+export type Track = 'professional' | 'personal';
+
 export interface PersonaConfig {
+  track: Track;
   name: string;
   scenario: string;
   userGoal: string;
+  // Professional traits
   difficultyLevel: number;
   decisionOrientation: number;
   communicationStyle: number;
   authorityPosture: number;
   temperamentStability: number;
   socialPresence: number;
+  // Personal traits
+  interestLevel: number;
+  flirtatiousness: number;
+  communicationEffort: number;
+  emotionalOpenness: number;
+  humorStyle: number;
+  pickiness: number;
 }
 
 export interface SavedPersona {
   id: string;
   userId: string;
+  track: Track;
   name: string;
   goal: string;
   scenario: string;
+  // Professional traits
   difficultyLevel: number;
   decisionOrientation: number;
   communicationStyle: number;
   authorityPosture: number;
   temperamentStability: number;
   socialPresence: number;
+  // Personal traits
+  interestLevel: number;
+  flirtatiousness: number;
+  communicationEffort: number;
+  emotionalOpenness: number;
+  humorStyle: number;
+  pickiness: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,7 +66,7 @@ export interface FeedbackReport {
 
 // ── Goal options (selectable cards) ──
 
-export const GOAL_OPTIONS = [
+export const PROFESSIONAL_GOAL_OPTIONS = [
   {
     id: 'promotion',
     label: 'Asking for a Promotion',
@@ -97,9 +117,65 @@ export const GOAL_OPTIONS = [
   },
 ] as const;
 
+export const PERSONAL_GOAL_OPTIONS = [
+  {
+    id: 'first-message',
+    label: 'First Message / Opener',
+    icon: '👋',
+    description: 'Craft a great opening on Tinder, Bumble, or Hinge',
+  },
+  {
+    id: 'get-number',
+    label: 'Getting Their Number',
+    icon: '📱',
+    description: 'Transition from app chat to real contact',
+  },
+  {
+    id: 'plan-date',
+    label: 'Planning the First Date',
+    icon: '☕',
+    description: 'Suggest and plan an exciting first meetup',
+  },
+  {
+    id: 'keep-convo',
+    label: 'Keeping the Conversation Going',
+    icon: '💬',
+    description: 'Avoid awkward silences and keep things flowing',
+  },
+  {
+    id: 'flirty-banter',
+    label: 'Flirty Banter',
+    icon: '😏',
+    description: 'Practice playful, witty, and flirty exchanges',
+  },
+  {
+    id: 'deep-connection',
+    label: 'Deep Conversation',
+    icon: '💫',
+    description: 'Build emotional connection through meaningful talk',
+  },
+  {
+    id: 'recover-awkward',
+    label: 'Recovering from Awkwardness',
+    icon: '😅',
+    description: 'Bounce back from a cringe moment or dry spell',
+  },
+  {
+    id: 'be-funny',
+    label: 'Being Funny & Witty',
+    icon: '😂',
+    description: 'Practice humor that lands and makes them laugh',
+  },
+] as const;
+
+// Convenience: get goal options by track
+export function getGoalOptions(track: Track) {
+  return track === 'personal' ? PERSONAL_GOAL_OPTIONS : PROFESSIONAL_GOAL_OPTIONS;
+}
+
 // ── Personality Matrix with trait names per value ──
 
-export const PERSONA_ATTRIBUTES = [
+export const PROFESSIONAL_PERSONA_ATTRIBUTES = [
   {
     key: 'difficultyLevel' as const,
     label: 'Difficulty Level',
@@ -223,4 +299,138 @@ export const PERSONA_ATTRIBUTES = [
   },
 ] as const;
 
-export type PersonaAttributeKey = (typeof PERSONA_ATTRIBUTES)[number]['key'];
+export const PERSONAL_PERSONA_ATTRIBUTES = [
+  {
+    key: 'interestLevel' as const,
+    label: 'Interest Level',
+    lowLabel: 'Not interested',
+    highLabel: 'Very into you',
+    description: 'How receptive and engaged they are in the conversation.',
+    traitNames: [
+      'Ghosting',        // 0
+      'Cold',            // 1
+      'Distant',         // 2
+      'Lukewarm',        // 3
+      'Curious',         // 4
+      'Interested',      // 5
+      'Engaged',         // 6
+      'Keen',            // 7
+      'Eager',           // 8
+      'Very Eager',      // 9
+      'Hooked',          // 10
+    ],
+  },
+  {
+    key: 'flirtatiousness' as const,
+    label: 'Flirtatiousness',
+    lowLabel: 'Strictly platonic',
+    highLabel: 'Very flirty',
+    description: 'How much they flirt, tease, and give romantic signals.',
+    traitNames: [
+      'Platonic',        // 0
+      'Reserved',        // 1
+      'Polite',          // 2
+      'Friendly',        // 3
+      'Slightly Flirty', // 4
+      'Balanced',        // 5
+      'Flirty',          // 6
+      'Teasing',         // 7
+      'Very Flirty',     // 8
+      'Seductive',       // 9
+      'Irresistible',    // 10
+    ],
+  },
+  {
+    key: 'communicationEffort' as const,
+    label: 'Communication Effort',
+    lowLabel: 'Dry texter / One-word answers',
+    highLabel: 'Expressive / Puts effort in',
+    description: 'How much effort they put into their messages.',
+    traitNames: [
+      'One-word',        // 0
+      'Minimal',         // 1
+      'Low Effort',      // 2
+      'Brief',           // 3
+      'Average',         // 4
+      'Decent',          // 5
+      'Thoughtful',      // 6
+      'Engaging',        // 7
+      'Expressive',      // 8
+      'Enthusiastic',    // 9
+      'All In',          // 10
+    ],
+  },
+  {
+    key: 'emotionalOpenness' as const,
+    label: 'Emotional Openness',
+    lowLabel: 'Guarded / Surface-level',
+    highLabel: 'Open / Vulnerable',
+    description: 'How willing they are to share personal things and go deep.',
+    traitNames: [
+      'Walled Off',      // 0
+      'Very Guarded',    // 1
+      'Guarded',         // 2
+      'Cautious',        // 3
+      'Slightly Open',   // 4
+      'Balanced',        // 5
+      'Fairly Open',     // 6
+      'Open',            // 7
+      'Very Open',       // 8
+      'Vulnerable',      // 9
+      'Heart on Sleeve', // 10
+    ],
+  },
+  {
+    key: 'humorStyle' as const,
+    label: 'Humor Style',
+    lowLabel: 'Dry / Sarcastic',
+    highLabel: 'Playful / Silly',
+    description: 'Their sense of humor — from deadpan to bubbly.',
+    traitNames: [
+      'Deadpan',         // 0
+      'Very Dry',        // 1
+      'Dry',             // 2
+      'Sarcastic',       // 3
+      'Witty',           // 4
+      'Balanced',        // 5
+      'Light',           // 6
+      'Playful',         // 7
+      'Very Playful',    // 8
+      'Silly',           // 9
+      'Goofy',           // 10
+    ],
+  },
+  {
+    key: 'pickiness' as const,
+    label: 'Pickiness',
+    lowLabel: 'Easy-going / Low standards',
+    highLabel: 'High standards / Selective',
+    description: 'How selective they are and how much you need to impress.',
+    traitNames: [
+      'Anything Goes',   // 0
+      'Very Chill',      // 1
+      'Chill',           // 2
+      'Easy-going',      // 3
+      'Moderate',        // 4
+      'Balanced',        // 5
+      'Selective',       // 6
+      'Picky',           // 7
+      'Very Picky',      // 8
+      'High Standards',  // 9
+      'Ultra Selective', // 10
+    ],
+  },
+] as const;
+
+// Convenience: get attributes by track
+export function getPersonaAttributes(track: Track) {
+  return track === 'personal' ? PERSONAL_PERSONA_ATTRIBUTES : PROFESSIONAL_PERSONA_ATTRIBUTES;
+}
+
+// Legacy alias for backward compatibility
+export const PERSONA_ATTRIBUTES = PROFESSIONAL_PERSONA_ATTRIBUTES;
+export const GOAL_OPTIONS = PROFESSIONAL_GOAL_OPTIONS;
+
+export type PersonaAttributeKey =
+  | (typeof PROFESSIONAL_PERSONA_ATTRIBUTES)[number]['key']
+  | (typeof PERSONAL_PERSONA_ATTRIBUTES)[number]['key'];

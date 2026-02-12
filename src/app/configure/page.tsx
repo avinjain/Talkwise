@@ -3,22 +3,37 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { PERSONA_ATTRIBUTES } from '@/lib/types';
+import { Track, getPersonaAttributes } from '@/lib/types';
+
+const DEFAULT_PROFESSIONAL_TRAITS = {
+  difficultyLevel: 5,
+  decisionOrientation: 5,
+  communicationStyle: 5,
+  authorityPosture: 5,
+  temperamentStability: 5,
+  socialPresence: 5,
+};
+
+const DEFAULT_PERSONAL_TRAITS = {
+  interestLevel: 5,
+  flirtatiousness: 5,
+  communicationEffort: 5,
+  emotionalOpenness: 5,
+  humorStyle: 5,
+  pickiness: 5,
+};
 
 export default function ConfigurePage() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [editPersonaId, setEditPersonaId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [track, setTrack] = useState<Track>('professional');
 
   const [name, setName] = useState('');
-  const [traits, setTraits] = useState({
-    difficultyLevel: 5,
-    decisionOrientation: 5,
-    communicationStyle: 5,
-    authorityPosture: 5,
-    temperamentStability: 5,
-    socialPresence: 5,
+  const [traits, setTraits] = useState<Record<string, number>>({
+    ...DEFAULT_PROFESSIONAL_TRAITS,
+    ...DEFAULT_PERSONAL_TRAITS,
   });
 
   useEffect(() => {
@@ -29,28 +44,20 @@ export default function ConfigurePage() {
     }
     setUserName(stored);
 
-    // Check if editing an existing persona
     const personaId = sessionStorage.getItem('editPersonaId');
     if (personaId) {
       setEditPersonaId(personaId);
     }
 
-    // Load pre-filled data if available
     const storedConfig = sessionStorage.getItem('editPersonaData');
     if (storedConfig) {
       try {
         const parsed = JSON.parse(storedConfig);
-        setName(parsed.name || '');
-        setTraits({
-          difficultyLevel: parsed.difficultyLevel ?? 5,
-          decisionOrientation: parsed.decisionOrientation ?? 5,
-          communicationStyle: parsed.communicationStyle ?? 5,
-          authorityPosture: parsed.authorityPosture ?? 5,
-          temperamentStability: parsed.temperamentStability ?? 5,
-          socialPresence: parsed.socialPresence ?? 5,
-        });
+        if (parsed.track) setTrack(parsed.track);
+        if (parsed.name) setName(parsed.name);
+        setTraits((prev) => ({ ...prev, ...parsed }));
       } catch {
-        // ignore parse errors
+        // ignore
       }
     }
   }, [router]);
@@ -65,10 +72,24 @@ export default function ConfigurePage() {
 
     try {
       const body = {
+        track,
         name: name.trim(),
         goal: '',
         scenario: '',
-        ...traits,
+        // Professional traits
+        difficultyLevel: traits.difficultyLevel,
+        decisionOrientation: traits.decisionOrientation,
+        communicationStyle: traits.communicationStyle,
+        authorityPosture: traits.authorityPosture,
+        temperamentStability: traits.temperamentStability,
+        socialPresence: traits.socialPresence,
+        // Personal traits
+        interestLevel: traits.interestLevel,
+        flirtatiousness: traits.flirtatiousness,
+        communicationEffort: traits.communicationEffort,
+        emotionalOpenness: traits.emotionalOpenness,
+        humorStyle: traits.humorStyle,
+        pickiness: traits.pickiness,
       };
 
       let res: Response;
@@ -93,7 +114,6 @@ export default function ConfigurePage() {
         return;
       }
 
-      // Clean up and go back to landing page
       sessionStorage.removeItem('editPersonaId');
       sessionStorage.removeItem('editPersonaData');
       router.push('/');
@@ -104,6 +124,8 @@ export default function ConfigurePage() {
       setSaving(false);
     }
   };
+
+  const attributes = getPersonaAttributes(track);
 
   return (
     <div className="min-h-screen py-12 px-6">
@@ -130,23 +152,54 @@ export default function ConfigurePage() {
             </>
           )}
         </h1>
-        <p className="text-slate-500 mb-10">
-          Give them a name and shape their personality. You&apos;ll pick the
-          conversation topic when you start.
+        <p className="text-slate-500 mb-8">
+          {track === 'personal'
+            ? "Give them a name and shape their dating personality."
+            : "Give them a name and shape their professional personality."}
         </p>
+
+        {/* Track selector (only for new personas) */}
+        {!editPersonaId && (
+          <div className="flex bg-slate-100 rounded-lg p-1 mb-8">
+            <button
+              onClick={() => setTrack('professional')}
+              className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                track === 'professional'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              💼 Professional
+            </button>
+            <button
+              onClick={() => setTrack('personal')}
+              className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                track === 'personal'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              💬 Personal / Dating
+            </button>
+          </div>
+        )}
 
         <div className="space-y-8">
           {/* ── Persona Name ── */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Who is this person?{' '}
+              {track === 'personal' ? "Who are they?" : "Who is this person?"}{' '}
               <span className="text-brand-600">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Sarah Chen, VP of Engineering"
+              placeholder={
+                track === 'personal'
+                  ? 'e.g., Emma, 26, loves hiking and coffee'
+                  : 'e.g., Sarah Chen, VP of Engineering'
+              }
               className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-sm"
             />
           </div>
@@ -160,13 +213,14 @@ export default function ConfigurePage() {
               Personality Matrix
             </h2>
             <p className="text-sm text-slate-500 mb-6">
-              Adjust each slider to shape their personality. The trait name
-              updates as you drag.
+              {track === 'personal'
+                ? 'Shape their dating personality — how interested, flirty, and open they are.'
+                : 'Adjust each slider to shape their personality. The trait name updates as you drag.'}
             </p>
 
             <div className="space-y-7">
-              {PERSONA_ATTRIBUTES.map((attr) => {
-                const value = traits[attr.key as keyof typeof traits];
+              {attributes.map((attr) => {
+                const value = traits[attr.key] ?? 5;
                 const traitName = attr.traitNames[value];
 
                 return (

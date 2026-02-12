@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { PersonaConfig, GOAL_OPTIONS, PERSONA_ATTRIBUTES } from '@/lib/types';
+import { PersonaConfig, Track, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
   const router = useRouter();
   const [personaName, setPersonaName] = useState('');
+  const [track, setTrack] = useState<Track>('professional');
   const [traits, setTraits] = useState<Record<string, number>>({});
   const [userGoal, setUserGoal] = useState('');
   const [scenario, setScenario] = useState('');
@@ -21,14 +22,8 @@ export default function StartPage() {
     try {
       const parsed = JSON.parse(stored);
       setPersonaName(parsed.name || '');
-      setTraits({
-        difficultyLevel: parsed.difficultyLevel ?? 5,
-        decisionOrientation: parsed.decisionOrientation ?? 5,
-        communicationStyle: parsed.communicationStyle ?? 5,
-        authorityPosture: parsed.authorityPosture ?? 5,
-        temperamentStability: parsed.temperamentStability ?? 5,
-        socialPresence: parsed.socialPresence ?? 5,
-      });
+      setTrack(parsed.track || 'professional');
+      setTraits(parsed);
     } catch {
       router.push('/');
     }
@@ -38,6 +33,7 @@ export default function StartPage() {
     if (!userGoal) return;
 
     const config: PersonaConfig = {
+      track,
       name: personaName,
       scenario,
       userGoal,
@@ -47,6 +43,12 @@ export default function StartPage() {
       authorityPosture: traits.authorityPosture ?? 5,
       temperamentStability: traits.temperamentStability ?? 5,
       socialPresence: traits.socialPresence ?? 5,
+      interestLevel: traits.interestLevel ?? 5,
+      flirtatiousness: traits.flirtatiousness ?? 5,
+      communicationEffort: traits.communicationEffort ?? 5,
+      emotionalOpenness: traits.emotionalOpenness ?? 5,
+      humorStyle: traits.humorStyle ?? 5,
+      pickiness: traits.pickiness ?? 5,
     };
 
     sessionStorage.setItem('personaConfig', JSON.stringify(config));
@@ -74,12 +76,14 @@ export default function StartPage() {
             Talk to <span className="text-gradient">{personaName}</span>
           </h1>
           <p className="text-slate-500 mb-4">
-            Choose what you want to discuss and describe the situation.
+            {track === 'personal'
+              ? 'Choose what you want to practice and set the scene.'
+              : 'Choose what you want to discuss and describe the situation.'}
           </p>
 
           {/* Trait pills */}
           <div className="flex flex-wrap gap-2">
-            {PERSONA_ATTRIBUTES.map((attr) => {
+            {getPersonaAttributes(track).map((attr) => {
               const value = traits[attr.key] ?? 5;
               const traitName = attr.traitNames[value];
               return (
@@ -102,7 +106,7 @@ export default function StartPage() {
               <span className="text-brand-600">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {GOAL_OPTIONS.map((goal) => {
+              {getGoalOptions(track).map((goal) => {
                 const isSelected = userGoal === goal.label;
                 return (
                   <button
@@ -164,7 +168,11 @@ export default function StartPage() {
             <textarea
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
-              placeholder="e.g., Quarterly review meeting. You've been at the company for 2 years and just shipped a major project."
+              placeholder={
+                track === 'personal'
+                  ? "e.g., You matched on Tinder. They have a witty bio about travel and dogs."
+                  : "e.g., Quarterly review meeting. You've been at the company for 2 years and just shipped a major project."
+              }
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none shadow-sm"
             />

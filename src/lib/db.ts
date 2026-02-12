@@ -54,6 +54,7 @@ function initTables(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS saved_personas (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
+      track TEXT DEFAULT 'professional',
       name TEXT NOT NULL,
       goal TEXT NOT NULL,
       scenario TEXT DEFAULT '',
@@ -63,6 +64,12 @@ function initTables(db: Database.Database) {
       authority_posture INTEGER DEFAULT 5,
       temperament_stability INTEGER DEFAULT 5,
       social_presence INTEGER DEFAULT 5,
+      interest_level INTEGER DEFAULT 5,
+      flirtatiousness INTEGER DEFAULT 5,
+      communication_effort INTEGER DEFAULT 5,
+      emotional_openness INTEGER DEFAULT 5,
+      humor_style INTEGER DEFAULT 5,
+      pickiness INTEGER DEFAULT 5,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -73,6 +80,26 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_user ON saved_personas(user_id);
   `);
+
+  // ── Migration: add new columns to existing saved_personas table ──
+  const cols = db.pragma('table_info(saved_personas)') as { name: string }[];
+  const colNames = new Set(cols.map((c) => c.name));
+
+  const migrations: [string, string][] = [
+    ['track',                "ALTER TABLE saved_personas ADD COLUMN track TEXT DEFAULT 'professional'"],
+    ['interest_level',       'ALTER TABLE saved_personas ADD COLUMN interest_level INTEGER DEFAULT 5'],
+    ['flirtatiousness',      'ALTER TABLE saved_personas ADD COLUMN flirtatiousness INTEGER DEFAULT 5'],
+    ['communication_effort', 'ALTER TABLE saved_personas ADD COLUMN communication_effort INTEGER DEFAULT 5'],
+    ['emotional_openness',   'ALTER TABLE saved_personas ADD COLUMN emotional_openness INTEGER DEFAULT 5'],
+    ['humor_style',          'ALTER TABLE saved_personas ADD COLUMN humor_style INTEGER DEFAULT 5'],
+    ['pickiness',            'ALTER TABLE saved_personas ADD COLUMN pickiness INTEGER DEFAULT 5'],
+  ];
+
+  for (const [col, sql] of migrations) {
+    if (!colNames.has(col)) {
+      db.exec(sql);
+    }
+  }
 }
 
 // ── User operations ──
@@ -163,6 +190,7 @@ export function getRecentRequestCount(userId: string, windowSeconds: number): nu
 export interface SavedPersonaRow {
   id: string;
   user_id: string;
+  track: string;
   name: string;
   goal: string;
   scenario: string;
@@ -172,6 +200,12 @@ export interface SavedPersonaRow {
   authority_posture: number;
   temperament_stability: number;
   social_presence: number;
+  interest_level: number;
+  flirtatiousness: number;
+  communication_effort: number;
+  emotional_openness: number;
+  humor_style: number;
+  pickiness: number;
   created_at: string;
   updated_at: string;
 }
@@ -193,11 +227,12 @@ export function getPersonaById(id: string, userId: string): SavedPersonaRow | un
 export function savePersona(persona: Omit<SavedPersonaRow, 'created_at' | 'updated_at'>) {
   const db = getDb();
   db.prepare(
-    `INSERT INTO saved_personas (id, user_id, name, goal, scenario, difficulty_level, decision_orientation, communication_style, authority_posture, temperament_stability, social_presence)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO saved_personas (id, user_id, track, name, goal, scenario, difficulty_level, decision_orientation, communication_style, authority_posture, temperament_stability, social_presence, interest_level, flirtatiousness, communication_effort, emotional_openness, humor_style, pickiness)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     persona.id,
     persona.user_id,
+    persona.track || 'professional',
     persona.name,
     persona.goal,
     persona.scenario,
@@ -206,7 +241,13 @@ export function savePersona(persona: Omit<SavedPersonaRow, 'created_at' | 'updat
     persona.communication_style,
     persona.authority_posture,
     persona.temperament_stability,
-    persona.social_presence
+    persona.social_presence,
+    persona.interest_level,
+    persona.flirtatiousness,
+    persona.communication_effort,
+    persona.emotional_openness,
+    persona.humor_style,
+    persona.pickiness
   );
 }
 
@@ -218,12 +259,19 @@ export function updatePersona(id: string, userId: string, updates: Partial<Omit<
   if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
   if (updates.goal !== undefined) { fields.push('goal = ?'); values.push(updates.goal); }
   if (updates.scenario !== undefined) { fields.push('scenario = ?'); values.push(updates.scenario); }
+  if (updates.track !== undefined) { fields.push('track = ?'); values.push(updates.track); }
   if (updates.difficulty_level !== undefined) { fields.push('difficulty_level = ?'); values.push(updates.difficulty_level); }
   if (updates.decision_orientation !== undefined) { fields.push('decision_orientation = ?'); values.push(updates.decision_orientation); }
   if (updates.communication_style !== undefined) { fields.push('communication_style = ?'); values.push(updates.communication_style); }
   if (updates.authority_posture !== undefined) { fields.push('authority_posture = ?'); values.push(updates.authority_posture); }
   if (updates.temperament_stability !== undefined) { fields.push('temperament_stability = ?'); values.push(updates.temperament_stability); }
   if (updates.social_presence !== undefined) { fields.push('social_presence = ?'); values.push(updates.social_presence); }
+  if (updates.interest_level !== undefined) { fields.push('interest_level = ?'); values.push(updates.interest_level); }
+  if (updates.flirtatiousness !== undefined) { fields.push('flirtatiousness = ?'); values.push(updates.flirtatiousness); }
+  if (updates.communication_effort !== undefined) { fields.push('communication_effort = ?'); values.push(updates.communication_effort); }
+  if (updates.emotional_openness !== undefined) { fields.push('emotional_openness = ?'); values.push(updates.emotional_openness); }
+  if (updates.humor_style !== undefined) { fields.push('humor_style = ?'); values.push(updates.humor_style); }
+  if (updates.pickiness !== undefined) { fields.push('pickiness = ?'); values.push(updates.pickiness); }
 
   if (fields.length === 0) return;
 

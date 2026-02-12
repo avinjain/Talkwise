@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { SavedPersona } from '@/lib/types';
+import { SavedPersona, Track } from '@/lib/types';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function LandingPage() {
   const [personas, setPersonas] = useState<SavedPersona[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [activeTrack, setActiveTrack] = useState<Track>('professional');
 
   const fetchPersonas = useCallback(async () => {
     try {
@@ -72,12 +73,17 @@ export default function LandingPage() {
     }
   };
 
+  const filteredPersonas = personas.filter(
+    (p) => (p.track || 'professional') === activeTrack
+  );
+
   // Click persona → go to /start to pick a scenario
   const handleSelectPersona = (persona: SavedPersona) => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.setItem(
       'startPersonaData',
       JSON.stringify({
+        track: persona.track || 'professional',
         name: persona.name,
         difficultyLevel: persona.difficultyLevel,
         decisionOrientation: persona.decisionOrientation,
@@ -85,6 +91,12 @@ export default function LandingPage() {
         authorityPosture: persona.authorityPosture,
         temperamentStability: persona.temperamentStability,
         socialPresence: persona.socialPresence,
+        interestLevel: persona.interestLevel,
+        flirtatiousness: persona.flirtatiousness,
+        communicationEffort: persona.communicationEffort,
+        emotionalOpenness: persona.emotionalOpenness,
+        humorStyle: persona.humorStyle,
+        pickiness: persona.pickiness,
       })
     );
     router.push('/start');
@@ -97,6 +109,7 @@ export default function LandingPage() {
     sessionStorage.setItem(
       'editPersonaData',
       JSON.stringify({
+        track: persona.track || 'professional',
         name: persona.name,
         difficultyLevel: persona.difficultyLevel,
         decisionOrientation: persona.decisionOrientation,
@@ -104,16 +117,22 @@ export default function LandingPage() {
         authorityPosture: persona.authorityPosture,
         temperamentStability: persona.temperamentStability,
         socialPresence: persona.socialPresence,
+        interestLevel: persona.interestLevel,
+        flirtatiousness: persona.flirtatiousness,
+        communicationEffort: persona.communicationEffort,
+        emotionalOpenness: persona.emotionalOpenness,
+        humorStyle: persona.humorStyle,
+        pickiness: persona.pickiness,
       })
     );
     router.push('/configure');
   };
 
-  // Create new → go to /configure with blank slate
+  // Create new → go to /configure with the active track
   const handleCreateNew = () => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.removeItem('editPersonaId');
-    sessionStorage.removeItem('editPersonaData');
+    sessionStorage.setItem('editPersonaData', JSON.stringify({ track: activeTrack }));
     router.push('/configure');
   };
 
@@ -194,10 +213,30 @@ export default function LandingPage() {
 
         {/* Saved Personas */}
         <div className="w-full max-w-3xl">
+          {/* Track tabs */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Your Personas
-            </h2>
+            <div className="flex bg-slate-100 rounded-lg p-1">
+              <button
+                onClick={() => setActiveTrack('professional')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTrack === 'professional'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                💼 Professional
+              </button>
+              <button
+                onClick={() => setActiveTrack('personal')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTrack === 'personal'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                💬 Personal
+              </button>
+            </div>
             <button
               onClick={handleCreateNew}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
@@ -210,14 +249,14 @@ export default function LandingPage() {
             <div className="text-center py-12 text-slate-400">
               Loading personas...
             </div>
-          ) : personas.length === 0 ? (
+          ) : filteredPersonas.length === 0 ? (
             <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
               <div className="text-4xl mb-3">🎭</div>
               <h3 className="text-lg font-semibold text-slate-700 mb-1">
                 No personas yet
               </h3>
               <p className="text-sm text-slate-400 mb-5">
-                Create your first persona to start a practice conversation.
+                Create your first {activeTrack === 'personal' ? 'dating' : 'professional'} persona to start practicing.
               </p>
               <button
                 onClick={handleCreateNew}
@@ -228,7 +267,7 @@ export default function LandingPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {personas.map((persona) => (
+              {filteredPersonas.map((persona) => (
                 <div
                   key={persona.id}
                   className="group relative p-5 rounded-2xl border border-slate-200 bg-white hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-500/10 transition-all duration-300 shadow-sm"
@@ -292,7 +331,7 @@ export default function LandingPage() {
                     onClick={() => handleSelectPersona(persona)}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">🎭</span>
+                      <span className="text-lg">{persona.track === 'personal' ? '💬' : '💼'}</span>
                       <h3 className="text-base font-bold text-slate-900 truncate pr-16">
                         {persona.name}
                       </h3>
@@ -300,7 +339,9 @@ export default function LandingPage() {
 
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                        Difficulty: {persona.difficultyLevel}/10
+                        {persona.track === 'personal'
+                          ? `Interest: ${persona.interestLevel}/10`
+                          : `Difficulty: ${persona.difficultyLevel}/10`}
                       </span>
                     </div>
 
