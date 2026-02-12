@@ -1,4 +1,4 @@
-import openai from '@/lib/openai';
+import { getOpenAI } from '@/lib/openai';
 import { buildPersonaSystemPrompt } from '@/lib/prompts';
 import { PersonaConfig, ChatMessage } from '@/lib/types';
 import { truncateMessages, countMessagesTokens } from '@/lib/tokens';
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     // Count prompt tokens for usage tracking
     const promptTokens = countMessagesTokens(apiMessages, model);
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model,
       messages: apiMessages,
       stream: true,

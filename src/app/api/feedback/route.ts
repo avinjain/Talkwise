@@ -1,4 +1,4 @@
-import openai from '@/lib/openai';
+import { getOpenAI } from '@/lib/openai';
 import { buildFeedbackPrompt } from '@/lib/prompts';
 import { PersonaConfig, ChatMessage, FeedbackReport } from '@/lib/types';
 import { getAuthUserId } from '@/lib/session';
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const model = process.env.GPT_MODEL || 'gpt-4o';
     const prompt = buildFeedbackPrompt(personaConfig, messages);
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model,
       messages: [
         {
