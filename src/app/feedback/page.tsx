@@ -61,54 +61,33 @@ export default function FeedbackPage() {
     router.push('/');
   };
 
-  // ── Loading state ──
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="mb-6 flex justify-center">
-            <Logo size={80} className="animate-pulse" />
-          </div>
-          <div className="inline-flex items-center gap-2 text-brand-600 mb-4">
-            <svg
-              className="animate-spin h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
+          <Logo size={60} className="mx-auto mb-4 animate-pulse" />
+          <div className="inline-flex items-center gap-2 text-brand-600 text-sm mb-2">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
             Analyzing your conversation...
           </div>
-          <p className="text-slate-400 text-sm">This may take a few seconds</p>
+          <p className="text-slate-400 text-xs">This may take a few seconds</p>
         </div>
       </div>
     );
   }
 
-  // ── Error state ──
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <h1 className="text-xl font-bold text-red-600 mb-2">
-            Analysis Failed
-          </h1>
-          <p className="text-slate-500 mb-6">{error}</p>
+        <div className="text-center max-w-sm">
+          <h1 className="text-lg font-bold text-red-600 mb-2">Analysis Failed</h1>
+          <p className="text-sm text-slate-500 mb-4">{error}</p>
           <button
             onClick={handleNewSession}
-            className="px-6 py-3 rounded-xl text-white font-semibold bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25"
+            className="px-5 py-2.5 rounded-lg text-sm text-white font-medium bg-gradient-brand hover:bg-gradient-brand-hover transition-all"
           >
             Start New Session
           </button>
@@ -136,121 +115,80 @@ export default function FeedbackPage() {
   const circumference = 2 * Math.PI * 54;
 
   return (
-    <div className="min-h-screen py-12 px-6">
-      <div className="max-w-3xl mx-auto">
-        {/* ── Header ── */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <Logo size={64} />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Session Feedback
-          </h1>
-          <p className="text-slate-500">
-            Here&apos;s how you did — and how to improve.
-          </p>
+    <div className="min-h-screen py-8 px-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-lg font-bold text-slate-900">Session Feedback</h1>
+          <Logo size={36} />
         </div>
 
-        {/* ── Confidence Score ── */}
-        <div className="flex flex-col items-center mb-10 p-8 rounded-2xl bg-white border border-slate-200 shadow-sm">
-          <div className="relative w-32 h-32 mb-4">
-            <svg
-              className="w-full h-full -rotate-90"
-              viewBox="0 0 120 120"
-            >
+        {/* Confidence Score */}
+        <div className="flex items-center gap-6 mb-5 p-5 rounded-xl bg-white border border-slate-200">
+          <div className="relative w-20 h-20 flex-shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#e2e8f0" strokeWidth="8" />
               <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="#e2e8f0"
-                strokeWidth="8"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
+                cx="60" cy="60" r="54" fill="none"
                 className={scoreRingColor}
-                strokeWidth="8"
-                strokeLinecap="round"
+                strokeWidth="8" strokeLinecap="round"
                 strokeDasharray={`${(feedback.confidenceScore / 100) * circumference} ${circumference}`}
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-3xl font-bold ${scoreColor}`}>
+              <span className={`text-xl font-bold ${scoreColor}`}>
                 {feedback.confidenceScore}
               </span>
             </div>
           </div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-2">
-            Confidence Score
-          </h2>
-          <p className="text-sm text-slate-500 text-center max-w-lg leading-relaxed">
-            {feedback.confidenceNotes}
-          </p>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 mb-1">Confidence Score</h2>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {feedback.confidenceNotes}
+            </p>
+          </div>
         </div>
 
-        {/* ── Articulation Feedback ── */}
-        <div className="mb-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-accent-50 border border-accent-200 flex items-center justify-center text-accent-600 text-sm">
-              &#9998;
-            </span>
+        {/* Articulation Feedback */}
+        <div className="mb-4 p-5 rounded-xl bg-white border border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">
             Articulation Feedback
           </h2>
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {feedback.articulationFeedback.map((item, i) => (
-              <li
-                key={i}
-                className="flex gap-3 text-sm text-slate-600 leading-relaxed"
-              >
-                <span className="text-brand-500 mt-0.5 flex-shrink-0">
-                  &bull;
-                </span>
+              <li key={i} className="flex gap-2 text-xs text-slate-600 leading-relaxed">
+                <span className="text-brand-500 mt-0.5 flex-shrink-0">&bull;</span>
                 {item}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* ── Persona Reaction ── */}
-        <div className="mb-6 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 text-sm">
-              &#127917;
-            </span>
-            Persona Reaction
+        {/* Persona Reaction */}
+        <div className="mb-4 p-5 rounded-xl bg-white border border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900 mb-2">
+            How They Perceived You
           </h2>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             {feedback.personaReactionSummary}
           </p>
         </div>
 
-        {/* ── Alternative Suggestions ── */}
-        <div className="mb-12 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-700 text-sm">
-              &#128161;
-            </span>
+        {/* Alternative Suggestions */}
+        <div className="mb-8 p-5 rounded-xl bg-white border border-slate-200">
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">
             Better Ways to Say It
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {feedback.alternativeSuggestions.map((item, i) => (
-              <div key={i} className="space-y-2">
-                <div className="text-xs text-slate-400 uppercase tracking-wider">
-                  What you said
-                </div>
-                <div className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2 italic">
+              <div key={i}>
+                <div className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2 italic mb-1.5">
                   &ldquo;{item.original}&rdquo;
                 </div>
-                <div className="text-xs text-slate-400 uppercase tracking-wider mt-2">
-                  Try instead
-                </div>
-                <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mb-1.5">
                   &ldquo;{item.suggestion}&rdquo;
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-[10px] text-slate-500 leading-relaxed">
                   {item.rationale}
                 </p>
                 {i < feedback.alternativeSuggestions.length - 1 && (
@@ -261,17 +199,17 @@ export default function FeedbackPage() {
           </div>
         </div>
 
-        {/* ── Actions ── */}
-        <div className="flex gap-4 justify-center pb-12">
+        {/* Actions */}
+        <div className="flex gap-3 justify-center pb-8">
           <button
             onClick={handleNewSession}
-            className="px-8 py-4 rounded-xl text-white font-semibold bg-gradient-brand hover:bg-gradient-brand-hover transition-all text-lg shadow-lg shadow-brand-500/25"
+            className="px-6 py-2.5 rounded-lg text-sm text-white font-medium bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-md shadow-brand-500/20"
           >
-            Start New Session
+            New Session
           </button>
           <button
             onClick={() => router.push('/')}
-            className="px-8 py-4 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors text-lg"
+            className="px-6 py-2.5 rounded-lg text-sm border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors"
           >
             Home
           </button>

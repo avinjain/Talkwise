@@ -148,34 +148,29 @@ export default function LandingPage() {
   if (!session) {
     return (
       <div className="min-h-screen flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-          <Logo size={200} />
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Logo size={120} />
 
-          <h1 className="text-5xl md:text-6xl font-extrabold text-center mb-2 text-gradient">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-1 text-gradient">
             TalkWise
           </h1>
 
-          <p className="text-sm font-medium tracking-widest uppercase text-slate-400 mb-4">
+          <p className="text-xs font-medium tracking-widest uppercase text-slate-400 mb-6">
             Communication Training Platform
           </p>
 
-          <p className="text-base md:text-lg text-slate-500 text-center max-w-lg mb-8 leading-relaxed">
-            Simulate high-stakes conversations with AI personas. Practice
-            articulation, build confidence, and master your communication —
-            before the real thing.
+          <p className="text-sm text-slate-500 text-center max-w-md mb-8 leading-relaxed">
+            Simulate high-stakes conversations with AI personas. Build
+            confidence before the real thing.
           </p>
 
           <button
             onClick={() => router.push('/auth')}
-            className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-lg"
+            className="px-8 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25"
           >
             Get Started
           </button>
         </div>
-
-        <footer className="text-center py-4 text-slate-400 text-xs">
-          Built with OpenAI &middot; Talk wisely, talk confidently
-        </footer>
       </div>
     );
   }
@@ -200,100 +195,82 @@ export default function LandingPage() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center px-6 py-8">
-        <Logo size={100} />
-
-        <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-2 text-slate-900">
-          Welcome back, <span className="text-gradient">{userName}</span>
-        </h1>
-
-        <p className="text-base text-slate-500 text-center max-w-md mb-8">
-          Select a saved persona or create a new one to start practicing.
-        </p>
-
-        {/* Saved Personas */}
-        <div className="w-full max-w-3xl">
-          {/* Track tabs */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex bg-slate-100 rounded-lg p-1">
+      <div className="flex-1 px-6 py-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Greeting + Track tabs row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <h1 className="text-xl font-bold text-slate-900">
+              Hi, <span className="text-gradient">{userName}</span>
+            </h1>
+            <div className="flex items-center gap-3">
+              <div className="flex bg-slate-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setActiveTrack('professional')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    activeTrack === 'professional'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  💼 Professional
+                </button>
+                <button
+                  onClick={() => setActiveTrack('personal')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    activeTrack === 'personal'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  💬 Personal
+                </button>
+              </div>
               <button
-                onClick={() => setActiveTrack('professional')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeTrack === 'professional'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
+                onClick={handleCreateNew}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
               >
-                💼 Professional
-              </button>
-              <button
-                onClick={() => setActiveTrack('personal')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeTrack === 'personal'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                💬 Personal
+                + New
               </button>
             </div>
-            <button
-              onClick={handleCreateNew}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
-            >
-              + Create New
-            </button>
           </div>
 
+          {/* Persona grid */}
           {loading ? (
-            <div className="text-center py-12 text-slate-400">
-              Loading personas...
+            <div className="text-center py-12 text-slate-400 text-sm">
+              Loading...
             </div>
           ) : filteredPersonas.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
-              <div className="text-4xl mb-3">🎭</div>
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">
-                No personas yet
-              </h3>
-              <p className="text-sm text-slate-400 mb-5">
-                Create your first {activeTrack === 'personal' ? 'dating' : 'professional'} persona to start practicing.
+            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
+              <p className="text-sm text-slate-400 mb-4">
+                No {activeTrack === 'personal' ? 'dating' : 'professional'} personas yet.
               </p>
               <button
                 onClick={handleCreateNew}
-                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-md"
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
               >
-                Create Your First Persona
+                Create First Persona
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredPersonas.map((persona) => (
                 <div
                   key={persona.id}
-                  className="group relative p-5 rounded-2xl border border-slate-200 bg-white hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-500/10 transition-all duration-300 shadow-sm"
+                  onClick={() => handleSelectPersona(persona)}
+                  className="group relative p-4 rounded-xl border border-slate-200 bg-white hover:border-brand-400 hover:shadow-md transition-all cursor-pointer"
                 >
-                  {/* Action buttons (top right) */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Action buttons */}
+                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEditPersona(persona);
                       }}
-                      className="w-7 h-7 rounded-full bg-slate-100 hover:bg-brand-100 text-slate-400 hover:text-brand-600 flex items-center justify-center transition-colors"
-                      title="Edit persona"
+                      className="w-6 h-6 rounded-full bg-slate-100 hover:bg-brand-100 text-slate-400 hover:text-brand-600 flex items-center justify-center transition-colors"
+                      title="Edit"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                        />
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
                     <button
@@ -302,52 +279,32 @@ export default function LandingPage() {
                         handleDeletePersona(persona.id);
                       }}
                       disabled={deleting === persona.id}
-                      className="w-7 h-7 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors"
-                      title="Delete persona"
+                      className="w-6 h-6 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                      title="Delete"
                     >
-                      {deleting === persona.id ? (
-                        <span className="text-xs">...</span>
-                      ) : (
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      )}
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
 
-                  {/* Card content — click to start */}
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => handleSelectPersona(persona)}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{persona.track === 'personal' ? '💬' : '💼'}</span>
-                      <h3 className="text-base font-bold text-slate-900 truncate pr-16">
-                        {persona.name}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                        {persona.track === 'personal'
-                          ? `Interest: ${persona.interestLevel}/10`
-                          : `Difficulty: ${persona.difficultyLevel}/10`}
-                      </span>
-                    </div>
-
-                    <div className="text-brand-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
-                      Start conversation &rarr;
-                    </div>
+                  <h3 className="text-sm font-semibold text-slate-900 truncate pr-14 mb-1.5">
+                    {persona.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
+                      {persona.track === 'personal'
+                        ? `Interest ${persona.interestLevel}/10`
+                        : `Difficulty ${persona.difficultyLevel}/10`}
+                    </span>
+                    <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
+                      {persona.track === 'personal'
+                        ? `Flirty ${persona.flirtatiousness}/10`
+                        : `Direct ${persona.communicationStyle}/10`}
+                    </span>
+                  </div>
+                  <div className="text-xs text-brand-600 font-medium group-hover:translate-x-0.5 transition-transform">
+                    Start &rarr;
                   </div>
                 </div>
               ))}
@@ -355,10 +312,6 @@ export default function LandingPage() {
           )}
         </div>
       </div>
-
-      <footer className="text-center py-4 text-slate-400 text-xs">
-        Built with OpenAI &middot; Talk wisely, talk confidently
-      </footer>
     </div>
   );
 }

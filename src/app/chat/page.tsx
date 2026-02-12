@@ -141,23 +141,15 @@ export default function ChatPage() {
   return (
     <div className="h-screen flex flex-col bg-slate-50">
       {/* ── Header ── */}
-      <header className="flex-shrink-0 border-b border-slate-200 bg-white px-6 py-3 shadow-sm">
+      <header className="flex-shrink-0 border-b border-slate-200 bg-white px-6 py-2.5">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <Logo size={44} />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Logo size={32} />
             <div className="min-w-0">
               <h1 className="font-semibold text-slate-900 truncate text-sm">
-                {userName ? (
-                  <>
-                    <span className="text-slate-500">{userName}</span>
-                    <span className="text-slate-300 mx-1.5">&rarr;</span>
-                    <span className="text-gradient">{personaConfig.name}</span>
-                  </>
-                ) : (
-                  personaConfig.name
-                )}
+                <span className="text-gradient">{personaConfig.name}</span>
               </h1>
-              <p className="text-xs text-slate-400 truncate">
+              <p className="text-[11px] text-slate-400 truncate">
                 {personaConfig.userGoal}
               </p>
             </div>
@@ -165,9 +157,9 @@ export default function ChatPage() {
           <button
             onClick={handleEndConversation}
             disabled={messages.length < 2}
-            className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="ml-4 flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            End Conversation
+            End
           </button>
         </div>
       </header>
