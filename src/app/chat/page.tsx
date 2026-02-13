@@ -154,13 +154,6 @@ export default function ChatPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleEndConversation}
-            disabled={messages.length < 2}
-            className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            End Conversation
-          </button>
         </div>
       </header>
 
@@ -199,29 +192,40 @@ export default function ChatPage() {
       </div>
 
       {/* ── Input ── */}
-      <div className="flex-shrink-0 border-t border-slate-200 bg-white px-6 py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
-        <div className="max-w-3xl mx-auto flex gap-3">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              isInitializing
-                ? 'Waiting for persona...'
-                : 'Type your message... (Enter to send, Shift+Enter for new line)'
-            }
-            disabled={isStreaming}
-            rows={1}
-            className="flex-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none disabled:opacity-50"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isStreaming}
-            className="px-5 py-3 rounded-xl bg-gradient-brand text-white font-semibold hover:bg-gradient-brand-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
-          >
-            Send
-          </button>
+      <div className="flex-shrink-0 border-t border-slate-200 bg-white px-6 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+        <div className="max-w-3xl mx-auto space-y-2">
+          <div className="flex gap-3">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                isInitializing
+                  ? 'Waiting for persona...'
+                  : 'Type your message... (Enter to send, Shift+Enter for new line)'
+              }
+              disabled={isStreaming}
+              rows={1}
+              className="flex-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none disabled:opacity-50"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isStreaming}
+              className="px-5 py-3 rounded-xl bg-gradient-brand text-white font-semibold hover:bg-gradient-brand-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
+            >
+              Send
+            </button>
+          </div>
+          <div className="flex justify-center">
+            <button
+              onClick={handleEndConversation}
+              disabled={messages.length < 2}
+              className="px-5 py-2 rounded-lg text-xs font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              End Conversation & Get Feedback
+            </button>
+          </div>
         </div>
       </div>
     </div>

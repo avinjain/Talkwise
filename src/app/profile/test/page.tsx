@@ -5,8 +5,46 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { QUESTIONS, DIMENSIONS, calculateScores } from '@/lib/personality-test';
 
+interface UserContext {
+  role: string;
+  experience: string;
+  goal: string;
+  focus: string;
+}
+
+const EXPERIENCE_OPTIONS = [
+  'Student / Early Career',
+  '1-3 years',
+  '3-7 years',
+  '7-15 years',
+  '15+ years',
+];
+
+const GOAL_OPTIONS = [
+  'Speaking up confidently in meetings',
+  'Handling difficult conversations',
+  'Networking and building connections',
+  'Leading and motivating others',
+  'Dating and romantic conversations',
+  'Resolving conflicts without stress',
+  'Negotiating salary or deals',
+  'Making a strong first impression',
+  'Other',
+];
+
 export default function PersonalityTestPage() {
   const router = useRouter();
+
+  // Pre-test "About You" state
+  const [phase, setPhase] = useState<'about' | 'test'>('about');
+  const [userContext, setUserContext] = useState<UserContext>({
+    role: '',
+    experience: '',
+    goal: '',
+    focus: 'professional',
+  });
+
+  // Test state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -17,7 +55,6 @@ export default function PersonalityTestPage() {
   const progress = ((currentIndex) / total) * 100;
   const answered = answers[question?.id] !== undefined;
 
-  // Find which dimension this question belongs to
   const dimInfo = DIMENSIONS.find((d) => d.key === question?.dimension);
 
   const handleSelect = (score: number) => {
@@ -36,16 +73,22 @@ export default function PersonalityTestPage() {
     }
   };
 
+  const canStartTest = userContext.role.trim() !== '' && userContext.experience !== '' && userContext.goal !== '';
+
+  const handleStartTest = () => {
+    if (canStartTest) {
+      setPhase('test');
+    }
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
 
     try {
-      // Verify all questions answered
       const unanswered = QUESTIONS.filter((q) => answers[q.id] === undefined);
       if (unanswered.length > 0) {
         setError(`Please answer all questions. ${unanswered.length} remaining.`);
-        // Jump to first unanswered
         const firstIdx = QUESTIONS.findIndex((q) => answers[q.id] === undefined);
         setCurrentIndex(firstIdx);
         setSubmitting(false);
@@ -55,7 +98,7 @@ export default function PersonalityTestPage() {
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers, userContext }),
       });
 
       if (!res.ok) {
@@ -63,8 +106,8 @@ export default function PersonalityTestPage() {
         throw new Error(err.error || 'Failed to save results');
       }
 
-      // Calculate scores for display
-      const scores = calculateScores(answers);
+      const data = await res.json();
+      const scores = data.scores || calculateScores(answers);
       sessionStorage.setItem('profileScores', JSON.stringify(scores));
 
       router.push('/profile');
@@ -78,13 +121,172 @@ export default function PersonalityTestPage() {
   const isLast = currentIndex === total - 1;
   const allAnswered = QUESTIONS.every((q) => answers[q.id] !== undefined);
 
+  // ─── About You Phase ───
+  if (phase === 'about') {
+    return (
+      <div className="min-h-screen py-8 px-6">
+        <div className="max-w-xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => router.push('/profile')}
+              className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
+            >
+              &larr; Back
+            </button>
+            <Logo size={48} />
+          </div>
+
+          {/* Hero */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/20">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+              Tell us about yourself
+            </h1>
+            <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
+              This helps us personalize your feedback and give you advice that actually
+              applies to your life and goals.
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
+            {/* Role / Occupation */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                What do you do?
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Software Engineer, Student, Sales Manager..."
+                value={userContext.role}
+                onChange={(e) => setUserContext({ ...userContext, role: e.target.value })}
+                className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 text-slate-900 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Experience Level */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                Experience level
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {EXPERIENCE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setUserContext({ ...userContext, experience: opt })}
+                    className={`px-3 py-2 text-xs rounded-lg border-2 font-medium transition-all ${
+                      userContext.experience === opt
+                        ? 'border-brand-500 bg-brand-50 text-brand-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* What they want to improve */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                What do you most want to improve?
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {GOAL_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setUserContext({ ...userContext, goal: opt })}
+                    className={`px-3 py-2 text-xs rounded-lg border-2 font-medium text-left transition-all ${
+                      userContext.goal === opt
+                        ? 'border-brand-500 bg-brand-50 text-brand-700'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Focus area */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                Primary focus
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setUserContext({ ...userContext, focus: 'professional' })}
+                  className={`px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                    userContext.focus === 'professional'
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">💼</span>
+                    <span className={`text-sm font-semibold ${userContext.focus === 'professional' ? 'text-brand-700' : 'text-slate-700'}`}>
+                      Professional
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Workplace, leadership, meetings, negotiations
+                  </p>
+                </button>
+                <button
+                  onClick={() => setUserContext({ ...userContext, focus: 'personal' })}
+                  className={`px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                    userContext.focus === 'personal'
+                      ? 'border-pink-500 bg-pink-50'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">💬</span>
+                    <span className={`text-sm font-semibold ${userContext.focus === 'personal' ? 'text-pink-700' : 'text-slate-700'}`}>
+                      Personal
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Dating, friendships, social situations
+                  </p>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Start button */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleStartTest}
+              disabled={!canStartTest}
+              className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand-500/25 text-lg"
+            >
+              Start the Test
+            </button>
+            {!canStartTest && (
+              <p className="text-xs text-slate-400 mt-2">
+                Fill in all fields above to continue
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Test Phase ───
   return (
     <div className="min-h-screen py-8 px-6">
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => router.push('/profile')}
+            onClick={() => setPhase('about')}
             className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
           >
             &larr; Back
@@ -200,7 +402,7 @@ export default function PersonalityTestPage() {
                 disabled={!allAnswered || submitting}
                 className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
               >
-                {submitting ? 'Saving...' : 'See My Results'}
+                {submitting ? 'Analyzing...' : 'See My Results'}
               </button>
             )}
           </div>

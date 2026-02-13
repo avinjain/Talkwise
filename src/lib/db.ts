@@ -85,8 +85,21 @@ function initTables(db: Database.Database) {
       emotional_intelligence REAL DEFAULT 0,
       social_energy REAL DEFAULT 0,
       raw_answers TEXT DEFAULT '{}',
+      user_context TEXT DEFAULT '{}',
+      ai_feedback TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS saved_conversations (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      persona_config TEXT NOT NULL,
+      messages TEXT NOT NULL DEFAULT '[]',
+      title TEXT DEFAULT '',
+      notes TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
@@ -95,6 +108,7 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_user ON saved_personas(user_id);
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
+    CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
   `);
 
   // ── Migration: add new columns to existing saved_personas table ──
@@ -129,6 +143,33 @@ function initTables(db: Database.Database) {
   } catch (err) {
     console.error('Migration check failed:', err);
   }
+
+  // ── Migration: add new columns to existing profile_results table ──
+  try {
+    const prCols = db.pragma('table_info(profile_results)') as { name: string }[];
+    const prColNames = new Set(prCols.map((c) => c.name));
+
+    const prMigrations: [string, string][] = [
+      ['user_context', "ALTER TABLE profile_results ADD COLUMN user_context TEXT DEFAULT '{}'"],
+      ['ai_feedback', "ALTER TABLE profile_results ADD COLUMN ai_feedback TEXT DEFAULT ''"],
+    ];
+
+    for (const [col, sql] of prMigrations) {
+      if (!prColNames.has(col)) {
+        try {
+          db.exec(sql);
+          console.log(`Migration: added column '${col}' to profile_results`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : '';
+          if (!msg.includes('duplicate column')) {
+            console.error(`Migration failed for column '${col}':`, err);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Profile migration check failed:', err);
+  }
 }
 
 // ── User operations ──
@@ -145,6 +186,11 @@ export function getUserByEmail(email: string) {
   return db.prepare('SELECT * FROM users WHERE email = ?').get(email) as
     | { id: string; email: string; name: string; password_hash: string; created_at: string }
     | undefined;
+}
+
+export function updateUserPassword(email: string, newPasswordHash: string) {
+  const db = getDb();
+  db.prepare('UPDATE users SET password_hash = ? WHERE email = ?').run(newPasswordHash, email);
 }
 
 export function getUserById(id: string) {
@@ -329,6 +375,8 @@ export interface ProfileResultRow {
   emotional_intelligence: number;
   social_energy: number;
   raw_answers: string;
+  user_context: string;
+  ai_feedback: string;
   created_at: string;
   updated_at: string;
 }
@@ -350,7 +398,10 @@ export function saveProfileResult(
     emotionalIntelligence: number;
     socialEnergy: number;
   },
-  rawAnswers: Record<number, number>
+  rawAnswers: Record<number, number>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  userContext: Record<string, any>,
+  aiFeedback: string
 ) {
   const db = getDb();
   const existing = getProfileResult(userId);
@@ -360,23 +411,23 @@ export function saveProfileResult(
       `UPDATE profile_results SET
         assertiveness = ?, empathy = ?, confidence = ?,
         adaptability = ?, emotional_intelligence = ?, social_energy = ?,
-        raw_answers = ?, updated_at = datetime('now')
+        raw_answers = ?, user_context = ?, ai_feedback = ?, updated_at = datetime('now')
        WHERE user_id = ?`
     ).run(
       scores.assertiveness, scores.empathy, scores.confidence,
       scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
-      JSON.stringify(rawAnswers), userId
+      JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback, userId
     );
   } else {
     const id = crypto.randomUUID();
     db.prepare(
-      `INSERT INTO profile_results (id, user_id, assertiveness, empathy, confidence, adaptability, emotional_intelligence, social_energy, raw_answers)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO profile_results (id, user_id, assertiveness, empathy, confidence, adaptability, emotional_intelligence, social_energy, raw_answers, user_context, ai_feedback)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id, userId,
       scores.assertiveness, scores.empathy, scores.confidence,
       scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
-      JSON.stringify(rawAnswers)
+      JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback
     );
   }
 }
