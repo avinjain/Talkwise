@@ -83,7 +83,7 @@ export default function StartPage() {
             onClick={() => setShowTraits(!showTraits)}
             className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
           >
-            {showTraits ? 'Hide' : 'Show'} personality details
+            {showTraits ? 'Hide' : 'Show'} their traits
           </button>
 
           {showTraits && (
@@ -169,7 +169,7 @@ export default function StartPage() {
           disabled={!userGoal}
           className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
         >
-          Start Conversation
+          Start practicing
         </button>
       </div>
     </div>

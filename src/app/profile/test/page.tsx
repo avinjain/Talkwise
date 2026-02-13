@@ -231,7 +231,7 @@ export default function PersonalityTestPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">💼</span>
                     <span className={`text-sm font-semibold ${userContext.focus === 'professional' ? 'text-brand-700' : 'text-slate-700'}`}>
-                      Professional
+                      Work
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">
@@ -249,7 +249,7 @@ export default function PersonalityTestPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg">💬</span>
                     <span className={`text-sm font-semibold ${userContext.focus === 'personal' ? 'text-pink-700' : 'text-slate-700'}`}>
-                      Personal
+                      Life
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">

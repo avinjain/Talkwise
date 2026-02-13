@@ -155,7 +155,7 @@ export default function ProfilePage() {
               <span className={`px-2 py-0.5 rounded ${
                 userContext.focus === 'personal' ? 'bg-pink-50 text-pink-600' : 'bg-brand-50 text-brand-600'
               }`}>
-                {userContext.focus === 'personal' ? 'Personal Focus' : 'Professional Focus'}
+                {userContext.focus === 'personal' ? 'Life focus' : 'Work focus'}
               </span>
             )}
             {updatedAt && (

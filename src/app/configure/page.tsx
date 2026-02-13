@@ -137,15 +137,15 @@ export default function ConfigurePage() {
 
         <h1 className="text-3xl font-bold text-slate-900 mb-2">
           {editPersonaId ? (
-            <>Edit <span className="text-gradient">{name || 'Persona'}</span></>
+            <>Edit <span className="text-gradient">{name || 'character'}</span></>
           ) : (
-            <>Build a persona</>
+            <>Create a character</>
           )}
         </h1>
         <p className="text-sm text-slate-400 mb-6">
           {track === 'personal'
-            ? 'Name them and shape their dating personality.'
-            : 'Name them and shape their professional personality.'}
+            ? 'Give them a name and set how they act in social situations.'
+            : 'Give them a name and set how they behave at work.'}
         </p>
 
         {/* Track selector (new personas only) */}
@@ -166,10 +166,10 @@ export default function ConfigurePage() {
               </div>
               <div>
                 <span className={`text-sm font-semibold ${track === 'professional' ? 'text-slate-900' : 'text-slate-600'}`}>
-                  Professional
+                  Work
                 </span>
                 <p className={`text-[10px] ${track === 'professional' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Workplace
+                  Career &amp; workplace
                 </p>
               </div>
               {track === 'professional' && (
@@ -195,10 +195,10 @@ export default function ConfigurePage() {
               </div>
               <div>
                 <span className={`text-sm font-semibold ${track === 'personal' ? 'text-slate-900' : 'text-slate-600'}`}>
-                  Personal
+                  Life
                 </span>
                 <p className={`text-[10px] ${track === 'personal' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Dating & social
+                  Dating &amp; social
                 </p>
               </div>
               {track === 'personal' && (
@@ -230,7 +230,7 @@ export default function ConfigurePage() {
         {/* Personality Sliders */}
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-slate-700 mb-4">
-            Personality
+            How do they behave?
           </h2>
 
           <div className="space-y-5">
