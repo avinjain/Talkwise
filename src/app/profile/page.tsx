@@ -186,8 +186,8 @@ export default function ProfilePage() {
         )}
 
         {/* Radar Chart */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <RadarChart scores={scores} size={380} />
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm overflow-visible">
+          <RadarChart scores={scores} size={450} />
         </div>
 
         {/* Top Strengths */}

@@ -7,10 +7,25 @@ interface RadarChartProps {
   size?: number;
 }
 
-export default function RadarChart({ scores, size = 380 }: RadarChartProps) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size * 0.34;
+// Short labels that fit without clipping
+const SHORT_LABELS: Record<string, string> = {
+  conscientiousness: 'Conscientious',
+  emotionalStability: 'Emotional Stability',
+  agreeableness: 'Agreeableness',
+  emotionalIntelligence: 'Emotional Intel.',
+  integrity: 'Integrity',
+  assertiveness: 'Assertiveness',
+  conflictStyle: 'Conflict Res.',
+  stressResponse: 'Stress Response',
+  motivationOrientation: 'Motivation',
+};
+
+export default function RadarChart({ scores, size = 450 }: RadarChartProps) {
+  const padding = 70; // extra space around the chart for labels
+  const svgSize = size;
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
+  const radius = (svgSize - padding * 2) / 2;
   const levels = 5;
   const dims = DIMENSIONS;
   const angleStep = (2 * Math.PI) / dims.length;
@@ -31,8 +46,13 @@ export default function RadarChart({ scores, size = 380 }: RadarChartProps) {
   const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
 
   return (
-    <div className="flex justify-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div className="flex justify-center w-full">
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${svgSize} ${svgSize}`}
+        className="max-w-[450px]"
+      >
         {/* Concentric rings */}
         {Array.from({ length: levels }, (_, i) => {
           const r = (radius / levels) * (i + 1);
@@ -91,34 +111,41 @@ export default function RadarChart({ scores, size = 380 }: RadarChartProps) {
 
         {/* Labels */}
         {dims.map((dim, i) => {
-          const labelDist = radius + 32;
+          const labelDist = radius + 24;
           const angle = angleStep * i - Math.PI / 2;
-          const lx = cx + labelDist * Math.cos(angle);
-          const ly = cy + labelDist * Math.sin(angle);
+          const cosA = Math.cos(angle);
+          const sinA = Math.sin(angle);
+          const lx = cx + labelDist * cosA;
+          const ly = cy + labelDist * sinA;
           const value = (scores as unknown as Record<string, number>)[dim.key] ?? 0;
+          const label = SHORT_LABELS[dim.key] || dim.label;
 
-          // Determine text-anchor based on position
+          // Smart anchor: left side = end, right side = start, top/bottom = middle
           let anchor: 'start' | 'middle' | 'end' = 'middle';
-          if (Math.cos(angle) > 0.3) anchor = 'start';
-          else if (Math.cos(angle) < -0.3) anchor = 'end';
+          if (cosA > 0.25) anchor = 'start';
+          else if (cosA < -0.25) anchor = 'end';
+
+          // Nudge labels outward a bit more for left/right labels
+          const nudgeX = cosA > 0.25 ? 4 : cosA < -0.25 ? -4 : 0;
+          const nudgeY = sinA < -0.5 ? -6 : sinA > 0.5 ? 6 : 0;
 
           return (
             <g key={`label-${i}`}>
               <text
-                x={lx}
-                y={ly - 5}
+                x={lx + nudgeX}
+                y={ly + nudgeY - 5}
                 textAnchor={anchor}
                 dominantBaseline="middle"
-                className="text-[9px] font-semibold fill-slate-600"
+                className="text-[10px] font-semibold fill-slate-700"
               >
-                {dim.label}
+                {label}
               </text>
               <text
-                x={lx}
-                y={ly + 8}
+                x={lx + nudgeX}
+                y={ly + nudgeY + 9}
                 textAnchor={anchor}
                 dominantBaseline="middle"
-                className="text-[10px] font-bold"
+                className="text-[11px] font-bold"
                 fill={dim.color}
               >
                 {value.toFixed(1)}
