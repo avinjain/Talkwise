@@ -175,13 +175,13 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-sm font-medium tracking-widest uppercase text-slate-400 mb-4">
-            Communication Training Platform
+            Your AI Communication Coach
           </p>
 
           <p className="text-base md:text-lg text-slate-500 text-center max-w-lg mb-8 leading-relaxed">
-            Simulate high-stakes conversations with AI personas. Practice
-            articulation, build confidence, and master your communication —
-            before the real thing.
+            Practice tough conversations before they happen — job interviews,
+            salary talks, difficult dates, and more. Get real-time feedback
+            to help you communicate with confidence.
           </p>
 
           <button
@@ -288,55 +288,55 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
                   </svg>
                 </span>
-                Here&apos;s what you can do on TalkWise
+                How it works
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-start gap-2.5">
                   <span className="text-base mt-0.5">🎭</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Practice Real Conversations</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Chat with AI personas — bosses, clients, dates, and more</p>
+                    <p className="text-sm font-semibold text-slate-800">Have a practice conversation</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">Talk to an AI that acts like a real person — your boss, a date, a difficult client</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
                   <span className="text-base mt-0.5">🎯</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Two Tracks</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Professional (negotiations, reviews) &amp; Personal (dating, social)</p>
+                    <p className="text-sm font-semibold text-slate-800">Pick your scenario</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">Salary negotiation, first date, team conflict — choose what you want to get better at</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">💾</span>
+                  <span className="text-base mt-0.5">💬</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Save Your Personas</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Build reusable conversation partners with custom personality traits</p>
+                    <p className="text-sm font-semibold text-slate-800">Get honest feedback</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">After each conversation, AI tells you what you did well and what to work on</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">📊</span>
+                  <span className="text-base mt-0.5">👤</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Get AI Feedback</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">After each chat, receive personalized coaching on what to improve</p>
+                    <p className="text-sm font-semibold text-slate-800">Save people you talk to</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">Create characters with specific personalities and practice with them again later</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
                   <span className="text-base mt-0.5">🧠</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Know Your Style</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Take a 10-min personality test to discover your strengths</p>
+                    <p className="text-sm font-semibold text-slate-800">Discover your personality</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">Quick test that shows your communication strengths and blind spots</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">🚀</span>
+                  <span className="text-base mt-0.5">📈</span>
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">Personalized Growth Plan</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">AI advice tailored to your role, goals, and personality profile</p>
+                    <p className="text-sm font-semibold text-slate-800">Grow over time</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">Get advice that fits your actual role, goals, and personality</p>
                   </div>
                 </div>
               </div>
@@ -366,19 +366,19 @@ export default function LandingPage() {
                   <h3 className={`text-sm font-bold ${
                     activeTrack === 'professional' ? 'text-slate-900' : 'text-slate-600'
                   }`}>
-                    Professional
+                    Work
                   </h3>
                   <p className={`text-xs ${
                     activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
                   }`}>
-                    Workplace conversations
+                    Career &amp; workplace
                   </p>
                 </div>
               </div>
               <p className={`text-xs leading-relaxed ${
                 activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
               }`}>
-                Negotiations, reviews, feedback, conflict resolution
+                Salary talks, tough feedback, interviews, team conflicts
               </p>
               {activeTrack === 'professional' && (
                 <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-brand flex items-center justify-center">
@@ -410,19 +410,19 @@ export default function LandingPage() {
                   <h3 className={`text-sm font-bold ${
                     activeTrack === 'personal' ? 'text-slate-900' : 'text-slate-600'
                   }`}>
-                    Personal
+                    Life
                   </h3>
                   <p className={`text-xs ${
                     activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
                   }`}>
-                    Dating & social
+                    Dating &amp; social
                   </p>
                 </div>
               </div>
               <p className={`text-xs leading-relaxed ${
                 activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
               }`}>
-                First messages, banter, getting to know people
+                First dates, awkward chats, making new friends
               </p>
               {activeTrack === 'personal' && (
                 <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
@@ -437,13 +437,13 @@ export default function LandingPage() {
           {/* ── Personas Section ── */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-700">
-              {activeTrack === 'personal' ? 'Your Dating Personas' : 'Your Professional Personas'}
+              {activeTrack === 'personal' ? 'People you practice with' : 'People you practice with'}
             </h2>
             <button
               onClick={handleCreateNew}
               className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
             >
-              + Create New
+              + New character
             </button>
           </div>
 
@@ -458,16 +458,16 @@ export default function LandingPage() {
                 {activeTrack === 'personal' ? '💬' : '💼'}
               </div>
               <h3 className="text-lg font-semibold text-slate-700 mb-1">
-                No personas yet
+                No one here yet
               </h3>
               <p className="text-sm text-slate-400 mb-5">
-                Create your first {activeTrack === 'personal' ? 'dating' : 'professional'} persona to start practicing.
+                Create a character to practice {activeTrack === 'personal' ? 'social conversations' : 'work conversations'} with.
               </p>
               <button
                 onClick={handleCreateNew}
                 className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-md"
               >
-                Create Your First Persona
+                Create your first character
               </button>
             </div>
           ) : (
@@ -566,7 +566,7 @@ export default function LandingPage() {
                       <span className={`text-xs font-semibold group-hover:translate-x-1 transition-transform inline-block ${
                         isPersonal ? 'text-pink-500' : 'text-brand-600'
                       }`}>
-                        Start conversation &rarr;
+                        Start practicing &rarr;
                       </span>
                     </div>
                   </div>
@@ -578,7 +578,7 @@ export default function LandingPage() {
       </div>
 
       <footer className="text-center py-4 text-slate-400 text-xs">
-        Built with OpenAI &middot; Talk wisely, talk confidently
+        Practice makes confident &middot; Powered by AI
       </footer>
     </div>
   );
