@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+import AppHeader from '@/components/AppHeader';
 import { PersonaConfig, Track, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
@@ -61,18 +61,10 @@ export default function StartPage() {
   const personaAttrs = getPersonaAttributes(track);
 
   return (
-    <div className="min-h-screen py-8 px-6">
+    <div className="min-h-screen flex flex-col">
+      <AppHeader backHref="/" backLabel="Back" />
+      <div className="flex-1 py-8 px-6">
       <div className="max-w-xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => router.push('/')}
-            className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-          >
-            &larr; Back
-          </button>
-          <Logo size={48} />
-        </div>
 
         {/* Persona name + trait toggle */}
         <div className="mb-6">
@@ -171,6 +163,7 @@ export default function StartPage() {
         >
           Start practicing
         </button>
+      </div>
       </div>
     </div>
   );

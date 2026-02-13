@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+import AppHeader from '@/components/AppHeader';
 import { QUESTIONS, DIMENSIONS, LIKERT_OPTIONS, calculateScores } from '@/lib/personality-test';
 
 interface UserContext {
@@ -125,18 +125,10 @@ export default function PersonalityTestPage() {
   // ─── About You Phase ───
   if (phase === 'about') {
     return (
-      <div className="min-h-screen py-8 px-6">
+      <div className="min-h-screen flex flex-col">
+        <AppHeader backHref="/profile" backLabel="Back" />
+        <div className="flex-1 py-8 px-6">
         <div className="max-w-xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => router.push('/profile')}
-              className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-            >
-              &larr; Back
-            </button>
-            <Logo size={48} />
-          </div>
 
           {/* Hero */}
           <div className="text-center mb-8">
@@ -274,23 +266,30 @@ export default function PersonalityTestPage() {
             </p>
           </div>
         </div>
+        </div>
       </div>
     );
   }
 
   // ─── Test Phase ───
+  const handleBackInTest = () => {
+    if (currentIndex === 0) setPhase('about');
+    else handlePrev();
+  };
+
   return (
-    <div className="min-h-screen py-8 px-6">
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <div className="flex-1 py-8 px-6">
       <div className="max-w-xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Navigation */}
+        <div className="flex items-center mb-6">
           <button
-            onClick={() => currentIndex === 0 ? setPhase('about') : handlePrev()}
+            onClick={handleBackInTest}
             className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
           >
             &larr; {currentIndex === 0 ? 'Edit Profile' : 'Previous'}
           </button>
-          <Logo size={48} />
         </div>
 
         {/* Progress bar */}
@@ -430,6 +429,7 @@ export default function PersonalityTestPage() {
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );

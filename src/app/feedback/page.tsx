@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
+import AppHeader from '@/components/AppHeader';
 import { PersonaConfig, ChatMessage, FeedbackReport } from '@/lib/types';
 
 export default function FeedbackPage() {
@@ -117,7 +118,9 @@ export default function FeedbackPage() {
   const circumference = 2 * Math.PI * 54;
 
   return (
-    <div className="min-h-screen py-8 px-6">
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <div className="flex-1 py-8 px-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -223,6 +226,7 @@ export default function FeedbackPage() {
             Home
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

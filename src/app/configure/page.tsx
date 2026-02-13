@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Logo from '@/components/Logo';
+import AppHeader from '@/components/AppHeader';
 import { Track, getPersonaAttributes } from '@/lib/types';
 
 const DEFAULT_PROFESSIONAL_TRAITS = {
@@ -122,18 +122,10 @@ export default function ConfigurePage() {
   const attributes = getPersonaAttributes(track);
 
   return (
-    <div className="min-h-screen py-8 px-6">
+    <div className="min-h-screen flex flex-col">
+      <AppHeader backHref="/" backLabel="Back" />
+      <div className="flex-1 py-8 px-6">
       <div className="max-w-xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => router.push('/')}
-            className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-          >
-            &larr; Back
-          </button>
-          <Logo size={48} />
-        </div>
 
         <h1 className="text-3xl font-bold text-slate-900 mb-2">
           {editPersonaId ? (
@@ -289,6 +281,7 @@ export default function ConfigurePage() {
             ? 'Save changes'
             : 'Save character'}
         </button>
+      </div>
       </div>
     </div>
   );

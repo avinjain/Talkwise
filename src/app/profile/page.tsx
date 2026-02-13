@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
+import AppHeader from '@/components/AppHeader';
 import RadarChart from '@/components/RadarChart';
 import { DIMENSIONS, ProfileResult, getBand } from '@/lib/personality-test';
 
@@ -80,18 +81,10 @@ export default function ProfilePage() {
   // No test taken yet
   if (!hasResult || !scores) {
     return (
-      <div className="min-h-screen py-8 px-6">
+      <div className="min-h-screen flex flex-col">
+        <AppHeader backHref="/" backLabel="Home" />
+        <div className="flex-1 py-8 px-6">
         <div className="max-w-xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => router.push('/')}
-              className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-            >
-              &larr; Home
-            </button>
-            <Logo size={48} />
-          </div>
-
           <div className="text-center py-16">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-500/20">
               <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -118,6 +111,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -130,18 +124,10 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="min-h-screen py-8 px-6">
+    <div className="min-h-screen flex flex-col">
+      <AppHeader backHref="/" backLabel="Home" />
+      <div className="flex-1 py-8 px-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => router.push('/')}
-            className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-          >
-            &larr; Home
-          </button>
-          <Logo size={48} />
-        </div>
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
@@ -360,6 +346,7 @@ export default function ProfilePage() {
             Back to Home
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
