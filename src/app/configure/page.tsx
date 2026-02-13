@@ -103,7 +103,7 @@ export default function ConfigurePage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: `Server error (${res.status})` }));
-        setSaveError(err.error || `Failed to save persona (${res.status})`);
+        setSaveError(err.error || `Failed to save (${res.status})`);
         setSaving(false);
         return;
       }
@@ -286,8 +286,8 @@ export default function ConfigurePage() {
           {saving
             ? 'Saving...'
             : editPersonaId
-            ? 'Save Changes'
-            : 'Save Persona'}
+            ? 'Save changes'
+            : 'Save character'}
         </button>
       </div>
     </div>
