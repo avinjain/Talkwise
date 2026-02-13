@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
-import Onboarding from '@/components/Onboarding';
 import { SavedPersona, Track, getPersonaAttributes } from '@/lib/types';
 
 export default function LandingPage() {
@@ -15,32 +14,6 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [activeTrack, setActiveTrack] = useState<Track>('professional');
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-
-  // Check onboarding status from server
-  useEffect(() => {
-    if (session) {
-      fetch('/api/onboarding')
-        .then((res) => res.json())
-        .then((data) => {
-          if (!data.completed) {
-            setShowOnboarding(true);
-          }
-          setOnboardingChecked(true);
-        })
-        .catch(() => setOnboardingChecked(true));
-    }
-  }, [session]);
-
-  const handleOnboardingComplete = async () => {
-    setShowOnboarding(false);
-    try {
-      await fetch('/api/onboarding', { method: 'POST' });
-    } catch {
-      // silently fail — user can still use the app
-    }
-  };
 
   const fetchPersonas = useCallback(async () => {
     try {
@@ -65,7 +38,6 @@ export default function LandingPage() {
     }
   }, [session, fetchPersonas]);
 
-  // Re-fetch personas when the page becomes visible (e.g., navigating back)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && session) {
@@ -73,13 +45,10 @@ export default function LandingPage() {
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
-
-    // Also re-fetch on focus (covers back-navigation within the app)
     const handleFocus = () => {
       if (session) fetchPersonas();
     };
     window.addEventListener('focus', handleFocus);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleFocus);
@@ -105,7 +74,6 @@ export default function LandingPage() {
     (p) => (p.track || 'professional') === activeTrack
   );
 
-  // Click persona → go to /start to pick a scenario
   const handleSelectPersona = (persona: SavedPersona) => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.setItem(
@@ -130,7 +98,6 @@ export default function LandingPage() {
     router.push('/start');
   };
 
-  // Edit persona → go to /configure to change personality
   const handleEditPersona = (persona: SavedPersona) => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.setItem('editPersonaId', persona.id);
@@ -156,7 +123,6 @@ export default function LandingPage() {
     router.push('/configure');
   };
 
-  // Create new → go to /configure with the active track
   const handleCreateNew = () => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.removeItem('editPersonaId');
@@ -172,68 +138,166 @@ export default function LandingPage() {
     );
   }
 
-  // ── Not logged in ──
+  // ════════════════════════════════════════════
+  // PUBLIC LANDING PAGE (not logged in)
+  // ════════════════════════════════════════════
   if (!session) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <Logo size={200} />
-
-          <h1 className="text-5xl md:text-6xl font-extrabold text-center mb-2 text-gradient">
+      <div className="min-h-screen flex flex-col bg-white">
+        {/* ── Hero ── */}
+        <div className="flex-shrink-0 px-6 pt-12 pb-10 text-center">
+          <Logo size={100} />
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gradient mt-2 mb-2">
             TalkWise
           </h1>
-
           <p className="text-sm font-medium tracking-widest uppercase text-slate-400 mb-4">
             Your AI Communication Coach
           </p>
-
-          <p className="text-base md:text-lg text-slate-500 text-center max-w-lg mb-8 leading-relaxed">
+          <p className="text-base md:text-lg text-slate-500 max-w-xl mx-auto leading-relaxed mb-8">
             Practice tough conversations before they happen — job interviews,
             salary talks, difficult dates, and more. Get real-time feedback
-            to help you communicate with confidence.
+            to communicate with confidence.
           </p>
 
+          {/* Primary CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+            <button
+              onClick={() => router.push('/auth?callbackUrl=/configure')}
+              className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-base w-full sm:w-auto"
+            >
+              Create a character & start
+            </button>
+            <button
+              onClick={() => router.push('/auth?callbackUrl=/profile/test')}
+              className="px-8 py-3.5 rounded-xl font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-all text-base w-full sm:w-auto"
+            >
+              Take the personality test
+            </button>
+          </div>
+          <p className="text-xs text-slate-400">Free to use &middot; Sign in to get started</p>
+        </div>
+
+        {/* ── How It Works ── */}
+        <div className="bg-slate-50 border-t border-slate-100 px-6 py-12">
+          <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
+            How it works
+          </h2>
+
+          <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Step 1 */}
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
+                <span className="text-2xl">🎭</span>
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Create a character</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Build someone to practice with — a tough boss, a first date, a client. Set their personality with sliders.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
+                <span className="text-2xl">💬</span>
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Have the conversation</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Pick a scenario — salary negotiation, conflict, small talk — and chat naturally with the AI character.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Get feedback</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                AI reviews your conversation and tells you what you did well, what to improve, and gives a confidence score.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Features ── */}
+        <div className="px-6 py-12">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
+              What you can do
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-xl mt-0.5">💼</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Work conversations</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Salary talks, tough feedback, interviews, team conflicts</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-xl mt-0.5">💬</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Life conversations</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">First dates, awkward chats, making new friends</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-xl mt-0.5">🧠</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Personality test</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Discover your communication strengths and blind spots with a quick 8-minute test</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-xl mt-0.5">📈</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">AI growth advice</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Get personalized recommendations based on your role, goals, and personality</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bottom CTA ── */}
+        <div className="bg-gradient-to-br from-brand-50 via-white to-accent-50 border-t border-brand-100 px-6 py-10 text-center">
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Ready to practice?</h2>
+          <p className="text-sm text-slate-500 mb-5">Sign in and start your first conversation in under a minute.</p>
           <button
             onClick={() => router.push('/auth')}
-            className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-lg"
+            className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-base"
           >
             Get Started
           </button>
         </div>
+
+        <footer className="text-center py-4 text-slate-400 text-xs">
+          Practice makes confident &middot; Powered by AI
+        </footer>
       </div>
     );
   }
 
-  // ── Logged in ──
+  // ════════════════════════════════════════════
+  // LOGGED-IN DASHBOARD
+  // ════════════════════════════════════════════
   const userName = session.user?.name || 'there';
-
-  // Show onboarding for first-time users
-  if (showOnboarding) {
-    return (
-      <Onboarding
-        userName={userName}
-        onComplete={handleOnboardingComplete}
-        onGoToTest={() => { handleOnboardingComplete(); router.push('/profile/test'); }}
-        onCreateCharacter={() => { handleOnboardingComplete(); handleCreateNew(); }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
 
-      {/* Content */}
       <div className="flex-1 px-6 py-8">
         <div className="max-w-3xl mx-auto">
-          {/* Greeting */}
           <h1 className="text-2xl font-bold text-slate-900 mb-6">
             Welcome back, <span className="text-gradient">{userName}</span>
           </h1>
 
           {/* ── Track Selector Cards ── */}
           <div className="grid grid-cols-2 gap-4 mb-8">
-            {/* Professional */}
             <button
               onClick={() => setActiveTrack('professional')}
               className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
@@ -248,19 +312,15 @@ export default function LandingPage() {
                     ? 'bg-gradient-to-br from-brand-500 to-accent-500 shadow-sm'
                     : 'bg-slate-100'
                 }`}>
-                  <span>{activeTrack === 'professional' ? '💼' : '💼'}</span>
+                  <span>💼</span>
                 </div>
                 <div>
                   <h3 className={`text-sm font-bold ${
                     activeTrack === 'professional' ? 'text-slate-900' : 'text-slate-600'
-                  }`}>
-                    Work
-                  </h3>
+                  }`}>Work</h3>
                   <p className={`text-xs ${
                     activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
-                  }`}>
-                    Career &amp; workplace
-                  </p>
+                  }`}>Career &amp; workplace</p>
                 </div>
               </div>
               <p className={`text-xs leading-relaxed ${
@@ -277,7 +337,6 @@ export default function LandingPage() {
               )}
             </button>
 
-            {/* Personal */}
             <button
               onClick={() => setActiveTrack('personal')}
               className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
@@ -297,14 +356,10 @@ export default function LandingPage() {
                 <div>
                   <h3 className={`text-sm font-bold ${
                     activeTrack === 'personal' ? 'text-slate-900' : 'text-slate-600'
-                  }`}>
-                    Life
-                  </h3>
+                  }`}>Life</h3>
                   <p className={`text-xs ${
                     activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
-                  }`}>
-                    Dating &amp; social
-                  </p>
+                  }`}>Dating &amp; social</p>
                 </div>
               </div>
               <p className={`text-xs leading-relaxed ${
@@ -325,7 +380,7 @@ export default function LandingPage() {
           {/* ── Personas Section ── */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-slate-700">
-              {activeTrack === 'personal' ? 'People you practice with' : 'People you practice with'}
+              People you practice with
             </h2>
             <button
               onClick={handleCreateNew}
@@ -335,10 +390,9 @@ export default function LandingPage() {
             </button>
           </div>
 
-          {/* Persona grid */}
           {loading ? (
             <div className="text-center py-16 text-slate-400">
-              Loading personas...
+              Loading...
             </div>
           ) : filteredPersonas.length === 0 ? (
             <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
@@ -371,14 +425,11 @@ export default function LandingPage() {
                     onClick={() => handleSelectPersona(persona)}
                     className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${accentBorder} overflow-hidden hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-200 cursor-pointer`}
                   >
-                    {/* Card header */}
                     <div className="px-5 pt-4 pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2.5 min-w-0 pr-16">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
-                            isPersonal
-                              ? 'bg-pink-50 text-pink-500'
-                              : 'bg-brand-50 text-brand-600'
+                            isPersonal ? 'bg-pink-50 text-pink-500' : 'bg-brand-50 text-brand-600'
                           }`}>
                             {isPersonal ? '💬' : '💼'}
                           </div>
@@ -387,7 +438,6 @@ export default function LandingPage() {
                           </h3>
                         </div>
 
-                        {/* Action buttons */}
                         <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleEditPersona(persona); }}
@@ -416,7 +466,6 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Trait mini-bars */}
                     <div className="px-5 pb-3">
                       <div className="grid grid-cols-3 gap-x-4 gap-y-1.5">
                         {attrs.slice(0, 3).map((attr) => {
@@ -445,7 +494,6 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Card footer */}
                     <div className={`px-5 py-2.5 border-t border-slate-100 ${
                       isPersonal
                         ? 'bg-gradient-to-r from-pink-50/50 to-transparent'

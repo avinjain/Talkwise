@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
 import { QUESTIONS, DIMENSIONS, LIKERT_OPTIONS, calculateScores } from '@/lib/personality-test';
 
@@ -35,6 +37,21 @@ const GOAL_OPTIONS = [
 
 export default function PersonalityTestPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status !== 'loading' && !session) {
+      router.push('/auth?callbackUrl=/profile/test');
+    }
+  }, [session, status, router]);
+
+  if (status === 'loading' || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Logo size={80} className="animate-pulse" />
+      </div>
+    );
+  }
 
   // Pre-test "About You" state
   const [phase, setPhase] = useState<'about' | 'test'>('about');

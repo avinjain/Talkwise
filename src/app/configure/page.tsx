@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
 import { Track, getPersonaAttributes } from '@/lib/types';
@@ -25,7 +26,7 @@ const DEFAULT_PERSONAL_TRAITS = {
 
 export default function ConfigurePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState('');
+  const { data: session, status } = useSession();
   const [editPersonaId, setEditPersonaId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -38,12 +39,15 @@ export default function ConfigurePage() {
   });
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('userName');
-    if (!stored) {
-      router.push('/');
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth?callbackUrl=/configure');
       return;
     }
-    setUserName(stored);
+    // Store userName for downstream pages
+    if (session.user?.name) {
+      sessionStorage.setItem('userName', session.user.name);
+    }
 
     const personaId = sessionStorage.getItem('editPersonaId');
     if (personaId) {
@@ -61,7 +65,7 @@ export default function ConfigurePage() {
         // ignore
       }
     }
-  }, [router]);
+  }, [router, session, status]);
 
   const handleSliderChange = (key: string, value: number) => {
     setTraits((prev) => ({ ...prev, [key]: value }));

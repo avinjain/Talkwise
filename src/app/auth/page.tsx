@@ -2,11 +2,15 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Logo from '@/components/Logo';
+import { Suspense } from 'react';
 
-export default function AuthPage() {
+function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
+
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +35,7 @@ export default function AuthPage() {
       if (result?.error) {
         setError(result.error);
       } else {
-        router.push('/');
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch {
@@ -154,5 +158,17 @@ export default function AuthPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Logo size={80} className="animate-pulse" />
+      </div>
+    }>
+      <AuthForm />
+    </Suspense>
   );
 }
