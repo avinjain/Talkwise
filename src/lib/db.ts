@@ -117,6 +117,25 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
   `);
 
+  // ── Migration: add has_completed_onboarding to users ──
+  try {
+    const userCols = db.pragma('table_info(users)') as { name: string }[];
+    const userColNames = new Set(userCols.map((c) => c.name));
+    if (!userColNames.has('has_completed_onboarding')) {
+      try {
+        db.exec("ALTER TABLE users ADD COLUMN has_completed_onboarding INTEGER DEFAULT 0");
+        console.log("Migration: added column 'has_completed_onboarding' to users");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('duplicate column')) {
+          console.error("Migration failed for column 'has_completed_onboarding':", err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Users migration check failed:', err);
+  }
+
   // ── Migration: add new columns to existing saved_personas table ──
   try {
     const cols = db.pragma('table_info(saved_personas)') as { name: string }[];
@@ -208,9 +227,22 @@ export function updateUserPassword(email: string, newPasswordHash: string) {
 
 export function getUserById(id: string) {
   const db = getDb();
-  return db.prepare('SELECT id, email, name, created_at FROM users WHERE id = ?').get(id) as
-    | { id: string; email: string; name: string; created_at: string }
+  return db.prepare('SELECT id, email, name, has_completed_onboarding, created_at FROM users WHERE id = ?').get(id) as
+    | { id: string; email: string; name: string; has_completed_onboarding: number; created_at: string }
     | undefined;
+}
+
+export function getOnboardingStatus(userId: string): boolean {
+  const db = getDb();
+  const row = db.prepare('SELECT has_completed_onboarding FROM users WHERE id = ?').get(userId) as
+    | { has_completed_onboarding: number }
+    | undefined;
+  return row?.has_completed_onboarding === 1;
+}
+
+export function completeOnboarding(userId: string) {
+  const db = getDb();
+  db.prepare('UPDATE users SET has_completed_onboarding = 1 WHERE id = ?').run(userId);
 }
 
 // ── Usage logging ──

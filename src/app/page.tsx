@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
+import Onboarding from '@/components/Onboarding';
 import { SavedPersona, Track, getPersonaAttributes } from '@/lib/types';
 
 export default function LandingPage() {
@@ -14,22 +15,30 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [activeTrack, setActiveTrack] = useState<Track>('professional');
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
-  // Show welcome banner if user hasn't dismissed it yet
+  // Check onboarding status from server
   useEffect(() => {
-    if (session?.user?.email) {
-      const key = `talkwise_welcome_dismissed_${session.user.email}`;
-      if (!localStorage.getItem(key)) {
-        setShowWelcome(true);
-      }
+    if (session) {
+      fetch('/api/onboarding')
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.completed) {
+            setShowOnboarding(true);
+          }
+          setOnboardingChecked(true);
+        })
+        .catch(() => setOnboardingChecked(true));
     }
   }, [session]);
 
-  const dismissWelcome = () => {
-    setShowWelcome(false);
-    if (session?.user?.email) {
-      localStorage.setItem(`talkwise_welcome_dismissed_${session.user.email}`, '1');
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+    try {
+      await fetch('/api/onboarding', { method: 'POST' });
+    } catch {
+      // silently fail — user can still use the app
     }
   };
 
@@ -198,6 +207,18 @@ export default function LandingPage() {
   // ── Logged in ──
   const userName = session.user?.name || 'there';
 
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        userName={userName}
+        onComplete={handleOnboardingComplete}
+        onGoToTest={() => { handleOnboardingComplete(); router.push('/profile/test'); }}
+        onCreateCharacter={() => { handleOnboardingComplete(); handleCreateNew(); }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
@@ -209,80 +230,6 @@ export default function LandingPage() {
           <h1 className="text-2xl font-bold text-slate-900 mb-6">
             Welcome back, <span className="text-gradient">{userName}</span>
           </h1>
-
-          {/* ── Welcome Banner ── */}
-          {showWelcome && (
-            <div className="relative bg-gradient-to-br from-brand-50 via-white to-accent-50 border border-brand-200/50 rounded-2xl p-6 mb-8 shadow-sm">
-              <button
-                onClick={dismissWelcome}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
-                title="Dismiss"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-                  </svg>
-                </span>
-                How it works
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">🎭</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Have a practice conversation</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Talk to an AI that acts like a real person — your boss, a date, a difficult client</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">🎯</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Pick your scenario</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Salary negotiation, first date, team conflict — choose what you want to get better at</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">💬</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Get honest feedback</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">After each conversation, AI tells you what you did well and what to work on</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">👤</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Save people you talk to</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Create characters with specific personalities and practice with them again later</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">🧠</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Discover your personality</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Quick test that shows your communication strengths and blind spots</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">📈</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Grow over time</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">Get advice that fits your actual role, goals, and personality</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ── Track Selector Cards ── */}
           <div className="grid grid-cols-2 gap-4 mb-8">
