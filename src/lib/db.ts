@@ -78,12 +78,15 @@ function initTables(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS profile_results (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL UNIQUE,
-      assertiveness REAL DEFAULT 0,
-      empathy REAL DEFAULT 0,
-      confidence REAL DEFAULT 0,
-      adaptability REAL DEFAULT 0,
+      conscientiousness REAL DEFAULT 0,
+      emotional_stability REAL DEFAULT 0,
+      agreeableness REAL DEFAULT 0,
       emotional_intelligence REAL DEFAULT 0,
-      social_energy REAL DEFAULT 0,
+      integrity REAL DEFAULT 0,
+      assertiveness REAL DEFAULT 0,
+      conflict_style REAL DEFAULT 0,
+      stress_response REAL DEFAULT 0,
+      motivation_orientation REAL DEFAULT 0,
       raw_answers TEXT DEFAULT '{}',
       user_context TEXT DEFAULT '{}',
       ai_feedback TEXT DEFAULT '',
@@ -152,6 +155,13 @@ function initTables(db: Database.Database) {
     const prMigrations: [string, string][] = [
       ['user_context', "ALTER TABLE profile_results ADD COLUMN user_context TEXT DEFAULT '{}'"],
       ['ai_feedback', "ALTER TABLE profile_results ADD COLUMN ai_feedback TEXT DEFAULT ''"],
+      ['conscientiousness', 'ALTER TABLE profile_results ADD COLUMN conscientiousness REAL DEFAULT 0'],
+      ['emotional_stability', 'ALTER TABLE profile_results ADD COLUMN emotional_stability REAL DEFAULT 0'],
+      ['agreeableness', 'ALTER TABLE profile_results ADD COLUMN agreeableness REAL DEFAULT 0'],
+      ['integrity', 'ALTER TABLE profile_results ADD COLUMN integrity REAL DEFAULT 0'],
+      ['conflict_style', 'ALTER TABLE profile_results ADD COLUMN conflict_style REAL DEFAULT 0'],
+      ['stress_response', 'ALTER TABLE profile_results ADD COLUMN stress_response REAL DEFAULT 0'],
+      ['motivation_orientation', 'ALTER TABLE profile_results ADD COLUMN motivation_orientation REAL DEFAULT 0'],
     ];
 
     for (const [col, sql] of prMigrations) {
@@ -368,12 +378,15 @@ export function deletePersona(id: string, userId: string) {
 export interface ProfileResultRow {
   id: string;
   user_id: string;
-  assertiveness: number;
-  empathy: number;
-  confidence: number;
-  adaptability: number;
+  conscientiousness: number;
+  emotional_stability: number;
+  agreeableness: number;
   emotional_intelligence: number;
-  social_energy: number;
+  integrity: number;
+  assertiveness: number;
+  conflict_style: number;
+  stress_response: number;
+  motivation_orientation: number;
   raw_answers: string;
   user_context: string;
   ai_feedback: string;
@@ -391,12 +404,15 @@ export function getProfileResult(userId: string): ProfileResultRow | undefined {
 export function saveProfileResult(
   userId: string,
   scores: {
-    assertiveness: number;
-    empathy: number;
-    confidence: number;
-    adaptability: number;
+    conscientiousness: number;
+    emotionalStability: number;
+    agreeableness: number;
     emotionalIntelligence: number;
-    socialEnergy: number;
+    integrity: number;
+    assertiveness: number;
+    conflictStyle: number;
+    stressResponse: number;
+    motivationOrientation: number;
   },
   rawAnswers: Record<number, number>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -409,24 +425,27 @@ export function saveProfileResult(
   if (existing) {
     db.prepare(
       `UPDATE profile_results SET
-        assertiveness = ?, empathy = ?, confidence = ?,
-        adaptability = ?, emotional_intelligence = ?, social_energy = ?,
+        conscientiousness = ?, emotional_stability = ?, agreeableness = ?,
+        emotional_intelligence = ?, integrity = ?, assertiveness = ?,
+        conflict_style = ?, stress_response = ?, motivation_orientation = ?,
         raw_answers = ?, user_context = ?, ai_feedback = ?, updated_at = datetime('now')
        WHERE user_id = ?`
     ).run(
-      scores.assertiveness, scores.empathy, scores.confidence,
-      scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
+      scores.conscientiousness, scores.emotionalStability, scores.agreeableness,
+      scores.emotionalIntelligence, scores.integrity, scores.assertiveness,
+      scores.conflictStyle, scores.stressResponse, scores.motivationOrientation,
       JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback, userId
     );
   } else {
     const id = crypto.randomUUID();
     db.prepare(
-      `INSERT INTO profile_results (id, user_id, assertiveness, empathy, confidence, adaptability, emotional_intelligence, social_energy, raw_answers, user_context, ai_feedback)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO profile_results (id, user_id, conscientiousness, emotional_stability, agreeableness, emotional_intelligence, integrity, assertiveness, conflict_style, stress_response, motivation_orientation, raw_answers, user_context, ai_feedback)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id, userId,
-      scores.assertiveness, scores.empathy, scores.confidence,
-      scores.adaptability, scores.emotionalIntelligence, scores.socialEnergy,
+      scores.conscientiousness, scores.emotionalStability, scores.agreeableness,
+      scores.emotionalIntelligence, scores.integrity, scores.assertiveness,
+      scores.conflictStyle, scores.stressResponse, scores.motivationOrientation,
       JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback
     );
   }

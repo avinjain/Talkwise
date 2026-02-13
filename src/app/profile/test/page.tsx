@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { QUESTIONS, DIMENSIONS, calculateScores } from '@/lib/personality-test';
+import { QUESTIONS, DIMENSIONS, LIKERT_OPTIONS, calculateScores } from '@/lib/personality-test';
 
 interface UserContext {
   role: string;
@@ -29,6 +29,7 @@ const GOAL_OPTIONS = [
   'Resolving conflicts without stress',
   'Negotiating salary or deals',
   'Making a strong first impression',
+  'Managing stress better',
   'Other',
 ];
 
@@ -57,8 +58,8 @@ export default function PersonalityTestPage() {
 
   const dimInfo = DIMENSIONS.find((d) => d.key === question?.dimension);
 
-  const handleSelect = (score: number) => {
-    setAnswers((prev) => ({ ...prev, [question.id]: score }));
+  const handleSelect = (value: number) => {
+    setAnswers((prev) => ({ ...prev, [question.id]: value }));
   };
 
   const handleNext = () => {
@@ -148,7 +149,7 @@ export default function PersonalityTestPage() {
               Tell us about yourself
             </h1>
             <p className="text-slate-500 text-sm leading-relaxed max-w-md mx-auto">
-              This helps us personalize your feedback and give you advice that actually
+              This helps us personalize your feedback with advice that actually
               applies to your life and goals.
             </p>
           </div>
@@ -268,11 +269,9 @@ export default function PersonalityTestPage() {
             >
               Start the Test
             </button>
-            {!canStartTest && (
-              <p className="text-xs text-slate-400 mt-2">
-                Fill in all fields above to continue
-              </p>
-            )}
+            <p className="text-xs text-slate-400 mt-2">
+              {canStartTest ? '27 questions · ~8 minutes · Personalized AI feedback' : 'Fill in all fields above to continue'}
+            </p>
           </div>
         </div>
       </div>
@@ -286,10 +285,10 @@ export default function PersonalityTestPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => setPhase('about')}
+            onClick={() => currentIndex === 0 ? setPhase('about') : handlePrev()}
             className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
           >
-            &larr; Back
+            &larr; {currentIndex === 0 ? 'Edit Profile' : 'Previous'}
           </button>
           <Logo size={48} />
         </div>
@@ -301,7 +300,7 @@ export default function PersonalityTestPage() {
               Question {currentIndex + 1} of {total}
             </span>
             <span className="text-xs text-slate-400">
-              {Object.keys(answers).length} answered
+              {Object.keys(answers).length}/{total} answered
             </span>
           </div>
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -329,45 +328,48 @@ export default function PersonalityTestPage() {
         )}
 
         {/* Question */}
-        <h2 className="text-xl font-bold text-slate-900 mb-6 leading-relaxed">
-          {question?.question}
-        </h2>
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 mb-1 leading-relaxed">
+            &ldquo;{question?.question}&rdquo;
+          </h2>
+          {question?.reversed && (
+            <p className="text-[10px] text-slate-300 mt-1">*</p>
+          )}
+        </div>
 
-        {/* Options */}
-        <div className="space-y-3 mb-8">
-          {question?.options.map((opt, i) => {
-            const isSelected = answers[question.id] === opt.score;
-            return (
-              <button
-                key={i}
-                onClick={() => handleSelect(opt.score)}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
-                  isSelected
-                    ? 'border-brand-500 bg-brand-50 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+        {/* Likert Scale */}
+        <div className="mb-8">
+          <div className="flex justify-between mb-3 px-1">
+            <span className="text-[10px] text-slate-400 font-medium">Strongly Disagree</span>
+            <span className="text-[10px] text-slate-400 font-medium">Strongly Agree</span>
+          </div>
+          <div className="flex gap-2">
+            {LIKERT_OPTIONS.map((opt) => {
+              const isSelected = answers[question?.id] === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSelect(opt.value)}
+                  className={`flex-1 py-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1.5 ${
                     isSelected
-                      ? 'border-brand-500 bg-brand-500'
-                      : 'border-slate-300'
+                      ? 'border-brand-500 bg-brand-50 shadow-sm scale-105'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  }`}
+                >
+                  <span className={`text-lg font-bold ${
+                    isSelected ? 'text-brand-600' : 'text-slate-400'
                   }`}>
-                    {isSelected && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className={`text-sm leading-relaxed ${
-                    isSelected ? 'text-brand-700 font-medium' : 'text-slate-700'
-                  }`}>
-                    {opt.text}
+                    {opt.value}
                   </span>
-                </div>
-              </button>
-            );
-          })}
+                  <span className={`text-[10px] font-medium leading-tight text-center px-1 ${
+                    isSelected ? 'text-brand-600' : 'text-slate-400'
+                  }`}>
+                    {opt.label.split(' ').map((w, i) => <span key={i} className="block">{w}</span>)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Error */}
@@ -402,7 +404,7 @@ export default function PersonalityTestPage() {
                 disabled={!allAnswered || submitting}
                 className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
               >
-                {submitting ? 'Analyzing...' : 'See My Results'}
+                {submitting ? 'Analyzing your profile...' : 'See My Results'}
               </button>
             )}
           </div>

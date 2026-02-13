@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import RadarChart from '@/components/RadarChart';
-import { DIMENSIONS, ProfileResult } from '@/lib/personality-test';
+import { DIMENSIONS, ProfileResult, getBand } from '@/lib/personality-test';
 
 interface FeedbackStrength {
   dimension: string;
@@ -21,22 +21,14 @@ interface AIFeedback {
   summary: string;
   topStrengths: FeedbackStrength[];
   growthAreas: FeedbackGrowthArea[];
-  personalizedAdvice: string;
+  professionalInsight: string;
+  personalInsight: string;
   practiceScenario: string;
 }
 
-function getStrength(value: number): string {
-  if (value >= 8) return 'Very Strong';
-  if (value >= 6) return 'Strong';
-  if (value >= 4) return 'Moderate';
-  if (value >= 2) return 'Developing';
-  return 'Needs Work';
-}
-
-function getStrengthColor(value: number): string {
-  if (value >= 8) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
-  if (value >= 6) return 'text-brand-600 bg-brand-50 border-brand-200';
-  if (value >= 4) return 'text-amber-600 bg-amber-50 border-amber-200';
+function getBandColor(band: string): string {
+  if (band === 'High') return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+  if (band === 'Moderate') return 'text-amber-600 bg-amber-50 border-amber-200';
   return 'text-red-500 bg-red-50 border-red-200';
 }
 
@@ -108,14 +100,14 @@ export default function ProfilePage() {
             </div>
 
             <h1 className="text-3xl font-bold text-slate-900 mb-3">
-              Discover Your Communication Style
+              Discover Your Personality Profile
             </h1>
             <p className="text-slate-500 mb-2 max-w-md mx-auto leading-relaxed">
-              Take a quick 10-minute personality test to understand your
-              communication strengths and growth areas.
+              Take a psychometric personality assessment measuring 9 key traits
+              that predict professional effectiveness and relationship quality.
             </p>
             <p className="text-sm text-slate-400 mb-8">
-              24 questions &middot; 6 dimensions &middot; Personalized AI feedback
+              27 questions &middot; 5-point scale &middot; Reverse-scored items &middot; AI-powered feedback
             </p>
 
             <button
@@ -130,7 +122,7 @@ export default function ProfilePage() {
     );
   }
 
-  // Sort dimensions by score for the breakdown
+  // Sort dimensions by score
   const sortedDims = [...DIMENSIONS].sort((a, b) => {
     const scoreA = (scores as unknown as Record<string, number>)[a.key] ?? 0;
     const scoreB = (scores as unknown as Record<string, number>)[b.key] ?? 0;
@@ -153,9 +145,9 @@ export default function ProfilePage() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Your Communication Profile
+            Your Personality Profile
           </h1>
-          <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+          <div className="flex items-center justify-center gap-3 text-xs text-slate-400 flex-wrap">
             {userContext?.role && (
               <span className="bg-slate-100 px-2 py-0.5 rounded">{userContext.role}</span>
             )}
@@ -195,7 +187,7 @@ export default function ProfilePage() {
 
         {/* Radar Chart */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <RadarChart scores={scores} size={360} />
+          <RadarChart scores={scores} size={380} />
         </div>
 
         {/* Top Strengths */}
@@ -246,18 +238,27 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Personalized Advice */}
-        {feedback?.personalizedAdvice && (
-          <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                </svg>
+        {/* Professional & Personal Insights */}
+        {(feedback?.professionalInsight || feedback?.personalInsight) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {feedback?.professionalInsight && (
+              <div className="bg-gradient-to-br from-blue-50 to-slate-50 border border-blue-200/50 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">💼</span>
+                  <h2 className="text-sm font-semibold text-slate-900">At Work</h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">{feedback.professionalInsight}</p>
               </div>
-              <h2 className="text-sm font-semibold text-slate-900">Personalized Advice</h2>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed">{feedback.personalizedAdvice}</p>
+            )}
+            {feedback?.personalInsight && (
+              <div className="bg-gradient-to-br from-pink-50 to-slate-50 border border-pink-200/50 rounded-2xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">💬</span>
+                  <h2 className="text-sm font-semibold text-slate-900">In Relationships</h2>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">{feedback.personalInsight}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -285,13 +286,13 @@ export default function ProfilePage() {
         {/* Dimension Breakdown */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900 mb-4">
-            Dimension Breakdown
+            Full Trait Breakdown
           </h2>
           <div className="space-y-4">
             {sortedDims.map((dim) => {
               const value = (scores as unknown as Record<string, number>)[dim.key] ?? 0;
-              const strength = getStrength(value);
-              const strengthColor = getStrengthColor(value);
+              const band = getBand(value);
+              const bandColor = getBandColor(band);
 
               return (
                 <div key={dim.key}>
@@ -305,8 +306,8 @@ export default function ProfilePage() {
                         {dim.label}
                       </span>
                     </div>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${strengthColor}`}>
-                      {strength} &middot; {value.toFixed(1)}/10
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${bandColor}`}>
+                      {band} &middot; {value.toFixed(1)}/10
                     </span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -322,6 +323,25 @@ export default function ProfilePage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Scoring Guide */}
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6">
+          <h3 className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Scoring Guide</h3>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div className="bg-white rounded-lg p-2.5 border border-slate-200">
+              <span className="font-semibold text-red-500">Low (0-3.3)</span>
+              <p className="text-slate-400 mt-0.5">Area needs significant development</p>
+            </div>
+            <div className="bg-white rounded-lg p-2.5 border border-slate-200">
+              <span className="font-semibold text-amber-600">Moderate (3.4-6.6)</span>
+              <p className="text-slate-400 mt-0.5">Functional but room to grow</p>
+            </div>
+            <div className="bg-white rounded-lg p-2.5 border border-slate-200">
+              <span className="font-semibold text-emerald-600">High (6.7-10)</span>
+              <p className="text-slate-400 mt-0.5">Strong — a natural strength</p>
+            </div>
           </div>
         </div>
 
