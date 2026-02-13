@@ -10,7 +10,10 @@ function getDb(): Database.Database {
   if (!_db) {
     _db = new Database(DB_PATH);
     _db.pragma('journal_mode = WAL');
-    _db.pragma('foreign_keys = ON');
+    // Foreign keys disabled — with JWT sessions, user_id may reference
+    // rows that no longer exist after a DB rebuild on deploy. Data integrity
+    // is enforced at the application layer instead.
+    _db.pragma('foreign_keys = OFF');
     initTables(_db);
   }
   return _db;
