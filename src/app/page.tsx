@@ -144,7 +144,13 @@ export default function LandingPage() {
   if (!session) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        {/* ── Hero ── */}
+        <header className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
+          <Logo size={36} />
+          <div className="flex gap-2">
+            <button onClick={() => router.push('/auth')} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Sign in</button>
+            <button onClick={() => router.push('/auth?mode=signup')} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover">Sign up</button>
+          </div>
+        </header>
         <div className="flex-shrink-0 px-6 pt-12 pb-10 text-center">
           <Logo size={100} />
           <h1 className="text-4xl md:text-5xl font-extrabold text-gradient mt-2 mb-2">
