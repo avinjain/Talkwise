@@ -32,7 +32,6 @@ export default function InterviewPrepPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
   const [continuing, setContinuing] = useState(false);
-  const [rightTab, setRightTab] = useState<'core-positioning' | 'analysis'>('core-positioning');
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -95,7 +94,6 @@ export default function InterviewPrepPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analysis failed');
       setProfileAnalysis(data.analysis || 'Analysis complete.');
-      setRightTab('analysis');
       if (data.resumeContent) setResumeContent(data.resumeContent);
       if (data.profileContent) setLinkedInContent(data.profileContent);
     } catch (e) {
@@ -266,123 +264,93 @@ export default function InterviewPrepPage() {
             </button>
             </div>
 
-            {/* Right: Tabbed panel - Core positioning | Analysis & Improvement tips */}
-            <div className="lg:sticky lg:top-24 lg:self-start">
+            {/* Right: Stacked sections - Core positioning | Analyze profile & improvement tips */}
+            <div className="lg:sticky lg:top-24 lg:self-start space-y-6">
+              {/* Section 1: Core positioning */}
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                <div className="flex border-b border-slate-200 mb-4 -mx-5 px-5">
-                  <button
-                    type="button"
-                    onClick={() => setRightTab('core-positioning')}
-                    className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
-                      rightTab === 'core-positioning'
-                        ? 'border-brand-500 text-brand-700'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Core positioning
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRightTab('analysis')}
-                    className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors relative ${
-                      rightTab === 'analysis'
-                        ? 'border-brand-500 text-brand-700'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Analyze profile & get improvement tips
-                    {profileAnalysis && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand-500" aria-hidden />
-                    )}
-                  </button>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-900">Core positioning</h3>
                 </div>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Add resume above, then generate pitches.
+                </p>
 
-                {rightTab === 'core-positioning' && (
+                {!hasResume ? (
+                  <p className="text-[11px] text-slate-400 italic">Add your resume above.</p>
+                ) : (
                   <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
-                        <svg className="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                        </svg>
-                      </div>
-                      <h3 className="text-xs font-semibold text-slate-900">Speaking points</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mb-3">
-                      Add resume above, then generate pitches.
-                    </p>
+                    <button
+                      type="button"
+                      onClick={handleGeneratePitches}
+                      disabled={loadingPitches}
+                      className="w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                    >
+                      {loadingPitches ? 'Generating...' : 'Generate speaking points'}
+                    </button>
 
-                    {!hasResume ? (
-                      <p className="text-[11px] text-slate-400 italic">Add your resume above.</p>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleGeneratePitches}
-                          disabled={loadingPitches}
-                          className="w-full mb-3 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                        >
-                          {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                        </button>
-
-                        {pitches.length > 0 && (
-                          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                            {pitches.map((p, i) => (
-                              <div key={i} className="border border-slate-100 rounded-md p-2 bg-slate-50/50">
-                                <h4 className="text-[11px] font-semibold text-slate-800 mb-1">{p.name}</h4>
-                                {p.hook && (
-                                  <p className="text-[11px] text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
-                                )}
-                                {p.bullets && p.bullets.length > 0 && (
-                                  <ul className="text-[11px] text-slate-600 space-y-0.5 list-disc list-inside">
-                                    {p.bullets.map((b, j) => (
-                                      <li key={j}>{b}</li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                            ))}
+                    {pitches.length > 0 && (
+                      <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                        {pitches.map((p, i) => (
+                          <div key={i} className="border border-slate-100 rounded-md p-2 bg-slate-50/50">
+                            <h4 className="text-[11px] font-semibold text-slate-800 mb-1">{p.name}</h4>
+                            {p.hook && (
+                              <p className="text-[11px] text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
+                            )}
+                            {p.bullets && p.bullets.length > 0 && (
+                              <ul className="text-[11px] text-slate-600 space-y-0.5 list-disc list-inside">
+                                {p.bullets.map((b, j) => (
+                                  <li key={j}>{b}</li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
-                        )}
-                      </>
+                        ))}
+                      </div>
                     )}
                   </>
                 )}
+              </div>
 
-                {rightTab === 'analysis' && (
+              {/* Section 2: Analyze profile & improvement tips */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-900">Analyze profile & improvement tips</h3>
+                </div>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Add resume and/or LinkedIn above, then analyze.
+                </p>
+
+                {resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim() ? (
                   <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center">
-                        <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-xs font-semibold text-slate-900">Profile analysis</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mb-3">
-                      Add resume and/or LinkedIn above, then analyze.
-                    </p>
-
-                    {resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim() ? (
-                      <button
-                        type="button"
-                        onClick={handleAnalyzeProfile}
-                        disabled={analyzing}
-                        className="w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                      >
-                        {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
-                      </button>
-                    ) : (
-                      <p className="text-[11px] text-slate-400 italic mb-3">Add your resume and/or LinkedIn above.</p>
-                    )}
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeProfile}
+                      disabled={analyzing}
+                      className="w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                    >
+                      {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
+                    </button>
 
                     {profileAnalysis ? (
-                      <div className="max-h-[40vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <AnalysisDisplay content={profileAnalysis} className="text-sm" />
+                      <div className="max-h-[35vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <AnalysisDisplay content={profileAnalysis} compact />
                       </div>
-                    ) : resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim() ? (
+                    ) : (
                       <p className="text-[11px] text-slate-400 italic">Click the button above to see personalized tips.</p>
-                    ) : null}
+                    )}
                   </>
+                ) : (
+                  <p className="text-[11px] text-slate-400 italic">Add your resume and/or LinkedIn above.</p>
                 )}
               </div>
             </div>
