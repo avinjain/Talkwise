@@ -13,7 +13,6 @@ export default function ProfileDetailsPanel() {
   const [pitches, setPitches] = useState<Array<{ name: string; hook?: string; bullets?: string[] }>>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
-  const [activeTab, setActiveTab] = useState<'analysis' | 'core-positioning'>('analysis');
 
   const hasResume = resumeFile || resumePaste.trim();
   const hasLinkedIn = linkedInUrl.trim() || linkedInPaste.trim();
@@ -37,7 +36,6 @@ export default function ProfileDetailsPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analysis failed');
       setProfileAnalysis(data.analysis || 'Analysis complete.');
-      setActiveTab('analysis');
     } catch (e) {
       setProfileAnalysis(e instanceof Error ? e.message : 'Could not analyze. Please try again.');
     } finally {
@@ -69,7 +67,6 @@ export default function ProfileDetailsPanel() {
       const res = await fetch('/api/interview/core-positioning', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok && Array.isArray(data.pitches)) setPitches(data.pitches);
-      setActiveTab('core-positioning');
     } catch {
       /* ignore */
     } finally {
@@ -169,118 +166,86 @@ export default function ProfileDetailsPanel() {
         </div>
       </div>
 
-      {/* Right: Results panel */}
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      {/* Right: Results — stacked sections */}
+      <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        {/* Section 1: Analyze profile & improvement tips */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Tabs */}
-          <div className="flex border-b border-slate-200 bg-slate-50/50">
-            <button
-              type="button"
-              onClick={() => setActiveTab('analysis')}
-              className={`flex-1 py-2.5 px-3 text-xs font-medium transition-colors ${
-                activeTab === 'analysis'
-                  ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                Analysis
-                {profileAnalysis && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500" aria-hidden />
-                )}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('core-positioning')}
-              className={`flex-1 py-2.5 px-3 text-xs font-medium transition-colors ${
-                activeTab === 'core-positioning'
-                  ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                Core positioning
-                {pitches.length > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500" aria-hidden />
-                )}
-              </span>
-            </button>
+          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-semibold text-slate-800">Analyze profile & improvement tips</h3>
           </div>
-
           <div className="p-4">
-            {activeTab === 'analysis' && (
+            {hasInput ? (
               <div className="space-y-3">
-                {hasInput ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleAnalyzeProfile}
-                      disabled={analyzing}
-                      className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                    >
-                      {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
-                    </button>
-                    {profileAnalysis ? (
-                      <div className="max-h-[35vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
-                        <AnalysisDisplay content={profileAnalysis} compact />
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 text-center py-3">
-                        Click the button above to see personalized improvement tips.
-                      </p>
-                    )}
-                  </>
+                <button
+                  type="button"
+                  onClick={handleAnalyzeProfile}
+                  disabled={analyzing}
+                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                >
+                  {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
+                </button>
+                {profileAnalysis ? (
+                  <div className="max-h-[35vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <AnalysisDisplay content={profileAnalysis} compact />
+                  </div>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-6">
-                    Add your resume and/or LinkedIn on the left to get started.
+                  <p className="text-xs text-slate-400 text-center py-3">
+                    Click the button above to see personalized improvement tips.
                   </p>
                 )}
               </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-4">
+                Add your resume and/or LinkedIn on the left to get started.
+              </p>
             )}
+          </div>
+        </div>
 
-            {activeTab === 'core-positioning' && (
+        {/* Section 2: Core positioning */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-semibold text-slate-800">Core positioning</h3>
+          </div>
+          <div className="p-4">
+            {hasResume ? (
               <div className="space-y-3">
-                {hasResume ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleGeneratePitches}
-                      disabled={loadingPitches}
-                      className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                    >
-                      {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                    </button>
-                    {pitches.length > 0 ? (
-                      <div className="space-y-2 max-h-[35vh] overflow-y-auto">
-                        {pitches.map((p, i) => (
-                          <div key={i} className="rounded-lg p-2.5 bg-slate-50 border border-slate-100">
-                            <h4 className="text-xs font-semibold text-slate-800 mb-1">{p.name}</h4>
-                            {p.hook && (
-                              <p className="text-xs text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
-                            )}
-                            {p.bullets && p.bullets.length > 0 && (
-                              <ul className="text-xs text-slate-600 space-y-0.5 list-disc list-inside">
-                                {p.bullets.map((b, j) => (
-                                  <li key={j}>{b}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
+                <button
+                  type="button"
+                  onClick={handleGeneratePitches}
+                  disabled={loadingPitches}
+                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                >
+                  {loadingPitches ? 'Generating...' : 'Generate speaking points'}
+                </button>
+                {pitches.length > 0 ? (
+                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                    {pitches.map((p, i) => (
+                      <div key={i} className="rounded-lg p-2.5 bg-slate-50 border border-slate-100">
+                        <h4 className="text-xs font-semibold text-slate-800 mb-1">{p.name}</h4>
+                        {p.hook && (
+                          <p className="text-xs text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
+                        )}
+                        {p.bullets && p.bullets.length > 0 && (
+                          <ul className="text-xs text-slate-600 space-y-0.5 list-disc list-inside">
+                            {p.bullets.map((b, j) => (
+                              <li key={j}>{b}</li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 text-center py-3">
-                        Click the button above to generate speaking points from your resume.
-                      </p>
-                    )}
-                  </>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-6">
-                    Add your resume on the left to generate speaking points.
+                  <p className="text-xs text-slate-400 text-center py-3">
+                    Click the button above to generate speaking points from your resume.
                   </p>
                 )}
               </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-4">
+                Add your resume on the left to generate speaking points.
+              </p>
             )}
           </div>
         </div>
