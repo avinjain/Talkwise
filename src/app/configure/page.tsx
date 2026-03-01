@@ -139,12 +139,9 @@ export default function ConfigurePage() {
           )}
         </h1>
         <p className="text-sm text-slate-400 mb-6">
-          {track === 'personal'
-            ? 'Give them a name and set how they act in social situations.'
-            : 'Give them a name and set how they behave at work.'}
+          {track === 'personal' ? 'Give them a name and set how they act in social situations.' : 'Give them a name and set how they behave at work.'}
         </p>
 
-        {/* Track selector (new personas only) */}
         {!editPersonaId && (
           <div className="grid grid-cols-2 gap-3 mb-6">
             <button
@@ -215,9 +212,7 @@ export default function ConfigurePage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={
-              track === 'personal'
-                ? 'e.g., Emma, 26, loves hiking and coffee'
-                : 'e.g., Sarah Chen, VP of Engineering'
+              track === 'personal' ? 'e.g., Emma, 26, loves hiking and coffee' : 'e.g., Sarah Chen, VP of Engineering'
             }
             className="w-full px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
           />

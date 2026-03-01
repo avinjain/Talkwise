@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
-import { SavedPersona, Track, getPersonaAttributes } from '@/lib/types';
+import { SavedPersona, Track, getPersonaAttributes, ENABLE_INTERVIEW_PREP } from '@/lib/types';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -127,7 +127,8 @@ export default function LandingPage() {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.removeItem('editPersonaId');
     sessionStorage.setItem('editPersonaData', JSON.stringify({ track: activeTrack }));
-    router.push('/configure');
+    if (activeTrack === 'interview') router.push('/interview/prep');
+    else router.push('/configure');
   };
 
   if (status === 'loading') {
@@ -173,6 +174,14 @@ export default function LandingPage() {
             >
               Create a character & start
             </button>
+            {ENABLE_INTERVIEW_PREP && (
+            <button
+              onClick={() => router.push('/auth?callbackUrl=/interview/prep')}
+              className="px-8 py-3.5 rounded-xl font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all text-base w-full sm:w-auto"
+            >
+              Interview prep
+            </button>
+            )}
             <button
               onClick={() => router.push('/auth?callbackUrl=/profile/test')}
               className="px-8 py-3.5 rounded-xl font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-all text-base w-full sm:w-auto"
@@ -249,6 +258,15 @@ export default function LandingPage() {
                 </div>
               </div>
 
+              {ENABLE_INTERVIEW_PREP && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-xl mt-0.5">🎤</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Interview prep</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">Mock interviews with 5-dimension scoring (Substance, Structure, Relevance, Credibility, Differentiation)</p>
+                </div>
+              </div>
+              )}
               <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-xl mt-0.5">🧠</span>
                 <div>
@@ -302,8 +320,7 @@ export default function LandingPage() {
             Welcome back, <span className="text-gradient">{userName}</span>
           </h1>
 
-          {/* ── Track Selector Cards ── */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className={`grid gap-4 mb-8 ${ENABLE_INTERVIEW_PREP ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <button
               onClick={() => setActiveTrack('professional')}
               className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
@@ -381,6 +398,37 @@ export default function LandingPage() {
                 </div>
               )}
             </button>
+
+            {ENABLE_INTERVIEW_PREP && (
+              <button
+                onClick={() => setActiveTrack('interview')}
+                className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                  activeTrack === 'interview'
+                    ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-500/10'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                    activeTrack === 'interview' ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm' : 'bg-slate-100'
+                  }`}>🎤</div>
+                  <div>
+                    <h3 className={`text-sm font-bold ${activeTrack === 'interview' ? 'text-slate-900' : 'text-slate-600'}`}>Interview</h3>
+                    <p className={`text-xs ${activeTrack === 'interview' ? 'text-slate-500' : 'text-slate-400'}`}>Job interviews</p>
+                  </div>
+                </div>
+                <p className={`text-xs leading-relaxed ${activeTrack === 'interview' ? 'text-slate-500' : 'text-slate-400'}`}>
+                  TMAY, behavioral, salary, system design
+                </p>
+                {activeTrack === 'interview' && (
+                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            )}
           </div>
 
           {/* ── Personas Section ── */}
@@ -403,13 +451,11 @@ export default function LandingPage() {
           ) : filteredPersonas.length === 0 ? (
             <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
               <div className="text-4xl mb-3">
-                {activeTrack === 'personal' ? '💬' : '💼'}
+                {activeTrack === 'personal' ? '💬' : activeTrack === 'interview' ? '🎤' : '💼'}
               </div>
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">
-                No one here yet
-              </h3>
+              <h3 className="text-lg font-semibold text-slate-700 mb-1">No one here yet</h3>
               <p className="text-sm text-slate-400 mb-5">
-                Create a character to practice {activeTrack === 'personal' ? 'social conversations' : 'work conversations'} with.
+                Create a character to practice {activeTrack === 'personal' ? 'social' : activeTrack === 'interview' ? 'interview' : 'work'} conversations with.
               </p>
               <button
                 onClick={handleCreateNew}
@@ -423,7 +469,8 @@ export default function LandingPage() {
               {filteredPersonas.map((persona) => {
                 const attrs = getPersonaAttributes(persona.track || 'professional');
                 const isPersonal = persona.track === 'personal';
-                const accentBorder = isPersonal ? 'border-l-pink-400' : 'border-l-brand-500';
+                const isInterview = persona.track === 'interview';
+                const accentBorder = isPersonal ? 'border-l-pink-400' : isInterview ? 'border-l-amber-500' : 'border-l-brand-500';
 
                 return (
                   <div
@@ -435,9 +482,9 @@ export default function LandingPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2.5 min-w-0 pr-16">
                           <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
-                            isPersonal ? 'bg-pink-50 text-pink-500' : 'bg-brand-50 text-brand-600'
+                            isPersonal ? 'bg-pink-50 text-pink-500' : isInterview ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'
                           }`}>
-                            {isPersonal ? '💬' : '💼'}
+                            {isPersonal ? '💬' : isInterview ? '🎤' : '💼'}
                           </div>
                           <h3 className="text-sm font-bold text-slate-900 truncate">
                             {persona.name}
@@ -477,7 +524,7 @@ export default function LandingPage() {
                         {attrs.slice(0, 3).map((attr) => {
                           const value = (persona as unknown as Record<string, number>)[attr.key] ?? 5;
                           const traitName = attr.traitNames[value];
-                          const barColor = isPersonal ? 'bg-pink-400' : 'bg-brand-500';
+                          const barColor = isPersonal ? 'bg-pink-400' : isInterview ? 'bg-amber-500' : 'bg-brand-500';
                           return (
                             <div key={attr.key}>
                               <div className="flex items-center justify-between mb-0.5">
@@ -501,12 +548,10 @@ export default function LandingPage() {
                     </div>
 
                     <div className={`px-5 py-2.5 border-t border-slate-100 ${
-                      isPersonal
-                        ? 'bg-gradient-to-r from-pink-50/50 to-transparent'
-                        : 'bg-gradient-to-r from-brand-50/50 to-transparent'
+                      isPersonal ? 'bg-gradient-to-r from-pink-50/50 to-transparent' : isInterview ? 'bg-gradient-to-r from-amber-50/50 to-transparent' : 'bg-gradient-to-r from-brand-50/50 to-transparent'
                     }`}>
                       <span className={`text-xs font-semibold group-hover:translate-x-1 transition-transform inline-block ${
-                        isPersonal ? 'text-pink-500' : 'text-brand-600'
+                        isPersonal ? 'text-pink-500' : isInterview ? 'text-amber-600' : 'text-brand-600'
                       }`}>
                         Start practicing &rarr;
                       </span>

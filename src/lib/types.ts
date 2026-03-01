@@ -1,10 +1,20 @@
-export type Track = 'professional' | 'personal';
+export type Track = 'professional' | 'personal' | 'interview';
+
+export const ENABLE_INTERVIEW_PREP = process.env.NEXT_PUBLIC_ENABLE_INTERVIEW_PREP === 'true';
+
+export interface InterviewPrepContext {
+  company: string;
+  role: string;
+  format: string;
+  jd?: string;
+}
 
 export interface PersonaConfig {
   track: Track;
   name: string;
   scenario: string;
   userGoal: string;
+  interviewPrep?: InterviewPrepContext;
   // Professional traits
   difficultyLevel: number;
   decisionOrientation: number;
@@ -57,11 +67,8 @@ export interface FeedbackReport {
   confidenceNotes: string;
   articulationFeedback: string[];
   personaReactionSummary: string;
-  alternativeSuggestions: {
-    original: string;
-    suggestion: string;
-    rationale: string;
-  }[];
+  alternativeSuggestions: { original: string; suggestion: string; rationale: string }[];
+  interviewDimensions?: { substance: number; structure: number; relevance: number; credibility: number; differentiation: number };
 }
 
 // ── Goal options (selectable cards) ──
@@ -168,9 +175,21 @@ export const PERSONAL_GOAL_OPTIONS = [
   },
 ] as const;
 
-// Convenience: get goal options by track
+export const INTERVIEW_GOAL_OPTIONS = [
+  { id: 'tmay', label: 'Tell Me About Yourself', icon: '🎯', description: 'Opening pitch and self-introduction' },
+  { id: 'conflict', label: 'Conflict Resolution', icon: '⚡', description: 'Describe a time you handled conflict' },
+  { id: 'failure', label: 'Failure / Mistake', icon: '📉', description: 'Describe a failure and what you learned' },
+  { id: 'leadership', label: 'Leadership Example', icon: '👥', description: 'Leading a team or influencing without authority' },
+  { id: 'salary', label: 'Salary Expectations', icon: '💰', description: 'Discussing compensation and expectations' },
+  { id: 'behavioral', label: 'Behavioral Deep Dive', icon: '🔍', description: 'STAR-format behavioral questions' },
+  { id: 'system-design', label: 'System Design (Tech)', icon: '🏗️', description: 'Architecture and design discussion' },
+  { id: 'questions', label: 'Questions to Ask', icon: '❓', description: 'Prepare strong questions for the interviewer' },
+] as const;
+
 export function getGoalOptions(track: Track) {
-  return track === 'personal' ? PERSONAL_GOAL_OPTIONS : PROFESSIONAL_GOAL_OPTIONS;
+  if (track === 'personal') return PERSONAL_GOAL_OPTIONS;
+  if (track === 'interview') return INTERVIEW_GOAL_OPTIONS;
+  return PROFESSIONAL_GOAL_OPTIONS;
 }
 
 // ── Personality Matrix with trait names per value ──
@@ -422,9 +441,9 @@ export const PERSONAL_PERSONA_ATTRIBUTES = [
   },
 ] as const;
 
-// Convenience: get attributes by track
 export function getPersonaAttributes(track: Track) {
-  return track === 'personal' ? PERSONAL_PERSONA_ATTRIBUTES : PROFESSIONAL_PERSONA_ATTRIBUTES;
+  if (track === 'personal') return PERSONAL_PERSONA_ATTRIBUTES;
+  return PROFESSIONAL_PERSONA_ATTRIBUTES; // interview reuses professional
 }
 
 // Legacy alias for backward compatibility

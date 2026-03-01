@@ -161,6 +161,20 @@ export default function FeedbackPage() {
           </div>
         </div>
 
+        {feedback.interviewDimensions && (
+          <div className="mb-4 p-5 rounded-xl bg-white border border-slate-200">
+            <h2 className="text-sm font-semibold text-slate-900 mb-3">Interview dimensions</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {(['substance','structure','relevance','credibility','differentiation'] as const).map((k) => (
+                <div key={k} className="text-center p-2 rounded-lg bg-slate-50">
+                  <div className="text-lg font-bold text-brand-600">{feedback.interviewDimensions![k]}/10</div>
+                  <div className="text-[10px] text-slate-500 capitalize">{k}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Articulation Feedback */}
         <div className="mb-4 p-5 rounded-xl bg-white border border-slate-200">
           <h2 className="text-sm font-semibold text-slate-900 mb-3">

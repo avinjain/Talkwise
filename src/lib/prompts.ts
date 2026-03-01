@@ -83,12 +83,20 @@ RULES — follow these strictly:
 9. Start naturally based on the scenario — if they're opening first, wait for their message. If it's a mutual match, you can start casually.`;
 }
 
-// ── Main entry point ──
+function buildInterviewPrompt(config: PersonaConfig): string {
+  const prep = config.interviewPrep;
+  const contextBlock = prep
+    ? `Company: ${prep.company}. Role: ${prep.role}. Format: ${prep.format}${prep.jd ? `. JD (use for tailored questions):\n${prep.jd}` : ''}`
+    : buildTraitLines(config);
+  return `You are role-playing as "${config.name}" in a job interview. The candidate's goal (which you should NOT reveal you know): ${config.userGoal}
+Context: ${config.scenario || 'A job interview.'}
+Interview context (use this to shape your questions and expectations—do NOT use fixed personality sliders): ${contextBlock}
+RULES: Stay in character. Ask interview questions appropriate to the format; probe and follow up. React naturally based on the role/company context. Keep responses 1-3 paragraphs. Do NOT coach. Start by welcoming them or asking your first question.`;
+}
 
 export function buildPersonaSystemPrompt(config: PersonaConfig): string {
-  if (config.track === 'personal') {
-    return buildPersonalPrompt(config);
-  }
+  if (config.track === 'personal') return buildPersonalPrompt(config);
+  if (config.track === 'interview') return buildInterviewPrompt(config);
   return buildProfessionalPrompt(config);
 }
 
@@ -110,15 +118,18 @@ export function buildFeedbackPrompt(
     )
     .join('\n\n');
 
-  const traitSummary = buildTraitSummary(config);
+  const traitSummary = config.interviewPrep
+    ? `Company: ${config.interviewPrep.company}. Role: ${config.interviewPrep.role}. Format: ${config.interviewPrep.format}`
+    : buildTraitSummary(config);
 
+  const isInterview = config.track === 'interview';
   const coachRole = isPersonal
     ? `You are an expert dating and social communication coach. Analyze the following dating app conversation between ${speakerName} and ${personaName}.`
+    : isInterview
+    ? `You are an expert interview coach (aligned with interview-coach-skill framework). Analyze this job interview between candidate ${speakerName} and interviewer ${personaName}. Score on 5 dimensions: Substance (raw material), Structure (clarity), Relevance (question alignment), Credibility (authenticity), Differentiation (memorability). Each 0-10.`
     : `You are an expert communication coach. Analyze the following professional conversation between ${speakerName} and ${personaName}.`;
 
-  const defaultScenario = isPersonal
-    ? 'A dating app conversation.'
-    : 'A standard professional meeting.';
+  const defaultScenario = isPersonal ? 'A dating app conversation.' : isInterview ? 'A job interview.' : 'A standard professional meeting.';
 
   return `${coachRole}
 
@@ -126,7 +137,7 @@ ${speakerName.toUpperCase()}'S GOAL: ${config.userGoal}
 
 SCENARIO: ${config.scenario || defaultScenario}
 
-${personaName.toUpperCase()}'S PERSONALITY TRAITS:
+${personaName.toUpperCase()}'S ${isInterview && config.interviewPrep ? 'INTERVIEW CONTEXT' : 'PERSONALITY TRAITS'}:
 ${traitSummary}
 
 TRANSCRIPT:
@@ -138,21 +149,15 @@ Provide a detailed, constructive analysis. Be specific — reference actual quot
 
 IMPORTANT: Always refer to the participants by their actual names — use "${speakerName}" (not "the user") and "${personaName}" (not "the persona"). This makes the feedback feel personal and direct.
 
-You MUST respond with valid JSON matching this exact schema (no markdown, no code fences, just raw JSON):
-
+You MUST respond with valid JSON. Schema:
 {
   "confidenceScore": <number 0-100>,
-  "confidenceNotes": "<2-3 sentences analyzing ${speakerName}'s confidence level, referencing specific moments>",
-  "articulationFeedback": ["<specific feedback point>", "..."],
-  "personaReactionSummary": "<2-3 sentences describing how ${personaName} likely perceived ${speakerName}'s approach>",
-  "alternativeSuggestions": [
-    {
-      "original": "<exact quote from ${speakerName}>",
-      "suggestion": "<better phrasing>",
-      "rationale": "<why this is better>"
-    }
-  ]
+  "confidenceNotes": "<2-3 sentences>",
+  "articulationFeedback": ["<point>", "..."],
+  "personaReactionSummary": "<2-3 sentences>",
+  "alternativeSuggestions": [{"original": "<quote>", "suggestion": "<better>", "rationale": "<why>"}]
+${isInterview ? `,
+  "interviewDimensions": {"substance": <0-10>, "structure": <0-10>, "relevance": <0-10>, "credibility": <0-10>, "differentiation": <0-10>}` : ''}
 }
-
-Include 2-5 items in articulationFeedback and 2-4 items in alternativeSuggestions. Reference specific quotes from the transcript. Always use "${speakerName}" and "${personaName}" by name.`;
+Include 2-5 articulationFeedback, 2-4 alternativeSuggestions. Use names "${speakerName}" and "${personaName}".`;
 }

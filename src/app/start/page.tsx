@@ -33,11 +33,20 @@ export default function StartPage() {
   const handleStart = () => {
     if (!userGoal) return;
 
+    let interviewPrep: import('@/lib/types').InterviewPrepContext | undefined;
+    if (track === 'interview') {
+      try {
+        const raw = sessionStorage.getItem('interviewPrepContext');
+        if (raw) { interviewPrep = JSON.parse(raw); sessionStorage.removeItem('interviewPrepContext'); }
+      } catch { /* ignore */ }
+    }
+
     const config: PersonaConfig = {
       track,
       name: personaName,
       scenario,
       userGoal,
+      ...(interviewPrep && { interviewPrep }),
       difficultyLevel: traits.difficultyLevel ?? 5,
       decisionOrientation: traits.decisionOrientation ?? 5,
       communicationStyle: traits.communicationStyle ?? 5,
@@ -62,23 +71,24 @@ export default function StartPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AppHeader backHref="/" backLabel="Back" />
+      <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/'} backLabel="Back" />
       <div className="flex-1 py-8 px-6">
       <div className="max-w-xl mx-auto">
 
-        {/* Persona name + trait toggle */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-slate-900 mb-1">
             Talk to <span className="text-gradient">{personaName}</span>
           </h1>
-          <button
-            onClick={() => setShowTraits(!showTraits)}
-            className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            {showTraits ? 'Hide' : 'Show'} their traits
-          </button>
+          {track !== 'interview' && (
+            <button
+              onClick={() => setShowTraits(!showTraits)}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              {showTraits ? 'Hide' : 'Show'} their traits
+            </button>
+          )}
 
-          {showTraits && (
+          {showTraits && track !== 'interview' && (
             <div className="flex flex-wrap gap-1.5 mt-3">
               {personaAttrs.map((attr) => {
                 const value = traits[attr.key] ?? 5;
@@ -147,6 +157,8 @@ export default function StartPage() {
             placeholder={
               track === 'personal'
                 ? 'e.g., You matched on Tinder. They have a witty bio about travel and dogs.'
+                : track === 'interview'
+                ? 'e.g., 30-min behavioral screen. First round with the hiring manager.'
                 : "e.g., Quarterly review meeting. You've shipped a major project."
             }
             rows={2}
