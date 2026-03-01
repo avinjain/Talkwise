@@ -270,7 +270,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Resume & LinkedIn Validation */}
+        {/* Resume & LinkedIn — general profile grooming (no interview prep needed) */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
@@ -281,7 +281,7 @@ export default function ProfilePage() {
             <h2 className="text-sm font-semibold text-slate-900">Resume & LinkedIn Profile</h2>
           </div>
           <p className="text-xs text-slate-500 mb-4">
-            Get tailored feedback on how to improve your resume and LinkedIn profile alignment.
+            Groom your resume and LinkedIn profile with tailored improvement tips—no interview prep needed.
           </p>
           <ResumeLinkedInSection compact />
         </div>

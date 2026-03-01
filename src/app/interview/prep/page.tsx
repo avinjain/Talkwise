@@ -161,7 +161,7 @@ export default function InterviewPrepPage() {
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr,600px] gap-8">
-            {/* Left: Form */}
+            {/* Left: Form - Company, Role, JD, Interview format, then Resume/LinkedIn */}
             <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
@@ -184,6 +184,16 @@ export default function InterviewPrepPage() {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Job description (optional)</label>
+              <textarea
+                value={jd}
+                onChange={(e) => setJd(e.target.value)}
+                placeholder="Paste the JD here for more tailored questions..."
+                rows={4}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Interview format</label>
               <div className="grid grid-cols-2 gap-2">
                 {FORMATS.map((f) => (
@@ -199,16 +209,6 @@ export default function InterviewPrepPage() {
                   </button>
                 ))}
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Job description (optional)</label>
-              <textarea
-                value={jd}
-                onChange={(e) => setJd(e.target.value)}
-                placeholder="Paste the JD here for more tailored questions..."
-                rows={4}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
-              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Resume (optional)</label>
@@ -257,16 +257,6 @@ export default function InterviewPrepPage() {
                 />
               </details>
             </div>
-            {(resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim()) && (
-              <button
-                type="button"
-                onClick={handleAnalyzeProfile}
-                disabled={analyzing}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-              >
-                {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
-              </button>
-            )}
             <button
               onClick={handleContinue}
               disabled={!company.trim() || !role.trim() || continuing}
@@ -300,7 +290,7 @@ export default function InterviewPrepPage() {
                         : 'border-transparent text-slate-500 hover:text-slate-700'
                     }`}
                   >
-                    Analysis & Improvement tips
+                    Analyze profile & get improvement tips
                     {profileAnalysis && (
                       <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand-500" aria-hidden />
                     )}
@@ -309,41 +299,41 @@ export default function InterviewPrepPage() {
 
                 {rightTab === 'core-positioning' && (
                   <>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
-                        <svg className="w-4 h-4 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
                         </svg>
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-900">Speaking points</h3>
+                      <h3 className="text-xs font-semibold text-slate-900">Speaking points</h3>
                     </div>
-                    <p className="text-xs text-slate-500 mb-4">
-                      Speaking points for your interview. Upload your resume and generate pitches.
+                    <p className="text-[11px] text-slate-500 mb-3">
+                      Add resume above, then generate pitches.
                     </p>
 
                     {!hasResume ? (
-                      <p className="text-xs text-slate-400 italic">Add your resume above to generate speaking points.</p>
+                      <p className="text-[11px] text-slate-400 italic">Add your resume above.</p>
                     ) : (
                       <>
                         <button
                           type="button"
                           onClick={handleGeneratePitches}
                           disabled={loadingPitches}
-                          className="w-full mb-4 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                          className="w-full mb-3 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
                         >
                           {loadingPitches ? 'Generating...' : 'Generate speaking points'}
                         </button>
 
                         {pitches.length > 0 && (
-                          <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+                          <div className="space-y-2 max-h-[40vh] overflow-y-auto">
                             {pitches.map((p, i) => (
-                              <div key={i} className="border border-slate-100 rounded-lg p-3 bg-slate-50/50">
-                                <h4 className="text-xs font-semibold text-slate-800 mb-2">{p.name}</h4>
+                              <div key={i} className="border border-slate-100 rounded-md p-2 bg-slate-50/50">
+                                <h4 className="text-[11px] font-semibold text-slate-800 mb-1">{p.name}</h4>
                                 {p.hook && (
-                                  <p className="text-xs text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
+                                  <p className="text-[11px] text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
                                 )}
                                 {p.bullets && p.bullets.length > 0 && (
-                                  <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                  <ul className="text-[11px] text-slate-600 space-y-0.5 list-disc list-inside">
                                     {p.bullets.map((b, j) => (
                                       <li key={j}>{b}</li>
                                     ))}
@@ -360,29 +350,38 @@ export default function InterviewPrepPage() {
 
                 {rightTab === 'analysis' && (
                   <>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                        <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-900">Profile analysis</h3>
+                      <h3 className="text-xs font-semibold text-slate-900">Profile analysis</h3>
                     </div>
-                    <p className="text-xs text-slate-500 mb-4">
-                      Add resume and/or LinkedIn above, then click &ldquo;Analyze profile & get improvement tips&rdquo;.
+                    <p className="text-[11px] text-slate-500 mb-3">
+                      Add resume and/or LinkedIn above, then analyze.
                     </p>
 
+                    {resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim() ? (
+                      <button
+                        type="button"
+                        onClick={handleAnalyzeProfile}
+                        disabled={analyzing}
+                        className="w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                      >
+                        {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
+                      </button>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic mb-3">Add your resume and/or LinkedIn above.</p>
+                    )}
+
                     {profileAnalysis ? (
-                      <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-200">
+                      <div className="max-h-[40vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-200">
                         <AnalysisDisplay content={profileAnalysis} className="text-sm" />
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic">
-                        {resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim()
-                          ? 'Click &ldquo;Analyze profile & get improvement tips&rdquo; to see personalized tips.'
-                          : 'Add your resume and/or LinkedIn above to get improvement tips.'}
-                      </p>
-                    )}
+                    ) : resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim() ? (
+                      <p className="text-[11px] text-slate-400 italic">Click the button above to see personalized tips.</p>
+                    ) : null}
                   </>
                 )}
               </div>
