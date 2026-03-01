@@ -3,16 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
-import { PersonaConfig, Track, getGoalOptions, getPersonaAttributes } from '@/lib/types';
+import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
   const router = useRouter();
   const [personaName, setPersonaName] = useState('');
   const [track, setTrack] = useState<Track>('professional');
   const [traits, setTraits] = useState<Record<string, number>>({});
-  const [userGoal, setUserGoal] = useState('');
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [scenario, setScenario] = useState('');
   const [showTraits, setShowTraits] = useState(false);
+  const [interviewPrep, setInterviewPrep] = useState<import('@/lib/types').InterviewPrepContext | null>(null);
+  const [applicableGoalIds, setApplicableGoalIds] = useState<string[] | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('startPersonaData');
@@ -25,19 +27,47 @@ export default function StartPage() {
       setPersonaName(parsed.name || '');
       setTrack(parsed.track || 'professional');
       setTraits(parsed);
+      if (parsed.track === 'interview') {
+        const raw = sessionStorage.getItem('interviewPrepContext');
+        if (raw) setInterviewPrep(JSON.parse(raw));
+      }
     } catch {
       router.push('/');
     }
   }, [router]);
 
-  const handleStart = () => {
-    if (!userGoal) return;
+  useEffect(() => {
+    if (track !== 'interview' || !interviewPrep) return;
+    const hasContext = (interviewPrep.role || '').trim() || (interviewPrep.resume || '').trim();
+    if (!hasContext) {
+      setApplicableGoalIds(INTERVIEW_GOAL_OPTIONS.map((g) => g.id));
+      return;
+    }
+    let cancelled = false;
+    fetch('/api/interview/filter-goals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: interviewPrep.role, resume: (interviewPrep.resume || '').slice(0, 3000) }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.applicableIds)) setApplicableGoalIds(data.applicableIds);
+        else if (!cancelled) setApplicableGoalIds(INTERVIEW_GOAL_OPTIONS.map((g) => g.id));
+      })
+      .catch(() => {
+        if (!cancelled) setApplicableGoalIds(INTERVIEW_GOAL_OPTIONS.map((g) => g.id));
+      });
+    return () => { cancelled = true; };
+  }, [track, interviewPrep]);
 
-    let interviewPrep: import('@/lib/types').InterviewPrepContext | undefined;
+  const handleStart = () => {
+    if (selectedGoals.length === 0) return;
+
+    let prepToUse: import('@/lib/types').InterviewPrepContext | undefined = interviewPrep ?? undefined;
     if (track === 'interview') {
       try {
         const raw = sessionStorage.getItem('interviewPrepContext');
-        if (raw) { interviewPrep = JSON.parse(raw); sessionStorage.removeItem('interviewPrepContext'); }
+        if (raw) { prepToUse = JSON.parse(raw); sessionStorage.removeItem('interviewPrepContext'); }
       } catch { /* ignore */ }
     }
 
@@ -45,8 +75,8 @@ export default function StartPage() {
       track,
       name: personaName,
       scenario,
-      userGoal,
-      ...(interviewPrep && { interviewPrep }),
+      userGoal: selectedGoals.join(', '),
+      ...(prepToUse && { interviewPrep: prepToUse }),
       difficultyLevel: traits.difficultyLevel ?? 5,
       decisionOrientation: traits.decisionOrientation ?? 5,
       communicationStyle: traits.communicationStyle ?? 5,
@@ -66,8 +96,17 @@ export default function StartPage() {
     router.push('/chat');
   };
 
-  const goalOptions = getGoalOptions(track);
+  const goalOptions =
+    track === 'interview' && applicableGoalIds
+      ? INTERVIEW_GOAL_OPTIONS.filter((g) => applicableGoalIds.includes(g.id))
+      : getGoalOptions(track);
   const personaAttrs = getPersonaAttributes(track);
+
+  const toggleGoal = (label: string) => {
+    setSelectedGoals((prev) =>
+      prev.includes(label) ? prev.filter((g) => g !== label) : [...prev, label]
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -109,16 +148,19 @@ export default function StartPage() {
         {/* Goal selection */}
         <div className="mb-5">
           <label className="block text-xs font-medium text-slate-600 mb-2">
-            What&apos;s the conversation about?
+            What&apos;s the conversation about? <span className="font-normal text-slate-400">(select one or more)</span>
           </label>
+          {track === 'interview' && (interviewPrep?.role || interviewPrep?.resume) && !applicableGoalIds ? (
+            <p className="text-sm text-slate-500 py-4">Loading options based on your role and resume…</p>
+          ) : (
           <div className="grid grid-cols-2 gap-2">
             {goalOptions.map((goal) => {
-              const isSelected = userGoal === goal.label;
+              const isSelected = selectedGoals.includes(goal.label);
               return (
                 <button
                   key={goal.id}
                   type="button"
-                  onClick={() => setUserGoal(goal.label)}
+                  onClick={() => toggleGoal(goal.label)}
                   className={`relative p-3 rounded-lg border text-left transition-all ${
                     isSelected
                       ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500/30'
@@ -144,6 +186,7 @@ export default function StartPage() {
               );
             })}
           </div>
+          )}
         </div>
 
         {/* Scenario */}
@@ -170,7 +213,7 @@ export default function StartPage() {
         <button
           type="button"
           onClick={handleStart}
-          disabled={!userGoal}
+          disabled={selectedGoals.length === 0}
           className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
         >
           Start practicing
