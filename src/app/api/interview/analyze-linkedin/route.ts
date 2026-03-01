@@ -104,11 +104,16 @@ ${profileContent.slice(0, 6000)}
 ---
 ${jd ? `\nJOB DESCRIPTION:\n---\n${jd.slice(0, 4000)}\n---` : ''}
 
-Provide a concise optimization analysis (plain text, no markdown) with:
+Provide a concise optimization analysis in **markdown format**. Use:
+- ## for section headers
+- **bold** for emphasis
+- - for bullet points
+
+Sections (use ## for each):
 1. **Profile strengths** — What stands out or differentiates this candidate (headline, about, experience)
 2. **Coherence** — How well does the profile tell a consistent story? Any gaps or inconsistencies?
 3. **Positioning** — How clearly does the profile convey value and expertise for${role ? ` a ${role}` : ' the target'} role?
-4. **Optimization suggestions** — 3–5 specific, actionable tweaks to make the profile stronger${jd ? ' given the job description' : ''}
+4. **Optimization suggestions** — 3–5 specific, actionable tweaks. Use a bullet list.
 
 Keep it actionable and under 500 words.`;
 

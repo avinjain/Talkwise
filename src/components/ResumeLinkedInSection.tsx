@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 interface ResumeLinkedInSectionProps {
   role?: string;
@@ -109,8 +110,8 @@ export default function ResumeLinkedInSection({ role = '', jd = '', compact = fa
             {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
           </button>
           {profileAnalysis && (
-            <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
-              {profileAnalysis}
+            <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200">
+              <AnalysisDisplay content={profileAnalysis} className="text-sm" />
             </div>
           )}
         </div>

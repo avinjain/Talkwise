@@ -163,13 +163,14 @@ ${profileContent.slice(0, 6000)}
 ${role ? `\nTarget role: ${role}` : ''}
 ${jd ? `\nJob description (use for fit):\n---\n${jd.slice(0, 3000)}\n---` : ''}
 
-Provide a detailed, actionable analysis (plain text, no markdown) with:
+Provide a detailed, actionable analysis in **markdown format**. Use ## for section headers, **bold** for emphasis, - for bullet points.
 
+Sections (use ## for each):
 1. **Alignment gap** — What’s on the resume but missing or weak on LinkedIn? What should be added or emphasized?
 2. **Headline & About** — Specific suggestions to make the headline and About section stronger, drawing from resume strengths.
 3. **Experience section** — Gaps, missing achievements, or better ways to phrase roles. Reference resume for specifics.
 4. **Keywords & positioning** — What keywords or themes from the resume should appear on LinkedIn${role ? ` for this role` : ''}?
-5. **5–7 concrete action items** — Specific, copy-paste-ready or very clear edits to improve the profile.
+5. **Action items** — 5–7 concrete, copy-paste-ready edits. Use a bullet list.
 
 Keep it actionable and under 600 words.`;
 

@@ -32,7 +32,12 @@ ${resume.slice(0, 6000)}
 ---
 ${jd ? `\nJOB DESCRIPTION:\n---\n${jd.slice(0, 4000)}\n---` : ''}
 
-Provide a concise analysis (plain text, no markdown) with:
+Provide a concise analysis in **markdown format**. Use:
+- ## for section headers
+- **bold** for emphasis
+- - for bullet points
+
+Sections (use ## for each):
 1. **Strengths** — 2–3 standout points that align with${role ? ` a ${role}` : ' most'} roles
 2. **Gaps** — Areas to address or clarify (if JD provided, compare against it)
 3. **Story bank** — 2–3 experiences from the resume that could answer behavioral questions (brief STAR outline)

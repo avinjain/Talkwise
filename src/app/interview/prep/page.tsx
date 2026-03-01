@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
+import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 const FORMATS = [
   { id: 'behavioral', label: 'Behavioral', desc: 'STAR-format, past experience' },
@@ -31,6 +32,7 @@ export default function InterviewPrepPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
   const [continuing, setContinuing] = useState(false);
+  const [rightTab, setRightTab] = useState<'core-positioning' | 'analysis'>('core-positioning');
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -93,6 +95,7 @@ export default function InterviewPrepPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analysis failed');
       setProfileAnalysis(data.analysis || 'Analysis complete.');
+      setRightTab('analysis');
       if (data.resumeContent) setResumeContent(data.resumeContent);
       if (data.profileContent) setLinkedInContent(data.profileContent);
     } catch (e) {
@@ -255,21 +258,14 @@ export default function InterviewPrepPage() {
               </details>
             </div>
             {(resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim()) && (
-              <div>
-                <button
-                  type="button"
-                  onClick={handleAnalyzeProfile}
-                  disabled={analyzing}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                >
-                  {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
-                </button>
-                {profileAnalysis && (
-                  <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
-                    {profileAnalysis}
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={handleAnalyzeProfile}
+                disabled={analyzing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+              >
+                {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
+              </button>
             )}
             <button
               onClick={handleContinue}
@@ -280,52 +276,112 @@ export default function InterviewPrepPage() {
             </button>
             </div>
 
-            {/* Right: Core positioning / Speaking points */}
+            {/* Right: Tabbed panel - Core positioning | Analysis & Improvement tips */}
             <div className="lg:sticky lg:top-24 lg:self-start">
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                    </svg>
-                  </div>
-                  <h2 className="text-sm font-semibold text-slate-900">Core positioning</h2>
+                <div className="flex border-b border-slate-200 mb-4 -mx-5 px-5">
+                  <button
+                    type="button"
+                    onClick={() => setRightTab('core-positioning')}
+                    className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
+                      rightTab === 'core-positioning'
+                        ? 'border-brand-500 text-brand-700'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Core positioning
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRightTab('analysis')}
+                    className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors relative ${
+                      rightTab === 'analysis'
+                        ? 'border-brand-500 text-brand-700'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Analysis & Improvement tips
+                    {profileAnalysis && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand-500" aria-hidden />
+                    )}
+                  </button>
                 </div>
-                <p className="text-xs text-slate-500 mb-4">
-                  Speaking points for your interview. Upload your resume and generate pitches.
-                </p>
 
-                {!hasResume ? (
-                  <p className="text-xs text-slate-400 italic">Add your resume above to generate speaking points.</p>
-                ) : (
+                {rightTab === 'core-positioning' && (
                   <>
-                    <button
-                      type="button"
-                      onClick={handleGeneratePitches}
-                      disabled={loadingPitches}
-                      className="w-full mb-4 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                    >
-                      {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                    </button>
-
-                    {pitches.length > 0 && (
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                        {pitches.map((p, i) => (
-                          <div key={i} className="border border-slate-100 rounded-lg p-3 bg-slate-50/50">
-                            <h3 className="text-xs font-semibold text-slate-800 mb-2">{p.name}</h3>
-                            {p.hook && (
-                              <p className="text-xs text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
-                            )}
-                            {p.bullets && p.bullets.length > 0 && (
-                              <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-                                {p.bullets.map((b, j) => (
-                                  <li key={j}>{b}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                        </svg>
                       </div>
+                      <h3 className="text-sm font-semibold text-slate-900">Speaking points</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-4">
+                      Speaking points for your interview. Upload your resume and generate pitches.
+                    </p>
+
+                    {!hasResume ? (
+                      <p className="text-xs text-slate-400 italic">Add your resume above to generate speaking points.</p>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleGeneratePitches}
+                          disabled={loadingPitches}
+                          className="w-full mb-4 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                        >
+                          {loadingPitches ? 'Generating...' : 'Generate speaking points'}
+                        </button>
+
+                        {pitches.length > 0 && (
+                          <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+                            {pitches.map((p, i) => (
+                              <div key={i} className="border border-slate-100 rounded-lg p-3 bg-slate-50/50">
+                                <h4 className="text-xs font-semibold text-slate-800 mb-2">{p.name}</h4>
+                                {p.hook && (
+                                  <p className="text-xs text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
+                                )}
+                                {p.bullets && p.bullets.length > 0 && (
+                                  <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                    {p.bullets.map((b, j) => (
+                                      <li key={j}>{b}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+
+                {rightTab === 'analysis' && (
+                  <>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900">Profile analysis</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 mb-4">
+                      Add resume and/or LinkedIn above, then click &ldquo;Analyze profile & get improvement tips&rdquo;.
+                    </p>
+
+                    {profileAnalysis ? (
+                      <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-200">
+                        <AnalysisDisplay content={profileAnalysis} className="text-sm" />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">
+                        {resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim()
+                          ? 'Click &ldquo;Analyze profile & get improvement tips&rdquo; to see personalized tips.'
+                          : 'Add your resume and/or LinkedIn above to get improvement tips.'}
+                      </p>
                     )}
                   </>
                 )}
