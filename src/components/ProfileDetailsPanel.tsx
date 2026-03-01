@@ -87,7 +87,7 @@ export default function ProfileDetailsPanel() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6">
       {/* Left: Input form */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <p className="text-sm text-slate-500 mb-5">
@@ -177,7 +177,7 @@ export default function ProfileDetailsPanel() {
             <button
               type="button"
               onClick={() => setActiveTab('analysis')}
-              className={`flex-1 py-3.5 px-4 text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-3 text-xs font-medium transition-colors ${
                 activeTab === 'analysis'
                   ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
                   : 'text-slate-500 hover:text-slate-700'
@@ -193,7 +193,7 @@ export default function ProfileDetailsPanel() {
             <button
               type="button"
               onClick={() => setActiveTab('core-positioning')}
-              className={`flex-1 py-3.5 px-4 text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-3 text-xs font-medium transition-colors ${
                 activeTab === 'core-positioning'
                   ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
                   : 'text-slate-500 hover:text-slate-700'
@@ -208,31 +208,31 @@ export default function ProfileDetailsPanel() {
             </button>
           </div>
 
-          <div className="p-5">
+          <div className="p-4">
             {activeTab === 'analysis' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {hasInput ? (
                   <>
                     <button
                       type="button"
                       onClick={handleAnalyzeProfile}
                       disabled={analyzing}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all shadow-md shadow-brand-500/20"
+                      className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
                     >
                       {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
                     </button>
                     {profileAnalysis ? (
-                      <div className="max-h-[50vh] overflow-y-auto p-4 rounded-xl bg-slate-50 border border-slate-100">
-                        <AnalysisDisplay content={profileAnalysis} className="text-sm" />
+                      <div className="max-h-[35vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
+                        <AnalysisDisplay content={profileAnalysis} compact />
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-400 text-center py-4">
+                      <p className="text-xs text-slate-400 text-center py-3">
                         Click the button above to see personalized improvement tips.
                       </p>
                     )}
                   </>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-8">
+                  <p className="text-xs text-slate-400 text-center py-6">
                     Add your resume and/or LinkedIn on the left to get started.
                   </p>
                 )}
@@ -240,27 +240,27 @@ export default function ProfileDetailsPanel() {
             )}
 
             {activeTab === 'core-positioning' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {hasResume ? (
                   <>
                     <button
                       type="button"
                       onClick={handleGeneratePitches}
                       disabled={loadingPitches}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all shadow-md shadow-brand-500/20"
+                      className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
                     >
                       {loadingPitches ? 'Generating...' : 'Generate speaking points'}
                     </button>
                     {pitches.length > 0 ? (
-                      <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                      <div className="space-y-2 max-h-[35vh] overflow-y-auto">
                         {pitches.map((p, i) => (
-                          <div key={i} className="rounded-xl p-4 bg-slate-50 border border-slate-100">
-                            <h4 className="text-sm font-semibold text-slate-800 mb-2">{p.name}</h4>
+                          <div key={i} className="rounded-lg p-2.5 bg-slate-50 border border-slate-100">
+                            <h4 className="text-xs font-semibold text-slate-800 mb-1">{p.name}</h4>
                             {p.hook && (
-                              <p className="text-sm text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
+                              <p className="text-xs text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
                             )}
                             {p.bullets && p.bullets.length > 0 && (
-                              <ul className="text-sm text-slate-600 space-y-1.5 list-disc list-inside">
+                              <ul className="text-xs text-slate-600 space-y-0.5 list-disc list-inside">
                                 {p.bullets.map((b, j) => (
                                   <li key={j}>{b}</li>
                                 ))}
@@ -270,13 +270,13 @@ export default function ProfileDetailsPanel() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-400 text-center py-4">
+                      <p className="text-xs text-slate-400 text-center py-3">
                         Click the button above to generate speaking points from your resume.
                       </p>
                     )}
                   </>
                 ) : (
-                  <p className="text-xs text-slate-400 text-center py-8">
+                  <p className="text-xs text-slate-400 text-center py-6">
                     Add your resume on the left to generate speaking points.
                   </p>
                 )}
