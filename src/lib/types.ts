@@ -8,6 +8,7 @@ export interface InterviewPrepContext {
   format: string;
   jd?: string;
   resume?: string;
+  linkedIn?: string;
 }
 
 export interface PersonaConfig {

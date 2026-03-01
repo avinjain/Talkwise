@@ -22,7 +22,10 @@ export default function InterviewPrepPage() {
   const [jd, setJd] = useState('');
   const [resume, setResume] = useState('');
   const [resumeAnalysis, setResumeAnalysis] = useState<string | null>(null);
+  const [linkedIn, setLinkedIn] = useState('');
+  const [linkedInAnalysis, setLinkedInAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzingLinkedIn, setAnalyzingLinkedIn] = useState(false);
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -56,6 +59,30 @@ export default function InterviewPrepPage() {
     }
   };
 
+  const handleAnalyzeLinkedIn = async () => {
+    if (!linkedIn.trim()) return;
+    setAnalyzingLinkedIn(true);
+    setLinkedInAnalysis(null);
+    try {
+      const res = await fetch('/api/interview/analyze-linkedin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          linkedIn: linkedIn.trim(),
+          role: role.trim() || undefined,
+          jd: jd.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('Analysis failed');
+      const data = await res.json();
+      setLinkedInAnalysis(data.analysis || data.error || 'Analysis complete.');
+    } catch {
+      setLinkedInAnalysis('Could not analyze. You can still continue.');
+    } finally {
+      setAnalyzingLinkedIn(false);
+    }
+  };
+
   const handleContinue = () => {
     if (!company.trim() || !role.trim()) return;
     const prep: import('@/lib/types').InterviewPrepContext = {
@@ -64,6 +91,7 @@ export default function InterviewPrepPage() {
       format,
       jd: jd.trim() || undefined,
       resume: resume.trim() || undefined,
+      linkedIn: linkedIn.trim() || undefined,
     };
     sessionStorage.setItem('interviewPrepContext', JSON.stringify(prep));
     sessionStorage.setItem('userName', session.user?.name || 'there');
@@ -163,6 +191,31 @@ export default function InterviewPrepPage() {
               {resumeAnalysis && (
                 <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
                   {resumeAnalysis}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn profile (optional)</label>
+              <textarea
+                value={linkedIn}
+                onChange={(e) => { setLinkedIn(e.target.value); setLinkedInAnalysis(null); }}
+                placeholder="Paste your LinkedIn About, headline, or key sections. We'll analyze and use it for feedback."
+                rows={4}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              />
+              {linkedIn.trim() && (
+                <button
+                  type="button"
+                  onClick={handleAnalyzeLinkedIn}
+                  disabled={analyzingLinkedIn}
+                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                >
+                  {analyzingLinkedIn ? 'Analyzing...' : 'Analyze LinkedIn'}
+                </button>
+              )}
+              {linkedInAnalysis && (
+                <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
+                  {linkedInAnalysis}
                 </div>
               )}
             </div>

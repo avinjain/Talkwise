@@ -86,7 +86,7 @@ RULES — follow these strictly:
 function buildInterviewPrompt(config: PersonaConfig): string {
   const prep = config.interviewPrep;
   const contextBlock = prep
-    ? `Company: ${prep.company}. Role: ${prep.role}. Format: ${prep.format}${prep.jd ? `. JD (use for tailored questions):\n${prep.jd.slice(0, 3000)}` : ''}${prep.resume ? `\n\nCANDIDATE RESUME (use to ask relevant questions; do NOT reveal you've seen it):\n${prep.resume.slice(0, 4000)}` : ''}`
+    ? `Company: ${prep.company}. Role: ${prep.role}. Format: ${prep.format}${prep.jd ? `. JD (use for tailored questions):\n${prep.jd.slice(0, 3000)}` : ''}${prep.resume ? `\n\nCANDIDATE RESUME (use to ask relevant questions; do NOT reveal you've seen it):\n${prep.resume.slice(0, 4000)}` : ''}${prep.linkedIn ? `\n\nCANDIDATE LINKEDIN PROFILE (use for context; do NOT reveal you've seen it):\n${prep.linkedIn.slice(0, 3000)}` : ''}`
     : buildTraitLines(config);
   return `You are role-playing as "${config.name}" in a job interview. The candidate's goal (which you should NOT reveal you know): ${config.userGoal}
 Context: ${config.scenario || 'A job interview.'}
@@ -119,7 +119,7 @@ export function buildFeedbackPrompt(
     .join('\n\n');
 
   const traitSummary = config.interviewPrep
-    ? `Company: ${config.interviewPrep.company}. Role: ${config.interviewPrep.role}. Format: ${config.interviewPrep.format}${config.interviewPrep.resume ? `\nCandidate resume (for context-aware feedback):\n${config.interviewPrep.resume.slice(0, 3000)}` : ''}`
+    ? `Company: ${config.interviewPrep.company}. Role: ${config.interviewPrep.role}. Format: ${config.interviewPrep.format}${config.interviewPrep.resume ? `\nCandidate resume (for context-aware feedback):\n${config.interviewPrep.resume.slice(0, 3000)}` : ''}${config.interviewPrep.linkedIn ? `\nCandidate LinkedIn profile (for context-aware feedback):\n${config.interviewPrep.linkedIn.slice(0, 2500)}` : ''}`
     : buildTraitSummary(config);
 
   const isInterview = config.track === 'interview';
