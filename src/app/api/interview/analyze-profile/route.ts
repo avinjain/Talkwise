@@ -63,7 +63,7 @@ function profileToText(profile: Record<string, unknown>): string {
 
 async function fetchLinkedInProfile(url: string): Promise<string> {
   const apiKey = process.env.PROXYCURL_API_KEY;
-  if (!apiKey) throw new Error('Add PROXYCURL_API_KEY to fetch LinkedIn profiles by URL.');
+  if (!apiKey) throw new Error('LinkedIn URL fetch is not configured. Please paste your LinkedIn About section in the "Or paste your About section" field below instead.');
 
   const res = await fetch(
     `https://nubela.co/proxycurl/api/v2/linkedin?url=${encodeURIComponent(url)}`,

@@ -199,6 +199,7 @@ export default function InterviewPrepPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn profile (optional)</label>
+              <p className="text-xs text-slate-500 mb-1.5">Enter URL to fetch, or paste your About section below.</p>
               <input
                 type="url"
                 value={linkedInUrl}
