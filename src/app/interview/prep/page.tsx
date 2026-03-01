@@ -160,7 +160,7 @@ export default function InterviewPrepPage() {
             Share context so the mock interview feels real. We use this (not personality sliders) to shape the interviewer.
           </p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,340px] gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,600px] gap-8">
             {/* Left: Form */}
             <div className="space-y-5">
             <div>
