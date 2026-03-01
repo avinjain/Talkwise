@@ -20,6 +20,9 @@ export default function InterviewPrepPage() {
   const [role, setRole] = useState('');
   const [format, setFormat] = useState('behavioral');
   const [jd, setJd] = useState('');
+  const [resume, setResume] = useState('');
+  const [resumeAnalysis, setResumeAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -29,6 +32,30 @@ export default function InterviewPrepPage() {
 
   if (status === 'loading' || !session) return null;
 
+  const handleAnalyzeResume = async () => {
+    if (!resume.trim()) return;
+    setAnalyzing(true);
+    setResumeAnalysis(null);
+    try {
+      const res = await fetch('/api/interview/analyze-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume: resume.trim(),
+          role: role.trim() || undefined,
+          jd: jd.trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('Analysis failed');
+      const data = await res.json();
+      setResumeAnalysis(data.analysis || data.error || 'Analysis complete.');
+    } catch {
+      setResumeAnalysis('Could not analyze. You can still continue.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleContinue = () => {
     if (!company.trim() || !role.trim()) return;
     const prep: import('@/lib/types').InterviewPrepContext = {
@@ -36,6 +63,7 @@ export default function InterviewPrepPage() {
       role: role.trim(),
       format,
       jd: jd.trim() || undefined,
+      resume: resume.trim() || undefined,
     };
     sessionStorage.setItem('interviewPrepContext', JSON.stringify(prep));
     sessionStorage.setItem('userName', session.user?.name || 'there');
@@ -112,6 +140,31 @@ export default function InterviewPrepPage() {
                 rows={4}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Resume (optional)</label>
+              <textarea
+                value={resume}
+                onChange={(e) => { setResume(e.target.value); setResumeAnalysis(null); }}
+                placeholder="Paste your resume here. We'll use it for tailored questions and feedback."
+                rows={6}
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              />
+              {resume.trim() && (
+                <button
+                  type="button"
+                  onClick={handleAnalyzeResume}
+                  disabled={analyzing}
+                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                >
+                  {analyzing ? 'Analyzing...' : 'Analyze resume'}
+                </button>
+              )}
+              {resumeAnalysis && (
+                <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
+                  {resumeAnalysis}
+                </div>
+              )}
             </div>
           </div>
 

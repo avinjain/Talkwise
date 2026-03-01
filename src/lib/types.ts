@@ -7,6 +7,7 @@ export interface InterviewPrepContext {
   role: string;
   format: string;
   jd?: string;
+  resume?: string;
 }
 
 export interface PersonaConfig {
