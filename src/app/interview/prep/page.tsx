@@ -22,7 +22,9 @@ export default function InterviewPrepPage() {
   const [jd, setJd] = useState('');
   const [resume, setResume] = useState('');
   const [resumeAnalysis, setResumeAnalysis] = useState<string | null>(null);
-  const [linkedIn, setLinkedIn] = useState('');
+  const [linkedInUrl, setLinkedInUrl] = useState('');
+  const [linkedInPaste, setLinkedInPaste] = useState('');
+  const [linkedInContent, setLinkedInContent] = useState('');
   const [linkedInAnalysis, setLinkedInAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzingLinkedIn, setAnalyzingLinkedIn] = useState(false);
@@ -60,24 +62,29 @@ export default function InterviewPrepPage() {
   };
 
   const handleAnalyzeLinkedIn = async () => {
-    if (!linkedIn.trim()) return;
+    const url = linkedInUrl.trim();
+    const paste = linkedInPaste.trim();
+    if (!url && !paste) return;
     setAnalyzingLinkedIn(true);
     setLinkedInAnalysis(null);
+    setLinkedInContent('');
     try {
       const res = await fetch('/api/interview/analyze-linkedin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          linkedIn: linkedIn.trim(),
+          linkedInUrl: url || undefined,
+          linkedIn: paste || undefined,
           role: role.trim() || undefined,
           jd: jd.trim() || undefined,
         }),
       });
-      if (!res.ok) throw new Error('Analysis failed');
       const data = await res.json();
-      setLinkedInAnalysis(data.analysis || data.error || 'Analysis complete.');
-    } catch {
-      setLinkedInAnalysis('Could not analyze. You can still continue.');
+      if (!res.ok) throw new Error(data.error || 'Analysis failed');
+      setLinkedInAnalysis(data.analysis || 'Analysis complete.');
+      if (data.profileContent) setLinkedInContent(data.profileContent);
+    } catch (e) {
+      setLinkedInAnalysis(e instanceof Error ? e.message : 'Could not analyze. You can still continue.');
     } finally {
       setAnalyzingLinkedIn(false);
     }
@@ -91,7 +98,7 @@ export default function InterviewPrepPage() {
       format,
       jd: jd.trim() || undefined,
       resume: resume.trim() || undefined,
-      linkedIn: linkedIn.trim() || undefined,
+      linkedIn: (linkedInContent || linkedInPaste).trim() || undefined,
     };
     sessionStorage.setItem('interviewPrepContext', JSON.stringify(prep));
     sessionStorage.setItem('userName', session.user?.name || 'there');
@@ -196,21 +203,31 @@ export default function InterviewPrepPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn profile (optional)</label>
-              <textarea
-                value={linkedIn}
-                onChange={(e) => { setLinkedIn(e.target.value); setLinkedInAnalysis(null); }}
-                placeholder="Paste your LinkedIn About, headline, or key sections. We'll analyze and use it for feedback."
-                rows={4}
+              <input
+                type="url"
+                value={linkedInUrl}
+                onChange={(e) => { setLinkedInUrl(e.target.value); setLinkedInAnalysis(null); }}
+                placeholder="https://linkedin.com/in/yourprofile"
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
               />
-              {linkedIn.trim() && (
+              <details className="mt-2">
+                <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your About section manually</summary>
+                <textarea
+                  value={linkedInPaste}
+                  onChange={(e) => { setLinkedInPaste(e.target.value); setLinkedInAnalysis(null); }}
+                  placeholder="Paste your LinkedIn About, headline, or key sections..."
+                  rows={3}
+                  className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+                />
+              </details>
+              {(linkedInUrl.trim() || linkedInPaste.trim()) && (
                 <button
                   type="button"
                   onClick={handleAnalyzeLinkedIn}
                   disabled={analyzingLinkedIn}
                   className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
                 >
-                  {analyzingLinkedIn ? 'Analyzing...' : 'Analyze LinkedIn'}
+                  {analyzingLinkedIn ? 'Fetching & analyzing...' : 'Fetch & optimize'}
                 </button>
               )}
               {linkedInAnalysis && (
