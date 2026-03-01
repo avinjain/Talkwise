@@ -87,191 +87,202 @@ export default function ProfileDetailsPanel() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr,480px] gap-8">
-      {/* Left: Enter details */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-1">Enter details</h2>
-          <p className="text-sm text-slate-500 mb-4">
-            Add your resume and/or LinkedIn to get AI-powered analysis and speaking points (interview-coach framework).
-          </p>
-        </div>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-6">
+      {/* Left: Input form */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-sm text-slate-500 mb-5">
+          Add your resume and/or LinkedIn to get AI-powered analysis and speaking points.
+        </p>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Resume</label>
-          <input
-            type="file"
-            accept=".pdf,.docx,.txt"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              setResumeFile(f || null);
-              setProfileAnalysis(null);
-              setPitches([]);
-              e.target.value = '';
-            }}
-            className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-          />
-          {resumeFile && <p className="mt-1 text-xs text-slate-500">{resumeFile.name}</p>}
-          <details className="mt-2">
-            <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your resume</summary>
-            <textarea
-              value={resumePaste}
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Resume</label>
+            <input
+              type="file"
+              accept=".pdf,.docx,.txt"
               onChange={(e) => {
-                setResumePaste(e.target.value);
+                const f = e.target.files?.[0];
+                setResumeFile(f || null);
                 setProfileAnalysis(null);
                 setPitches([]);
+                e.target.value = '';
               }}
-              placeholder="Paste resume text..."
-              rows={4}
-              className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:cursor-pointer"
             />
-          </details>
-        </div>
+            {resumeFile && <p className="mt-1.5 text-xs text-slate-500">{resumeFile.name}</p>}
+            <details className="mt-2">
+              <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+                Or paste resume text
+              </summary>
+              <textarea
+                value={resumePaste}
+                onChange={(e) => {
+                  setResumePaste(e.target.value);
+                  setProfileAnalysis(null);
+                  setPitches([]);
+                }}
+                placeholder="Paste resume text..."
+                rows={4}
+                className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
+              />
+            </details>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn profile</label>
-          <p className="text-xs text-slate-500 mb-1.5">Enter URL to fetch, or paste your About section.</p>
-          <input
-            type="url"
-            value={linkedInUrl}
-            onChange={(e) => {
-              setLinkedInUrl(e.target.value);
-              setProfileAnalysis(null);
-            }}
-            placeholder="https://linkedin.com/in/yourprofile"
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
-          />
-          <details className="mt-2">
-            <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your About section</summary>
-            <textarea
-              value={linkedInPaste}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">LinkedIn profile</label>
+            <input
+              type="url"
+              value={linkedInUrl}
               onChange={(e) => {
-                setLinkedInPaste(e.target.value);
+                setLinkedInUrl(e.target.value);
                 setProfileAnalysis(null);
               }}
-              placeholder="Paste LinkedIn About, headline, or key sections..."
-              rows={3}
-              className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              placeholder="https://linkedin.com/in/yourprofile"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
             />
-          </details>
-        </div>
+            <details className="mt-2">
+              <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+                Or paste your About section
+              </summary>
+              <textarea
+                value={linkedInPaste}
+                onChange={(e) => {
+                  setLinkedInPaste(e.target.value);
+                  setProfileAnalysis(null);
+                }}
+                placeholder="Paste LinkedIn About, headline, or key sections..."
+                rows={3}
+                className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
+              />
+            </details>
+          </div>
 
-        {hasInput && (
-          <button
-            type="button"
-            onClick={clearInputs}
-            className="text-xs text-slate-500 hover:text-slate-700"
-          >
-            Clear
-          </button>
-        )}
+          {hasInput && (
+            <button
+              type="button"
+              onClick={clearInputs}
+              className="text-xs text-slate-400 hover:text-slate-600"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Right: Analysis & Core positioning tabs */}
+      {/* Right: Results panel */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex border-b border-slate-200 mb-4 -mx-5 px-5">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Tabs */}
+          <div className="flex border-b border-slate-200 bg-slate-50/50">
             <button
               type="button"
               onClick={() => setActiveTab('analysis')}
-              className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
+              className={`flex-1 py-3.5 px-4 text-sm font-medium transition-colors ${
                 activeTab === 'analysis'
-                  ? 'border-brand-500 text-brand-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Analyze profile & get improvement tips
-              {profileAnalysis && (
-                <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-brand-500 align-middle" aria-hidden />
-              )}
+              <span className="flex items-center justify-center gap-1.5">
+                Analysis
+                {profileAnalysis && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500" aria-hidden />
+                )}
+              </span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('core-positioning')}
-              className={`py-2.5 px-3 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
+              className={`flex-1 py-3.5 px-4 text-sm font-medium transition-colors ${
                 activeTab === 'core-positioning'
-                  ? 'border-brand-500 text-brand-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-brand-700 border-b-2 border-brand-500 -mb-px'
+                  : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Core positioning
-              {pitches.length > 0 && (
-                <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-brand-500 align-middle" aria-hidden />
-              )}
+              <span className="flex items-center justify-center gap-1.5">
+                Core positioning
+                {pitches.length > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-500" aria-hidden />
+                )}
+              </span>
             </button>
           </div>
 
-          {activeTab === 'analysis' && (
-            <>
-              <p className="text-xs text-slate-500 mb-3">
-                Get tailored feedback on resume and LinkedIn alignment (interview-coach framework).
-              </p>
-              {hasInput ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleAnalyzeProfile}
-                    disabled={analyzing}
-                    className="w-full mb-3 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                  >
-                    {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
-                  </button>
-                  {profileAnalysis ? (
-                    <div className="max-h-[45vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-200">
-                      <AnalysisDisplay content={profileAnalysis} className="text-sm" />
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">Click the button above to see personalized tips.</p>
-                  )}
-                </>
-              ) : (
-                <p className="text-xs text-slate-400 italic">Add your resume and/or LinkedIn on the left.</p>
-              )}
-            </>
-          )}
+          <div className="p-5">
+            {activeTab === 'analysis' && (
+              <div className="space-y-4">
+                {hasInput ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeProfile}
+                      disabled={analyzing}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all shadow-md shadow-brand-500/20"
+                    >
+                      {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
+                    </button>
+                    {profileAnalysis ? (
+                      <div className="max-h-[50vh] overflow-y-auto p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <AnalysisDisplay content={profileAnalysis} className="text-sm" />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 text-center py-4">
+                        Click the button above to see personalized improvement tips.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400 text-center py-8">
+                    Add your resume and/or LinkedIn on the left to get started.
+                  </p>
+                )}
+              </div>
+            )}
 
-          {activeTab === 'core-positioning' && (
-            <>
-              <p className="text-xs text-slate-500 mb-3">
-                Speaking points for interviews. Requires resume.
-              </p>
-              {hasResume ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleGeneratePitches}
-                    disabled={loadingPitches}
-                    className="w-full mb-3 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                  >
-                    {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                  </button>
-                  {pitches.length > 0 ? (
-                    <div className="space-y-3 max-h-[45vh] overflow-y-auto">
-                      {pitches.map((p, i) => (
-                        <div key={i} className="border border-slate-100 rounded-lg p-3 bg-slate-50/50">
-                          <h4 className="text-xs font-semibold text-slate-800 mb-2">{p.name}</h4>
-                          {p.hook && (
-                            <p className="text-xs text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
-                          )}
-                          {p.bullets && p.bullets.length > 0 && (
-                            <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-                              {p.bullets.map((b, j) => (
-                                <li key={j}>{b}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">Click the button above to generate speaking points.</p>
-                  )}
-                </>
-              ) : (
-                <p className="text-xs text-slate-400 italic">Add your resume on the left to generate speaking points.</p>
-              )}
-            </>
-          )}
+            {activeTab === 'core-positioning' && (
+              <div className="space-y-4">
+                {hasResume ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleGeneratePitches}
+                      disabled={loadingPitches}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all shadow-md shadow-brand-500/20"
+                    >
+                      {loadingPitches ? 'Generating...' : 'Generate speaking points'}
+                    </button>
+                    {pitches.length > 0 ? (
+                      <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                        {pitches.map((p, i) => (
+                          <div key={i} className="rounded-xl p-4 bg-slate-50 border border-slate-100">
+                            <h4 className="text-sm font-semibold text-slate-800 mb-2">{p.name}</h4>
+                            {p.hook && (
+                              <p className="text-sm text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
+                            )}
+                            {p.bullets && p.bullets.length > 0 && (
+                              <ul className="text-sm text-slate-600 space-y-1.5 list-disc list-inside">
+                                {p.bullets.map((b, j) => (
+                                  <li key={j}>{b}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 text-center py-4">
+                        Click the button above to generate speaking points from your resume.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400 text-center py-8">
+                    Add your resume on the left to generate speaking points.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
