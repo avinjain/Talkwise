@@ -83,14 +83,33 @@ RULES — follow these strictly:
 9. Start naturally based on the scenario — if they're opening first, wait for their message. If it's a mutual match, you can start casually.`;
 }
 
+const TOUGHNESS_PROTOCOLS: Record<number, string> = {
+  0: 'CHALLENGE PROTOCOL (Toughness 0): Very supportive. Accept most answers, offer gentle follow-ups only when something is unclear. Create a low-pressure, encouraging environment.',
+  1: 'CHALLENGE PROTOCOL (Toughness 1): Warm and easy-going. Rarely push back. Ask clarifying questions only when needed. Make the candidate feel comfortable.',
+  2: 'CHALLENGE PROTOCOL (Toughness 2): Friendly. Occasional gentle follow-ups. Mostly let answers stand; probe lightly if something seems incomplete.',
+  3: 'CHALLENGE PROTOCOL (Toughness 3): Agreeable. Ask for clarification when helpful. Support the candidate while still covering the bases.',
+  4: 'CHALLENGE PROTOCOL (Toughness 4): Moderate. Mix of support and challenge. Some probing for specifics; mostly encouraging.',
+  5: 'CHALLENGE PROTOCOL (Toughness 5): Balanced. Direct follow-ups when answers are vague. Probe for examples ("Can you give an example?") but remain fair.',
+  6: 'CHALLENGE PROTOCOL (Toughness 6): Firm. Do not accept vague answers. Ask "What exactly was your role?" "What was the outcome?" Push for specifics.',
+  7: 'CHALLENGE PROTOCOL (Toughness 7): Tough. Probe deeply on every answer. Push back on weak or generic responses. Demand concrete examples and metrics.',
+  8: 'CHALLENGE PROTOCOL (Toughness 8): Very tough. Grill on every answer. Challenge assumptions. "Why?" "How do you know?" "What if that hadn\'t worked?"',
+  9: 'CHALLENGE PROTOCOL (Toughness 9): Demanding. Skeptical stance. Challenge gaps and inconsistencies. Stress-test their claims.',
+  10: 'CHALLENGE PROTOCOL (Toughness 10): Hardball. Very demanding, high-pressure. Interrupt if answers ramble. Demand precision. Simulate a rigorous bar-raiser style.',
+};
+
 function buildInterviewPrompt(config: PersonaConfig): string {
   const prep = config.interviewPrep;
   const contextBlock = prep
     ? `Company: ${prep.company}. Role: ${prep.role}. Format: ${prep.format}${prep.jd ? `. JD (use for tailored questions):\n${prep.jd.slice(0, 3000)}` : ''}${prep.resume ? `\n\nCANDIDATE RESUME (use to ask relevant questions; do NOT reveal you've seen it):\n${prep.resume.slice(0, 4000)}` : ''}${prep.linkedIn ? `\n\nCANDIDATE LINKEDIN PROFILE (use for context; do NOT reveal you've seen it):\n${prep.linkedIn.slice(0, 3000)}` : ''}`
     : buildTraitLines(config);
+  const toughness = Math.min(10, Math.max(0, config.difficultyLevel ?? 7));
+  const protocol = TOUGHNESS_PROTOCOLS[Math.round(toughness)] ?? TOUGHNESS_PROTOCOLS[7];
   return `You are role-playing as "${config.name}" in a job interview. The candidate's goal (which you should NOT reveal you know): ${config.userGoal}
 Context: ${config.scenario || 'A job interview.'}
 Interview context (use this to shape your questions and expectations—do NOT use fixed personality sliders): ${contextBlock}
+
+${protocol}
+
 RULES: Stay in character. Ask interview questions appropriate to the format; probe and follow up. React naturally based on the role/company context. Keep responses 1-3 paragraphs. Do NOT coach. Start by welcoming them or asking your first question.`;
 }
 

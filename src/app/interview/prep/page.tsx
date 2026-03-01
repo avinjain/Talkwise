@@ -20,14 +20,15 @@ export default function InterviewPrepPage() {
   const [role, setRole] = useState('');
   const [format, setFormat] = useState('behavioral');
   const [jd, setJd] = useState('');
-  const [resume, setResume] = useState('');
-  const [resumeAnalysis, setResumeAnalysis] = useState<string | null>(null);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumePaste, setResumePaste] = useState('');
+  const [resumeContent, setResumeContent] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState('');
   const [linkedInPaste, setLinkedInPaste] = useState('');
   const [linkedInContent, setLinkedInContent] = useState('');
-  const [linkedInAnalysis, setLinkedInAnalysis] = useState<string | null>(null);
+  const [profileAnalysis, setProfileAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analyzingLinkedIn, setAnalyzingLinkedIn] = useState(false);
+  const [continuing, setContinuing] = useState(false);
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -37,85 +38,80 @@ export default function InterviewPrepPage() {
 
   if (status === 'loading' || !session) return null;
 
-  const handleAnalyzeResume = async () => {
-    if (!resume.trim()) return;
+  const handleAnalyzeProfile = async () => {
+    const hasResume = resumeFile || resumePaste.trim();
+    const hasLinkedIn = linkedInUrl.trim() || linkedInPaste.trim();
+    if (!hasResume && !hasLinkedIn) return;
     setAnalyzing(true);
-    setResumeAnalysis(null);
+    setProfileAnalysis(null);
+    setResumeContent('');
+    setLinkedInContent('');
     try {
-      const res = await fetch('/api/interview/analyze-resume', {
+      const formData = new FormData();
+      formData.set('role', role.trim());
+      formData.set('jd', jd.trim());
+      if (resumeFile) formData.set('resumeFile', resumeFile);
+      else if (resumePaste.trim()) formData.set('resume', resumePaste.trim());
+      if (linkedInUrl.trim()) formData.set('linkedInUrl', linkedInUrl.trim());
+      else if (linkedInPaste.trim()) formData.set('linkedIn', linkedInPaste.trim());
+
+      const res = await fetch('/api/interview/analyze-profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume: resume.trim(),
-          role: role.trim() || undefined,
-          jd: jd.trim() || undefined,
-        }),
+        body: formData,
       });
-      if (!res.ok) throw new Error('Analysis failed');
       const data = await res.json();
-      setResumeAnalysis(data.analysis || data.error || 'Analysis complete.');
-    } catch {
-      setResumeAnalysis('Could not analyze. You can still continue.');
+      if (!res.ok) throw new Error(data.error || 'Analysis failed');
+      setProfileAnalysis(data.analysis || 'Analysis complete.');
+      if (data.resumeContent) setResumeContent(data.resumeContent);
+      if (data.profileContent) setLinkedInContent(data.profileContent);
+    } catch (e) {
+      setProfileAnalysis(e instanceof Error ? e.message : 'Could not analyze. You can still continue.');
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const handleAnalyzeLinkedIn = async () => {
-    const url = linkedInUrl.trim();
-    const paste = linkedInPaste.trim();
-    if (!url && !paste) return;
-    setAnalyzingLinkedIn(true);
-    setLinkedInAnalysis(null);
-    setLinkedInContent('');
-    try {
-      const res = await fetch('/api/interview/analyze-linkedin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          linkedInUrl: url || undefined,
-          linkedIn: paste || undefined,
-          role: role.trim() || undefined,
-          jd: jd.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Analysis failed');
-      setLinkedInAnalysis(data.analysis || 'Analysis complete.');
-      if (data.profileContent) setLinkedInContent(data.profileContent);
-    } catch (e) {
-      setLinkedInAnalysis(e instanceof Error ? e.message : 'Could not analyze. You can still continue.');
-    } finally {
-      setAnalyzingLinkedIn(false);
-    }
-  };
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!company.trim() || !role.trim()) return;
-    const prep: import('@/lib/types').InterviewPrepContext = {
-      company: company.trim(),
-      role: role.trim(),
-      format,
-      jd: jd.trim() || undefined,
-      resume: resume.trim() || undefined,
-      linkedIn: (linkedInContent || linkedInPaste).trim() || undefined,
-    };
-    sessionStorage.setItem('interviewPrepContext', JSON.stringify(prep));
-    sessionStorage.setItem('userName', session.user?.name || 'there');
-    sessionStorage.setItem(
-      'startPersonaData',
-      JSON.stringify({
-        track: 'interview',
-        name: `Interviewer at ${company.trim()}`,
-        difficultyLevel: 5,
-        decisionOrientation: 6,
-        communicationStyle: 7,
-        authorityPosture: 6,
-        temperamentStability: 6,
-        socialPresence: 5,
-      })
-    );
-    router.push('/start');
+    setContinuing(true);
+    try {
+      let resumeText = (resumeContent || resumePaste).trim();
+      if (!resumeText && resumeFile) {
+        try {
+          const fd = new FormData();
+          fd.set('file', resumeFile);
+          const res = await fetch('/api/interview/extract-resume', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (res.ok && data.text) resumeText = data.text;
+        } catch { /* ignore */ }
+      }
+      const prep: import('@/lib/types').InterviewPrepContext = {
+        company: company.trim(),
+        role: role.trim(),
+        format,
+        jd: jd.trim() || undefined,
+        resume: resumeText || undefined,
+        linkedIn: (linkedInContent || linkedInPaste).trim() || undefined,
+      };
+      sessionStorage.setItem('interviewPrepContext', JSON.stringify(prep));
+      sessionStorage.setItem('userName', session.user?.name || 'there');
+      sessionStorage.setItem(
+        'startPersonaData',
+        JSON.stringify({
+          track: 'interview',
+          name: `Interviewer at ${company.trim()}`,
+          difficultyLevel: 7,
+          decisionOrientation: 6,
+          communicationStyle: 7,
+          authorityPosture: 6,
+          temperamentStability: 6,
+          socialPresence: 5,
+        })
+      );
+      router.push('/start');
+    } finally {
+      setContinuing(false);
+    }
   };
 
   return (
@@ -178,72 +174,74 @@ export default function InterviewPrepPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Resume (optional)</label>
-              <textarea
-                value={resume}
-                onChange={(e) => { setResume(e.target.value); setResumeAnalysis(null); }}
-                placeholder="Paste your resume here. We'll use it for tailored questions and feedback."
-                rows={6}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+              <input
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  setResumeFile(f || null);
+                  setProfileAnalysis(null);
+                  e.target.value = '';
+                }}
+                className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
               />
-              {resume.trim() && (
-                <button
-                  type="button"
-                  onClick={handleAnalyzeResume}
-                  disabled={analyzing}
-                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                >
-                  {analyzing ? 'Analyzing...' : 'Analyze resume'}
-                </button>
-              )}
-              {resumeAnalysis && (
-                <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
-                  {resumeAnalysis}
-                </div>
-              )}
+              {resumeFile && <p className="mt-1 text-xs text-slate-500">{resumeFile.name}</p>}
+              <details className="mt-2">
+                <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your resume</summary>
+                <textarea
+                  value={resumePaste}
+                  onChange={(e) => { setResumePaste(e.target.value); setProfileAnalysis(null); }}
+                  placeholder="Paste resume text..."
+                  rows={4}
+                  className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
+                />
+              </details>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn profile (optional)</label>
               <input
                 type="url"
                 value={linkedInUrl}
-                onChange={(e) => { setLinkedInUrl(e.target.value); setLinkedInAnalysis(null); }}
+                onChange={(e) => { setLinkedInUrl(e.target.value); setProfileAnalysis(null); }}
                 placeholder="https://linkedin.com/in/yourprofile"
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
               />
               <details className="mt-2">
-                <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your About section manually</summary>
+                <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">Or paste your About section</summary>
                 <textarea
                   value={linkedInPaste}
-                  onChange={(e) => { setLinkedInPaste(e.target.value); setLinkedInAnalysis(null); }}
-                  placeholder="Paste your LinkedIn About, headline, or key sections..."
+                  onChange={(e) => { setLinkedInPaste(e.target.value); setProfileAnalysis(null); }}
+                  placeholder="Paste LinkedIn About, headline, or key sections..."
                   rows={3}
                   className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 text-sm"
                 />
               </details>
-              {(linkedInUrl.trim() || linkedInPaste.trim()) && (
+            </div>
+            {(resumeFile || resumePaste.trim() || linkedInUrl.trim() || linkedInPaste.trim()) && (
+              <div>
                 <button
                   type="button"
-                  onClick={handleAnalyzeLinkedIn}
-                  disabled={analyzingLinkedIn}
-                  className="mt-2 px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
+                  onClick={handleAnalyzeProfile}
+                  disabled={analyzing}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
                 >
-                  {analyzingLinkedIn ? 'Fetching & analyzing...' : 'Fetch & optimize'}
+                  {analyzing ? 'Analyzing...' : 'Analyze profile & get improvement tips'}
                 </button>
-              )}
-              {linkedInAnalysis && (
-                <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
-                  {linkedInAnalysis}
-                </div>
-              )}
-            </div>
+                {profileAnalysis && (
+                  <div className="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700 whitespace-pre-wrap">
+                    {profileAnalysis}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <button
             onClick={handleContinue}
-            disabled={!company.trim() || !role.trim()}
+            disabled={!company.trim() || !role.trim() || continuing}
             className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Continue to practice
+            {continuing ? 'Preparing...' : 'Continue to practice'}
           </button>
         </div>
       </div>

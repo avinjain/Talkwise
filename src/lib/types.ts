@@ -443,6 +443,20 @@ export const PERSONAL_PERSONA_ATTRIBUTES = [
   },
 ] as const;
 
+export const INTERVIEW_TOUGHNESS_LEVELS = [
+  { level: 0, name: 'Pushover', desc: 'Very supportive, accepts almost any answer' },
+  { level: 1, name: 'Very Easy', desc: 'Warm, rarely pushes back' },
+  { level: 2, name: 'Easy-going', desc: 'Friendly, occasional gentle follow-ups' },
+  { level: 3, name: 'Agreeable', desc: 'Helpful, asks for clarification when needed' },
+  { level: 4, name: 'Moderate', desc: 'Balanced; some probing, mostly encouraging' },
+  { level: 5, name: 'Balanced', desc: 'Mix of support and challenge; direct follow-ups' },
+  { level: 6, name: 'Firm', desc: 'Asks for specifics, doesn\'t accept vague answers' },
+  { level: 7, name: 'Tough', desc: 'Probes deeply, pushes back on weak responses' },
+  { level: 8, name: 'Very Tough', desc: 'Grills on every answer, demands concrete examples' },
+  { level: 9, name: 'Demanding', desc: 'Skeptical, challenges assumptions and gaps' },
+  { level: 10, name: 'Hardball', desc: 'Very demanding; stress-test style, high pressure' },
+] as const;
+
 export function getPersonaAttributes(track: Track) {
   if (track === 'personal') return PERSONAL_PERSONA_ATTRIBUTES;
   return PROFESSIONAL_PERSONA_ATTRIBUTES; // interview reuses professional

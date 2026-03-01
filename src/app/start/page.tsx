@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
-import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, getGoalOptions, getPersonaAttributes } from '@/lib/types';
+import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
   const router = useRouter();
@@ -108,6 +108,13 @@ export default function StartPage() {
     );
   };
 
+  const setToughness = (v: number) => {
+    setTraits((prev) => ({ ...prev, difficultyLevel: v }));
+  };
+
+  const toughnessLevel = Math.min(10, Math.max(0, traits.difficultyLevel ?? 7));
+  const toughnessInfo = INTERVIEW_TOUGHNESS_LEVELS[toughnessLevel] ?? INTERVIEW_TOUGHNESS_LEVELS[7];
+
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/'} backLabel="Back" />
@@ -188,6 +195,36 @@ export default function StartPage() {
           </div>
           )}
         </div>
+
+        {/* Interview toughness slider */}
+        {track === 'interview' && (
+          <div className="mb-6">
+            <label className="block text-xs font-medium text-slate-600 mb-2">
+              Interview toughness
+            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
+                {toughnessInfo.name} ({toughnessLevel})
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={10}
+              step={1}
+              value={toughnessLevel}
+              onChange={(e) => setToughness(Number(e.target.value))}
+              className="w-full"
+            />
+            <p className="text-xs text-slate-500 mt-1.5">
+              {toughnessInfo.desc}
+            </p>
+            <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <span>Easier</span>
+              <span>Tougher</span>
+            </div>
+          </div>
+        )}
 
         {/* Scenario */}
         <div className="mb-6">
