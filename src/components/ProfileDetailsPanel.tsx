@@ -3,13 +3,16 @@
 import { useState, ReactNode } from 'react';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 
+type ProfileNavTab = 'personality' | 'resume';
+
 interface ProfileDetailsPanelProps {
-  /** Content for the side pane (e.g. personality test), shown above Resume & LinkedIn */
-  sidePaneContent?: ReactNode;
+  /** Content for Personality test tab */
+  personalityContent?: ReactNode;
 }
 
-/** Profile page: Enter resume + LinkedIn, get Analysis & Core positioning (interview-coach framework) */
-export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsPanelProps) {
+/** Profile page: Side nav for Personality test | Resume & LinkedIn, main area for analysis */
+export default function ProfileDetailsPanel({ personalityContent }: ProfileDetailsPanelProps) {
+  const [activeTab, setActiveTab] = useState<ProfileNavTab>('personality');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState('');
@@ -223,11 +226,43 @@ export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsP
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Side pane: Personality + Resume & LinkedIn */}
-      <aside className="lg:w-[340px] lg:shrink-0 space-y-6 lg:sticky lg:top-24 lg:self-start">
-        {sidePaneContent}
-        {resumeLinkedInSection}
-      </aside>
+      {/* Side nav + content pane */}
+      <div className="flex flex-col lg:w-[340px] lg:shrink-0 gap-4 lg:sticky lg:top-24 lg:self-start">
+        <nav className="flex flex-row lg:flex-col gap-1 p-1 bg-slate-100 rounded-xl shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('personality')}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'personality'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
+            }`}
+          >
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
+            </svg>
+            Personality test
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('resume')}
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'resume'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
+            }`}
+          >
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Resume & LinkedIn
+          </button>
+        </nav>
+        <div className="flex-1 min-w-0">
+          {activeTab === 'personality' && personalityContent}
+          {activeTab === 'resume' && resumeLinkedInSection}
+        </div>
+      </div>
 
       {/* Main: Analysis sections */}
       <main className="flex-1 min-w-0">
@@ -281,7 +316,7 @@ export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume in the side pane to optimise it.
+                Add your resume in Resume & LinkedIn to optimise it.
               </p>
             )}
           </div>
@@ -315,7 +350,7 @@ export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume and/or LinkedIn in the side pane to get started.
+                Add your resume and/or LinkedIn in Resume & LinkedIn to get started.
               </p>
             )}
           </div>
@@ -363,7 +398,7 @@ export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume in the side pane to generate speaking points.
+                Add your resume in Resume & LinkedIn to generate speaking points.
               </p>
             )}
           </div>

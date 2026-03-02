@@ -113,7 +113,7 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <ProfileDetailsPanel sidePaneContent={personalitySection} />
+          <ProfileDetailsPanel personalityContent={personalitySection} />
 
           <div className="mt-10 flex justify-center">
             <button
