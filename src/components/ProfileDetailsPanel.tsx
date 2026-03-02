@@ -11,8 +11,12 @@ export default function ProfileDetailsPanel() {
   const [linkedInPaste, setLinkedInPaste] = useState('');
   const [profileAnalysis, setProfileAnalysis] = useState<string | null>(null);
   const [pitches, setPitches] = useState<Array<{ name: string; hook?: string; bullets?: string[] }>>([]);
+  const [resumeOptimisation, setResumeOptimisation] = useState<string | null>(null);
+  const [resumeOptRole, setResumeOptRole] = useState('');
+  const [resumeOptJd, setResumeOptJd] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
+  const [optimisingResume, setOptimisingResume] = useState(false);
 
   const hasResume = resumeFile || resumePaste.trim();
   const hasLinkedIn = linkedInUrl.trim() || linkedInPaste.trim();
@@ -40,6 +44,42 @@ export default function ProfileDetailsPanel() {
       setProfileAnalysis(e instanceof Error ? e.message : 'Could not analyze. Please try again.');
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const handleOptimizeResume = async () => {
+    let resumeText = resumePaste.trim();
+    if (!resumeText && resumeFile) {
+      try {
+        const fd = new FormData();
+        fd.set('file', resumeFile);
+        const r = await fetch('/api/interview/extract-resume', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (r.ok && d.text) resumeText = d.text;
+      } catch {
+        return;
+      }
+    }
+    if (!resumeText) return;
+    setOptimisingResume(true);
+    setResumeOptimisation(null);
+    try {
+      const res = await fetch('/api/interview/analyze-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume: resumeText,
+          ...(resumeOptRole.trim() && { role: resumeOptRole.trim() }),
+          ...(resumeOptJd.trim() && { jd: resumeOptJd.trim() }),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Optimisation failed');
+      setResumeOptimisation(data.analysis || 'Analysis complete.');
+    } catch (e) {
+      setResumeOptimisation(e instanceof Error ? e.message : 'Could not optimise. Please try again.');
+    } finally {
+      setOptimisingResume(false);
     }
   };
 
@@ -81,6 +121,7 @@ export default function ProfileDetailsPanel() {
     setLinkedInPaste('');
     setProfileAnalysis(null);
     setPitches([]);
+    setResumeOptimisation(null);
   };
 
   return (
@@ -102,6 +143,7 @@ export default function ProfileDetailsPanel() {
                 setResumeFile(f || null);
                 setProfileAnalysis(null);
                 setPitches([]);
+                setResumeOptimisation(null);
                 e.target.value = '';
               }}
               className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:cursor-pointer"
@@ -117,6 +159,7 @@ export default function ProfileDetailsPanel() {
                   setResumePaste(e.target.value);
                   setProfileAnalysis(null);
                   setPitches([]);
+                  setResumeOptimisation(null);
                 }}
                 placeholder="Paste resume text..."
                 rows={4}
@@ -168,7 +211,62 @@ export default function ProfileDetailsPanel() {
 
       {/* Right: Results — stacked sections */}
       <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-        {/* Section 1: Analyze profile & improvement tips */}
+        {/* Section 1: Resume optimisation */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-sm font-semibold text-slate-800">Resume optimisation</h3>
+          </div>
+          <div className="p-4">
+            {hasResume ? (
+              <div className="space-y-3">
+                <details className="group">
+                  <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+                    Target a specific role (optional)
+                  </summary>
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="text"
+                      value={resumeOptRole}
+                      onChange={(e) => setResumeOptRole(e.target.value)}
+                      placeholder="e.g. Product Manager"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
+                    />
+                    <textarea
+                      value={resumeOptJd}
+                      onChange={(e) => setResumeOptJd(e.target.value)}
+                      placeholder="Paste job description for targeted feedback..."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
+                    />
+                  </div>
+                </details>
+                <button
+                  type="button"
+                  onClick={handleOptimizeResume}
+                  disabled={optimisingResume}
+                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                >
+                  {optimisingResume ? 'Optimising...' : 'Optimise resume'}
+                </button>
+                {resumeOptimisation ? (
+                  <div className="max-h-[35vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <AnalysisDisplay content={resumeOptimisation} compact />
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 text-center py-3">
+                    Get strengths, gaps, story bank & one-line pitch from the interview coach.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-4">
+                Add your resume on the left to optimise it.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Section 2: Analyze profile & improvement tips */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-sm font-semibold text-slate-800">Analyze profile & improvement tips</h3>
@@ -202,7 +300,7 @@ export default function ProfileDetailsPanel() {
           </div>
         </div>
 
-        {/* Section 2: Core positioning */}
+        {/* Section 3: Core positioning */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-sm font-semibold text-slate-800">Core positioning</h3>
