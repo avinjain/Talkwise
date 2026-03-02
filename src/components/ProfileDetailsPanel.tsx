@@ -4,12 +4,12 @@ import { useState, ReactNode } from 'react';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 interface ProfileDetailsPanelProps {
-  /** Rendered between inputs and analysis sections (e.g. personality test) */
-  sectionsBetween?: ReactNode;
+  /** Content for the side pane (e.g. personality test), shown above Resume & LinkedIn */
+  sidePaneContent?: ReactNode;
 }
 
 /** Profile page: Enter resume + LinkedIn, get Analysis & Core positioning (interview-coach framework) */
-export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsPanelProps) {
+export default function ProfileDetailsPanel({ sidePaneContent }: ProfileDetailsPanelProps) {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState('');
@@ -129,23 +129,21 @@ export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsP
     setResumeOptimisation(null);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Top: Resume & LinkedIn inputs */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-            <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-          </div>
-          <h2 className="text-base font-semibold text-slate-900">Resume & LinkedIn</h2>
+  const resumeLinkedInSection = (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+          <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
         </div>
-        <p className="text-sm text-slate-500 mb-5">
-          Add your resume and/or LinkedIn to get AI-powered analysis and speaking points.
-        </p>
+        <h2 className="text-base font-semibold text-slate-900">Resume & LinkedIn</h2>
+      </div>
+      <p className="text-sm text-slate-500 mb-5">
+        Add your resume and/or LinkedIn to get AI-powered analysis and speaking points.
+      </p>
 
-        <div className="space-y-5">
+      <div className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Resume</label>
             <input
@@ -220,12 +218,20 @@ export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsP
             </button>
           )}
         </div>
-      </div>
+    </div>
+  );
 
-      {sectionsBetween}
+  return (
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Side pane: Personality + Resume & LinkedIn */}
+      <aside className="lg:w-[340px] lg:shrink-0 space-y-6 lg:sticky lg:top-24 lg:self-start">
+        {sidePaneContent}
+        {resumeLinkedInSection}
+      </aside>
 
-      {/* Analysis sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Main: Analysis sections */}
+      <main className="flex-1 min-w-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Section 1: Resume optimisation */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
@@ -275,7 +281,7 @@ export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume above to optimise it.
+                Add your resume in the side pane to optimise it.
               </p>
             )}
           </div>
@@ -309,7 +315,7 @@ export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume and/or LinkedIn above to get started.
+                Add your resume and/or LinkedIn in the side pane to get started.
               </p>
             )}
           </div>
@@ -357,12 +363,13 @@ export default function ProfileDetailsPanel({ sectionsBetween }: ProfileDetailsP
               </div>
             ) : (
               <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume above to generate speaking points.
+                Add your resume in the side pane to generate speaking points.
               </p>
             )}
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 }
