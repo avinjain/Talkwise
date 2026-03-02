@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
-import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, getGoalOptions, getPersonaAttributes } from '@/lib/types';
+import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, FORMAT_TO_GOAL_LABEL, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
   const router = useRouter();
@@ -29,7 +29,17 @@ export default function StartPage() {
       setTraits(parsed);
       if (parsed.track === 'interview') {
         const raw = sessionStorage.getItem('interviewPrepContext');
-        if (raw) setInterviewPrep(JSON.parse(raw));
+        if (raw) {
+          const prep = JSON.parse(raw);
+          setInterviewPrep(prep);
+          // Pre-select goal based on interview format (e.g. case → Case Study)
+          const formatLabel = FORMAT_TO_GOAL_LABEL[prep.format];
+          if (formatLabel) {
+            setSelectedGoals((prev) =>
+              prev.includes(formatLabel) ? prev : [formatLabel, ...prev]
+            );
+          }
+        }
       }
     } catch {
       router.push('/');
@@ -47,7 +57,11 @@ export default function StartPage() {
     fetch('/api/interview/filter-goals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: interviewPrep.role, resume: (interviewPrep.resume || '').slice(0, 3000) }),
+      body: JSON.stringify({
+        role: interviewPrep.role,
+        resume: (interviewPrep.resume || '').slice(0, 3000),
+        format: interviewPrep.format,
+      }),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -155,7 +169,10 @@ export default function StartPage() {
         {/* Goal selection */}
         <div className="mb-5">
           <label className="block text-xs font-medium text-slate-600 mb-2">
-            What&apos;s the conversation about? <span className="font-normal text-slate-400">(select one or more)</span>
+            {track === 'interview' && interviewPrep?.format
+              ? `Focus areas for your ${interviewPrep.format === 'case' ? 'case study' : interviewPrep.format === 'technical' ? 'technical' : interviewPrep.format} interview`
+              : "What's the conversation about?"}{' '}
+            <span className="font-normal text-slate-400">(select one or more)</span>
           </label>
           {track === 'interview' && (interviewPrep?.role || interviewPrep?.resume) && !applicableGoalIds ? (
             <p className="text-sm text-slate-500 py-4">Loading options based on your role and resume…</p>

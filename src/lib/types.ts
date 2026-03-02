@@ -184,9 +184,19 @@ export const INTERVIEW_GOAL_OPTIONS = [
   { id: 'leadership', label: 'Leadership Example', icon: '👥', description: 'Leading a team or influencing without authority' },
   { id: 'salary', label: 'Salary Expectations', icon: '💰', description: 'Discussing compensation and expectations' },
   { id: 'behavioral', label: 'Behavioral Deep Dive', icon: '🔍', description: 'STAR-format behavioral questions' },
+  { id: 'case', label: 'Case Study', icon: '📋', description: 'Problem-solving scenarios and case questions' },
   { id: 'system-design', label: 'System Design (Tech)', icon: '🏗️', description: 'Architecture and design discussion' },
   { id: 'questions', label: 'Questions to Ask', icon: '❓', description: 'Prepare strong questions for the interviewer' },
 ] as const;
+
+/** Map interview format (prep page) to goal option label */
+export const FORMAT_TO_GOAL_LABEL: Record<string, string> = {
+  behavioral: 'Behavioral Deep Dive',
+  technical: 'System Design (Tech)',
+  case: 'Case Study',
+  mixed: 'Behavioral Deep Dive', // default for mixed
+  panel: 'Behavioral Deep Dive', // default for panel
+};
 
 export function getGoalOptions(track: Track) {
   if (track === 'personal') return PERSONAL_GOAL_OPTIONS;

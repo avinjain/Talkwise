@@ -20,18 +20,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: rateCheck.reason }, { status: 429 });
     }
 
-    const { role, resume } = (await req.json()) as { role?: string; resume?: string };
+    const { role, resume, format } = (await req.json()) as { role?: string; resume?: string; format?: string };
     const roleStr = (role || '').trim();
     const resumeStr = (resume || '').trim();
+    const formatStr = (format || '').trim();
 
-    // No context: return all applicable
+    // No context: return all applicable (but always include format-matching goal)
     if (!roleStr && !resumeStr) {
-      return NextResponse.json({ applicableIds: ALL_GOAL_IDS });
+      const ids = [...ALL_GOAL_IDS];
+      if (formatStr === 'case' && !ids.includes('case')) ids.push('case');
+      if (formatStr === 'technical' && !ids.includes('system-design')) ids.push('system-design');
+      return NextResponse.json({ applicableIds: ids });
     }
 
-    const prompt = `You are an expert interview coach. Given the candidate's target role and resume (if any), determine which interview practice topics are applicable.
+    const prompt = `You are an expert interview coach. Given the candidate's target role, resume, and interview format (if any), determine which interview practice topics are applicable.
 
 ROLE: ${roleStr || '(not provided)'}
+INTERVIEW FORMAT: ${formatStr || '(not specified)'}
 
 RESUME (excerpt):
 ---
@@ -41,9 +46,10 @@ ${resumeStr.slice(0, 3000) || '(not provided)'}
 AVAILABLE TOPIC IDS: ${ALL_GOAL_IDS.join(', ')}
 
 RULES:
-- "system-design" is for technical roles: software engineer, developer, architect, tech lead, SRE, Technical PM, API PM, Platform PM, or any PM/role that involves system design or technical architecture. Do NOT include it for: Sales, Marketing, HR, Recruiting, Customer Success, Business Development, or other purely non-technical roles.
+- "system-design" is for technical roles or when format is "technical": software engineer, developer, architect, tech lead, SRE, Technical PM, API PM, Platform PM. Do NOT include for: Sales, Marketing, HR, or other purely non-technical roles (unless format is technical).
+- "case" is for case study / problem-solving interviews. Include it when format is "case" or "mixed".
 - Include all other topics that make sense for the role and candidate background.
-- Return a JSON array of applicable IDs only. Example: ["tmay","conflict","failure","leadership","salary","behavioral","questions"]
+- Return a JSON array of applicable IDs only. Example: ["tmay","conflict","case","behavioral","questions"]
 
 Respond with ONLY the JSON array, no other text.`;
 
