@@ -6,6 +6,24 @@ import { useSession, signOut } from 'next-auth/react';
 import Logo from '@/components/Logo';
 import { PersonaConfig, ChatMessage } from '@/lib/types';
 
+// Web Speech API (Chrome, Safari, Edge)
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+}
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((e: { resultIndex: number; results: Array<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -18,8 +36,11 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const streamAIResponse = useCallback(
     async (currentMessages: ChatMessage[], config: PersonaConfig) => {
@@ -99,6 +120,59 @@ export default function ChatPage() {
     streamAIResponse([], config);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Speech-to-text setup
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setSpeechSupported(!!SpeechRecognition);
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (e: { resultIndex: number; results: Array<{ isFinal: boolean; 0: { transcript: string } }> }) => {
+      let transcript = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        if (result.isFinal) {
+          transcript += result[0].transcript;
+        }
+      }
+      if (transcript) {
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript).trim());
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    return () => {
+      recognition.stop();
+    };
+  }, []);
+
+  const toggleSpeech = () => {
+    if (!recognitionRef.current || isStreaming) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch {
+        setIsListening(false);
+      }
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -239,7 +313,24 @@ export default function ChatPage() {
       {/* ── Input ── */}
       <div className="flex-shrink-0 border-t border-slate-200 bg-white px-6 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
         <div className="max-w-3xl mx-auto space-y-2">
-          <div className="flex gap-3">
+          <div className="flex gap-2">
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleSpeech}
+                disabled={isStreaming}
+                title={isListening ? 'Stop recording' : 'Speak (speech-to-text)'}
+                className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                  isListening
+                    ? 'bg-red-100 text-red-600 animate-pulse'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 disabled:opacity-50'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.83V20c0 .55.45 1 1 1s1-.45 1-1v-2.18c3.02-.48 5.42-2.83 5.91-5.83.1-.6-.39-1.14-1-1.14z" />
+                </svg>
+              </button>
+            )}
             <textarea
               ref={inputRef}
               value={input}
@@ -248,7 +339,9 @@ export default function ChatPage() {
               placeholder={
                 isInitializing
                   ? 'Waiting for persona...'
-                  : 'Type your message... (Enter to send, Shift+Enter for new line)'
+                  : speechSupported
+                    ? 'Type or speak your message... (Enter to send)'
+                    : 'Type your message... (Enter to send, Shift+Enter for new line)'
               }
               disabled={isStreaming}
               rows={1}
