@@ -6,11 +6,11 @@ import AnalysisDisplay from '@/components/AnalysisDisplay';
 type ProfileNavTab = 'personality' | 'resume';
 
 interface ProfileDetailsPanelProps {
-  /** Content for Personality test tab */
+  /** Content for Test your personality tab */
   personalityContent?: ReactNode;
 }
 
-/** Profile page: Side nav for Personality test | Resume & LinkedIn, main area for analysis */
+/** Profile page: Side nav (Test your personality | Resume and LinkedIn), main area switches by tab */
 export default function ProfileDetailsPanel({ personalityContent }: ProfileDetailsPanelProps) {
   const [activeTab, setActiveTab] = useState<ProfileNavTab>('personality');
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -132,7 +132,7 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
     setResumeOptimisation(null);
   };
 
-  const resumeLinkedInSection = (
+  const resumeInputSection = (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-5">
         <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -147,263 +147,271 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
       </p>
 
       <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Resume</label>
-            <input
-              type="file"
-              accept=".pdf,.docx,.txt"
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Resume</label>
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              setResumeFile(f || null);
+              setProfileAnalysis(null);
+              setPitches([]);
+              setResumeOptimisation(null);
+              e.target.value = '';
+            }}
+            className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:cursor-pointer"
+          />
+          {resumeFile && <p className="mt-1.5 text-xs text-slate-500">{resumeFile.name}</p>}
+          <details className="mt-2">
+            <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+              Or paste resume text
+            </summary>
+            <textarea
+              value={resumePaste}
               onChange={(e) => {
-                const f = e.target.files?.[0];
-                setResumeFile(f || null);
+                setResumePaste(e.target.value);
                 setProfileAnalysis(null);
                 setPitches([]);
                 setResumeOptimisation(null);
-                e.target.value = '';
               }}
-              className="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 file:cursor-pointer"
+              placeholder="Paste resume text..."
+              rows={4}
+              className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
             />
-            {resumeFile && <p className="mt-1.5 text-xs text-slate-500">{resumeFile.name}</p>}
-            <details className="mt-2">
-              <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
-                Or paste resume text
-              </summary>
-              <textarea
-                value={resumePaste}
-                onChange={(e) => {
-                  setResumePaste(e.target.value);
-                  setProfileAnalysis(null);
-                  setPitches([]);
-                  setResumeOptimisation(null);
-                }}
-                placeholder="Paste resume text..."
-                rows={4}
-                className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
-              />
-            </details>
-          </div>
+          </details>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">LinkedIn profile</label>
-            <input
-              type="url"
-              value={linkedInUrl}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">LinkedIn profile</label>
+          <input
+            type="url"
+            value={linkedInUrl}
+            onChange={(e) => {
+              setLinkedInUrl(e.target.value);
+              setProfileAnalysis(null);
+            }}
+            placeholder="https://linkedin.com/in/yourprofile"
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
+          />
+          <details className="mt-2">
+            <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+              Or paste your About section
+            </summary>
+            <textarea
+              value={linkedInPaste}
               onChange={(e) => {
-                setLinkedInUrl(e.target.value);
+                setLinkedInPaste(e.target.value);
                 setProfileAnalysis(null);
               }}
-              placeholder="https://linkedin.com/in/yourprofile"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
+              placeholder="Paste LinkedIn About, headline, or key sections..."
+              rows={3}
+              className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
             />
-            <details className="mt-2">
-              <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
-                Or paste your About section
-              </summary>
-              <textarea
-                value={linkedInPaste}
-                onChange={(e) => {
-                  setLinkedInPaste(e.target.value);
-                  setProfileAnalysis(null);
-                }}
-                placeholder="Paste LinkedIn About, headline, or key sections..."
-                rows={3}
-                className="mt-2 w-full px-4 py-2.5 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-sm"
-              />
-            </details>
-          </div>
-
-          {hasInput && (
-            <button
-              type="button"
-              onClick={clearInputs}
-              className="text-xs text-slate-400 hover:text-slate-600"
-            >
-              Clear all
-            </button>
-          )}
+          </details>
         </div>
+
+        {hasInput && (
+          <button
+            type="button"
+            onClick={clearInputs}
+            className="text-xs text-slate-400 hover:text-slate-600"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
     </div>
   );
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      {/* Side nav + content pane */}
-      <div className="flex flex-col lg:w-[340px] lg:shrink-0 gap-4 lg:sticky lg:top-24 lg:self-start">
-        <nav className="flex flex-row lg:flex-col gap-1 p-1 bg-slate-100 rounded-xl shrink-0">
-          <button
-            type="button"
-            onClick={() => setActiveTab('personality')}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'personality'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
-            }`}
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
-            </svg>
-            Personality test
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('resume')}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'resume'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
-            }`}
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            Resume & LinkedIn
-          </button>
-        </nav>
-        <div className="flex-1 min-w-0">
-          {activeTab === 'personality' && personalityContent}
-          {activeTab === 'resume' && resumeLinkedInSection}
-        </div>
-      </div>
+      {/* Side navigation pane */}
+      <nav className="flex flex-row lg:flex-col gap-1 p-1 bg-slate-100 rounded-xl shrink-0 lg:w-52 lg:sticky lg:top-24 lg:self-start">
+        <button
+          type="button"
+          onClick={() => setActiveTab('personality')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'personality'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
+          }`}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
+          </svg>
+          Test your personality
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('resume')}
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'resume'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
+          }`}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          Resume and LinkedIn
+        </button>
+      </nav>
 
-      {/* Main: Analysis sections */}
+      {/* Main content area */}
       <main className="flex-1 min-w-0">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Section 1: Resume optimisation */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-slate-800">Resume optimisation</h3>
+        {activeTab === 'personality' && (
+          <div className="max-w-2xl">
+            {personalityContent}
           </div>
-          <div className="p-4">
-            {hasResume ? (
-              <div className="space-y-3">
-                <details className="group">
-                  <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
-                    Target a specific role (optional)
-                  </summary>
-                  <div className="mt-2 space-y-2">
-                    <input
-                      type="text"
-                      value={resumeOptRole}
-                      onChange={(e) => setResumeOptRole(e.target.value)}
-                      placeholder="e.g. Product Manager"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
-                    />
-                    <textarea
-                      value={resumeOptJd}
-                      onChange={(e) => setResumeOptJd(e.target.value)}
-                      placeholder="Paste job description for targeted feedback..."
-                      rows={3}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
-                    />
-                  </div>
-                </details>
-                <button
-                  type="button"
-                  onClick={handleOptimizeResume}
-                  disabled={optimisingResume}
-                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                >
-                  {optimisingResume ? 'Optimising...' : 'Optimise resume'}
-                </button>
-                {resumeOptimisation ? (
-                  <div className="max-h-[40vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <AnalysisDisplay content={resumeOptimisation} compact />
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-3">
-                    Get strengths, gaps, story bank & one-line pitch from the interview coach.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume in Resume & LinkedIn to optimise it.
-              </p>
-            )}
-          </div>
-        </div>
+        )}
 
-        {/* Section 2: Analyze profile & improvement tips */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-slate-800">Analyze profile & improvement tips</h3>
-          </div>
-          <div className="p-4">
-            {hasInput ? (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleAnalyzeProfile}
-                  disabled={analyzing}
-                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                >
-                  {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
-                </button>
-                {profileAnalysis ? (
-                  <div className="max-h-[40vh] overflow-y-auto p-3 rounded-lg bg-slate-50 border border-slate-100">
-                    <AnalysisDisplay content={profileAnalysis} compact />
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-3">
-                    Click the button above to see personalized improvement tips.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume and/or LinkedIn in Resume & LinkedIn to get started.
-              </p>
-            )}
-          </div>
-        </div>
+        {activeTab === 'resume' && (
+          <div className="space-y-6">
+            {/* Top: Resume & LinkedIn inputs */}
+            {resumeInputSection}
 
-        {/* Section 3: Core positioning */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-sm font-semibold text-slate-800">Core positioning</h3>
-          </div>
-          <div className="p-4">
-            {hasResume ? (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleGeneratePitches}
-                  disabled={loadingPitches}
-                  className="w-full py-2 rounded-lg text-xs font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                >
-                  {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                </button>
-                {pitches.length > 0 ? (
-                  <div className="space-y-2 max-h-[35vh] overflow-y-auto">
-                    {pitches.map((p, i) => (
-                      <div key={i} className="rounded-lg p-2.5 bg-slate-50 border border-slate-100">
-                        <h4 className="text-xs font-semibold text-slate-800 mb-1">{p.name}</h4>
-                        {p.hook && (
-                          <p className="text-xs text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
-                        )}
-                        {p.bullets && p.bullets.length > 0 && (
-                          <ul className="text-xs text-slate-600 space-y-0.5 list-disc list-inside">
-                            {p.bullets.map((b, j) => (
-                              <li key={j}>{b}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-3">
-                    Click the button above to generate speaking points from your resume.
-                  </p>
-                )}
+            {/* Bottom: 3 stacked analysis sections */}
+            <div className="space-y-6">
+              {/* Resume optimisation */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                  <h3 className="text-sm font-semibold text-slate-800">Resume optimisation</h3>
+                </div>
+                <div className="p-4">
+                  {hasResume ? (
+                    <div className="space-y-3">
+                      <details className="group">
+                        <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700 select-none">
+                          Target a specific role (optional)
+                        </summary>
+                        <div className="mt-2 space-y-2">
+                          <input
+                            type="text"
+                            value={resumeOptRole}
+                            onChange={(e) => setResumeOptRole(e.target.value)}
+                            placeholder="e.g. Product Manager"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
+                          />
+                          <textarea
+                            value={resumeOptJd}
+                            onChange={(e) => setResumeOptJd(e.target.value)}
+                            placeholder="Paste job description for targeted feedback..."
+                            rows={3}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 text-xs"
+                          />
+                        </div>
+                      </details>
+                      <button
+                        type="button"
+                        onClick={handleOptimizeResume}
+                        disabled={optimisingResume}
+                        className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                      >
+                        {optimisingResume ? 'Optimising...' : 'Optimise resume'}
+                      </button>
+                      {resumeOptimisation ? (
+                        <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <AnalysisDisplay content={resumeOptimisation} />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400 text-center py-3">
+                          Get strengths, gaps, story bank & one-line pitch from the interview coach.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Add your resume above to optimise it.
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-4">
-                Add your resume in Resume & LinkedIn to generate speaking points.
-              </p>
-            )}
+
+              {/* Analyze profile & improvement tips */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                  <h3 className="text-sm font-semibold text-slate-800">Analyze profile & improvement tips</h3>
+                </div>
+                <div className="p-4">
+                  {hasInput ? (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={handleAnalyzeProfile}
+                        disabled={analyzing}
+                        className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                      >
+                        {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
+                      </button>
+                      {profileAnalysis ? (
+                        <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <AnalysisDisplay content={profileAnalysis} />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400 text-center py-3">
+                          Click the button above to see personalized improvement tips.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Add your resume and/or LinkedIn above to get started.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Core positioning */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                  <h3 className="text-sm font-semibold text-slate-800">Core positioning</h3>
+                </div>
+                <div className="p-4">
+                  {hasResume ? (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={handleGeneratePitches}
+                        disabled={loadingPitches}
+                        className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                      >
+                        {loadingPitches ? 'Generating...' : 'Generate speaking points'}
+                      </button>
+                      {pitches.length > 0 ? (
+                        <div className="space-y-3 overflow-y-auto max-h-[50vh]">
+                          {pitches.map((p, i) => (
+                            <div key={i} className="rounded-lg p-4 bg-slate-50 border border-slate-100">
+                              <h4 className="text-sm font-semibold text-slate-800 mb-1">{p.name}</h4>
+                              {p.hook && (
+                                <p className="text-sm text-slate-600 mb-2 italic">&ldquo;{p.hook}&rdquo;</p>
+                              )}
+                              {p.bullets && p.bullets.length > 0 && (
+                                <ul className="text-sm text-slate-600 space-y-1 list-disc list-inside">
+                                  {p.bullets.map((b, j) => (
+                                    <li key={j} className="leading-relaxed">{b}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400 text-center py-3">
+                          Click the button above to generate speaking points from your resume.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Add your resume above to generate speaking points.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
       </main>
     </div>
   );
