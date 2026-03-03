@@ -297,8 +297,8 @@ export default function PersonalityTestPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <div className="flex-1 py-8 px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:gap-12">
+      <div className="flex-1 py-8 px-6 lg:px-16 xl:px-24">
+        <div className="w-full max-w-[min(100%,_1800px)] mx-auto flex flex-col lg:flex-row lg:gap-12">
           {/* Main: question + Likert scale */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center mb-6">
@@ -406,7 +406,7 @@ export default function PersonalityTestPage() {
           </div>
 
           {/* Sidebar: progress + dimension + question grid */}
-          <div className="lg:w-72 xl:w-80 shrink-0 mt-8 lg:mt-0">
+          <div className="lg:w-80 xl:w-96 shrink-0 mt-8 lg:mt-0">
             <div className="lg:sticky lg:top-8 space-y-6">
               <div className="flex flex-col items-center">
                 <MBTIProgressRing
