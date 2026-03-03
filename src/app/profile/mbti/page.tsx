@@ -118,7 +118,7 @@ export default function MBTITestPage() {
       const data = await res.json();
       sessionStorage.setItem('mbtiResult', JSON.stringify(data));
 
-      router.push('/profile');
+      router.push('/profile/mbti/results');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

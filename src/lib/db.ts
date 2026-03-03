@@ -638,7 +638,7 @@ export function clearMBTIQuestions() {
 export function getMBTIResult(userId: string): { type_result: string; raw_answers: string; questions_snapshot: string; created_at: string } | undefined {
   const db = getDb();
   return db.prepare(
-    'SELECT type_result, raw_answers, COALESCE(questions_snapshot, "[]") as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+    "SELECT type_result, raw_answers, COALESCE(questions_snapshot, '[]') as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"
   ).get(userId) as { type_result: string; raw_answers: string; questions_snapshot: string; created_at: string } | undefined;
 }
 
@@ -647,7 +647,7 @@ const MBTI_RESULTS_LIMIT = 3;
 export function getMBTIResults(userId: string, limit = MBTI_RESULTS_LIMIT): Array<{ id: string; type_result: string; raw_answers: string; questions_snapshot: string; created_at: string }> {
   const db = getDb();
   return db.prepare(
-    'SELECT id, type_result, raw_answers, COALESCE(questions_snapshot, "[]") as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+    "SELECT id, type_result, raw_answers, COALESCE(questions_snapshot, '[]') as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT ?"
   ).all(userId, limit) as Array<{ id: string; type_result: string; raw_answers: string; questions_snapshot: string; created_at: string }>;
 }
 
