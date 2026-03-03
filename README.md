@@ -46,6 +46,7 @@ The app uses SQLite for persistence (personality test results, MBTI results, etc
 1. Deploy your service (Dockerfile is configured).
 2. In the Railway dashboard, add a **Volume** to your service.
 3. Set the volume **mount path** to `/data` (the app writes `talkwise.db` there).
-4. Redeploy so the volume is attached.
+4. Add env var `RAILWAY_RUN_UID=0` so the app can write to the volume (Railway mounts volumes as root).
+5. Redeploy so the volume is attached.
 
-Without a volume, the database lives on ephemeral container storage and test results will not persist.
+If you see "unable to open database file", the volume path is not writable—ensure `RAILWAY_RUN_UID=0` is set.

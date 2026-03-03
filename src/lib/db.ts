@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 
 // Prefer Railway volume mount path when available (persistent storage)
@@ -9,9 +10,26 @@ let _db: Database.Database | null = null;
 
 function getDb(): Database.Database {
   if (!_db) {
-    _db = new Database(DB_PATH);
+    let dbPath = DB_PATH;
+    try {
+      fs.mkdirSync(DB_DIR, { recursive: true });
+    } catch (err) {
+      console.warn('[db] Could not create DB_DIR:', err);
+    }
+    try {
+      _db = new Database(DB_PATH);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('unable to open') && DB_DIR !== process.cwd()) {
+        dbPath = path.join(process.cwd(), 'talkwise.db');
+        console.warn('[db] Fallback: using', dbPath, '(', DB_DIR, 'not writable; add Railway volume at /data or set RAILWAY_RUN_UID=0)');
+        _db = new Database(dbPath);
+      } else {
+        throw err;
+      }
+    }
     if (process.env.NODE_ENV !== 'test') {
-      console.log('[db] SQLite at', DB_PATH);
+      console.log('[db] SQLite at', dbPath);
     }
     _db.pragma('journal_mode = WAL');
     // Foreign keys disabled — with JWT sessions, user_id may reference
