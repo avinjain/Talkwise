@@ -19,6 +19,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     onGetFeedback,
     onEditPersonality,
     messagesCount,
+    lastTestResult,
   } = useSideNav();
 
   const hideSideNav = HIDE_SIDENAV_PATHS.some((p) => pathname.startsWith(p)) || !session;
@@ -38,6 +39,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onGetFeedback={onGetFeedback}
         onEditPersonality={onEditPersonality}
         messagesCount={messagesCount}
+        lastTestResult={lastTestResult}
       />
       <main className="flex-1 min-w-0 flex flex-col">
         {children}

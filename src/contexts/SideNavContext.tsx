@@ -5,6 +5,11 @@ import { createContext, useContext, useState, useCallback, ReactNode } from 'rea
 type ProfileTab = 'personality' | 'resume';
 type ChatTab = 'work' | 'life';
 
+export interface LastTestResult {
+  date?: string;
+  hasResult: boolean;
+}
+
 interface SideNavContextValue {
   variant: 'default' | 'profile' | 'chat';
   profileTab: ProfileTab;
@@ -18,6 +23,8 @@ interface SideNavContextValue {
   setOnEditPersonality: (fn: (() => void) | undefined) => void;
   messagesCount: number;
   setMessagesCount: (n: number) => void;
+  lastTestResult: LastTestResult | null;
+  setLastTestResult: (r: LastTestResult | null) => void;
 }
 
 const defaultContext: SideNavContextValue = {
@@ -31,6 +38,8 @@ const defaultContext: SideNavContextValue = {
   setOnEditPersonality: () => {},
   messagesCount: 0,
   setMessagesCount: () => {},
+  lastTestResult: null,
+  setLastTestResult: () => {},
 };
 
 const SideNavContext = createContext<SideNavContextValue>(defaultContext);
@@ -42,6 +51,7 @@ export function SideNavProvider({ children }: { children: ReactNode }) {
   const [onGetFeedback, setOnGetFeedbackState] = useState<(() => void) | undefined>();
   const [onEditPersonality, setOnEditPersonalityState] = useState<(() => void) | undefined>();
   const [messagesCount, setMessagesCount] = useState(0);
+  const [lastTestResult, setLastTestResult] = useState<LastTestResult | null>(null);
 
   const setOnGetFeedback = useCallback((fn: (() => void) | undefined) => {
     setOnGetFeedbackState(() => fn);
@@ -66,6 +76,8 @@ export function SideNavProvider({ children }: { children: ReactNode }) {
         setOnEditPersonality,
         messagesCount,
         setMessagesCount,
+        lastTestResult,
+        setLastTestResult,
       }}
     >
       {children}

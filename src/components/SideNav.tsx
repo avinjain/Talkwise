@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import type { LastTestResult } from '@/contexts/SideNavContext';
 
 type NavVariant = 'default' | 'profile' | 'chat';
 
@@ -18,6 +19,8 @@ interface SideNavProps {
   onEditPersonality?: () => void;
   /** Chat: messages count for Get Feedback */
   messagesCount?: number;
+  /** Profile: last test date and result */
+  lastTestResult?: LastTestResult | null;
 }
 
 export default function SideNav({
@@ -29,6 +32,7 @@ export default function SideNav({
   onGetFeedback,
   onEditPersonality,
   messagesCount = 0,
+  lastTestResult = null,
 }: SideNavProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -103,6 +107,20 @@ export default function SideNav({
               </svg>
               Resume and LinkedIn
             </button>
+
+            {/* Last test result */}
+            <div className="mt-3 pt-3 border-t border-slate-200">
+              <p className="px-2 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Last test</p>
+              <div className="mt-1.5 px-2 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                {lastTestResult?.hasResult && lastTestResult?.date ? (
+                  <p className="text-xs text-slate-600">
+                    Completed {new Date(lastTestResult.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500">Not yet taken</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
