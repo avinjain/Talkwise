@@ -134,7 +134,67 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
     CREATE INDEX IF NOT EXISTS idx_mbti_results_user ON mbti_results(user_id);
+
+    CREATE TABLE IF NOT EXISTS profile_result_attempts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      conscientiousness REAL DEFAULT 0,
+      emotional_stability REAL DEFAULT 0,
+      agreeableness REAL DEFAULT 0,
+      emotional_intelligence REAL DEFAULT 0,
+      integrity REAL DEFAULT 0,
+      assertiveness REAL DEFAULT 0,
+      conflict_style REAL DEFAULT 0,
+      stress_response REAL DEFAULT 0,
+      motivation_orientation REAL DEFAULT 0,
+      raw_answers TEXT DEFAULT '{}',
+      user_context TEXT DEFAULT '{}',
+      ai_feedback TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_profile_attempts_user ON profile_result_attempts(user_id);
+    CREATE INDEX IF NOT EXISTS idx_profile_attempts_created ON profile_result_attempts(created_at);
   `);
+
+  // ── Migration: migrate profile_results to profile_result_attempts ──
+  try {
+    const count = db.prepare('SELECT COUNT(*) as c FROM profile_result_attempts').get() as { c: number };
+    if (count.c === 0) {
+      try {
+        db.exec(`
+          INSERT INTO profile_result_attempts (id, user_id, conscientiousness, emotional_stability, agreeableness, emotional_intelligence, integrity, assertiveness, conflict_style, stress_response, motivation_orientation, raw_answers, user_context, ai_feedback, created_at)
+          SELECT id, user_id, conscientiousness, emotional_stability, agreeableness, emotional_intelligence, integrity, assertiveness, conflict_style, stress_response, motivation_orientation, raw_answers, user_context, ai_feedback, COALESCE(updated_at, created_at)
+          FROM profile_results
+        `);
+        console.log('Migration: migrated profile_results to profile_result_attempts');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('no such table')) console.error('Profile migration:', err);
+      }
+    }
+  } catch (err) {
+    console.error('Profile attempts migration check failed:', err);
+  }
+
+  // ── Migration: add questions_snapshot to mbti_results ──
+  try {
+    const mbtiCols = db.pragma('table_info(mbti_results)') as { name: string }[];
+    const mbtiColNames = new Set(mbtiCols.map((c) => c.name));
+    if (!mbtiColNames.has('questions_snapshot')) {
+      try {
+        db.exec("ALTER TABLE mbti_results ADD COLUMN questions_snapshot TEXT DEFAULT '[]'");
+        console.log("Migration: added column 'questions_snapshot' to mbti_results");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('duplicate column')) {
+          console.error("Migration failed for column 'questions_snapshot':", err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('MBTI results migration check failed:', err);
+  }
 
   // ── Migration: add has_completed_onboarding to users ──
   try {
@@ -448,11 +508,26 @@ export interface ProfileResultRow {
   updated_at: string;
 }
 
+const PROFILE_RESULTS_LIMIT = 3;
+
 export function getProfileResult(userId: string): ProfileResultRow | undefined {
   const db = getDb();
-  return db.prepare(
-    'SELECT * FROM profile_results WHERE user_id = ?'
+  const row = db.prepare(
+    'SELECT * FROM profile_result_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
   ).get(userId) as ProfileResultRow | undefined;
+  if (row) {
+    (row as { updated_at?: string }).updated_at = row.created_at;
+  }
+  return row;
+}
+
+export function getProfileResults(userId: string, limit = PROFILE_RESULTS_LIMIT): ProfileResultRow[] {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT * FROM profile_result_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+  ).all(userId, limit) as ProfileResultRow[];
+  rows.forEach((r) => { (r as { updated_at?: string }).updated_at = r.created_at; });
+  return rows;
 }
 
 export function saveProfileResult(
@@ -474,34 +549,27 @@ export function saveProfileResult(
   aiFeedback: string
 ) {
   const db = getDb();
-  const existing = getProfileResult(userId);
-
-  if (existing) {
+  const id = crypto.randomUUID();
+  db.prepare(
+    `INSERT INTO profile_result_attempts (id, user_id, conscientiousness, emotional_stability, agreeableness, emotional_intelligence, integrity, assertiveness, conflict_style, stress_response, motivation_orientation, raw_answers, user_context, ai_feedback)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id, userId,
+    scores.conscientiousness, scores.emotionalStability, scores.agreeableness,
+    scores.emotionalIntelligence, scores.integrity, scores.assertiveness,
+    scores.conflictStyle, scores.stressResponse, scores.motivationOrientation,
+    JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback
+  );
+  // Prune to keep only last 3
+  const toKeep = db.prepare(
+    'SELECT id FROM profile_result_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+  ).all(userId, PROFILE_RESULTS_LIMIT) as { id: string }[];
+  if (toKeep.length >= PROFILE_RESULTS_LIMIT) {
+    const ids = toKeep.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
     db.prepare(
-      `UPDATE profile_results SET
-        conscientiousness = ?, emotional_stability = ?, agreeableness = ?,
-        emotional_intelligence = ?, integrity = ?, assertiveness = ?,
-        conflict_style = ?, stress_response = ?, motivation_orientation = ?,
-        raw_answers = ?, user_context = ?, ai_feedback = ?, updated_at = datetime('now')
-       WHERE user_id = ?`
-    ).run(
-      scores.conscientiousness, scores.emotionalStability, scores.agreeableness,
-      scores.emotionalIntelligence, scores.integrity, scores.assertiveness,
-      scores.conflictStyle, scores.stressResponse, scores.motivationOrientation,
-      JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback, userId
-    );
-  } else {
-    const id = crypto.randomUUID();
-    db.prepare(
-      `INSERT INTO profile_results (id, user_id, conscientiousness, emotional_stability, agreeableness, emotional_intelligence, integrity, assertiveness, conflict_style, stress_response, motivation_orientation, raw_answers, user_context, ai_feedback)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      id, userId,
-      scores.conscientiousness, scores.emotionalStability, scores.agreeableness,
-      scores.emotionalIntelligence, scores.integrity, scores.assertiveness,
-      scores.conflictStyle, scores.stressResponse, scores.motivationOrientation,
-      JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback
-    );
+      `DELETE FROM profile_result_attempts WHERE user_id = ? AND id NOT IN (${placeholders})`
+    ).run(userId, ...ids);
   }
 }
 
@@ -545,19 +613,45 @@ export function clearMBTIQuestions() {
   db.prepare('DELETE FROM mbti_questions').run();
 }
 
-export function getMBTIResult(userId: string): { type_result: string; raw_answers: string; created_at: string } | undefined {
+export function getMBTIResult(userId: string): { type_result: string; raw_answers: string; questions_snapshot: string; created_at: string } | undefined {
   const db = getDb();
   return db.prepare(
-    'SELECT type_result, raw_answers, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
-  ).get(userId) as { type_result: string; raw_answers: string; created_at: string } | undefined;
+    'SELECT type_result, raw_answers, COALESCE(questions_snapshot, "[]") as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+  ).get(userId) as { type_result: string; raw_answers: string; questions_snapshot: string; created_at: string } | undefined;
 }
 
-export function saveMBTIResult(userId: string, typeResult: string, rawAnswers: Record<string, string>) {
+const MBTI_RESULTS_LIMIT = 3;
+
+export function getMBTIResults(userId: string, limit = MBTI_RESULTS_LIMIT): Array<{ id: string; type_result: string; raw_answers: string; questions_snapshot: string; created_at: string }> {
+  const db = getDb();
+  return db.prepare(
+    'SELECT id, type_result, raw_answers, COALESCE(questions_snapshot, "[]") as questions_snapshot, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+  ).all(userId, limit) as Array<{ id: string; type_result: string; raw_answers: string; questions_snapshot: string; created_at: string }>;
+}
+
+export function saveMBTIResult(
+  userId: string,
+  typeResult: string,
+  rawAnswers: Record<string, string>,
+  questionsSnapshot?: Array<{ id: string; dimension: string; question: string; optionA: string; optionB: string; order: number }>
+) {
   const db = getDb();
   const id = crypto.randomUUID();
+  const questionsJson = questionsSnapshot ? JSON.stringify(questionsSnapshot) : '[]';
   db.prepare(
-    'INSERT INTO mbti_results (id, user_id, type_result, raw_answers) VALUES (?, ?, ?, ?)'
-  ).run(id, userId, typeResult, JSON.stringify(rawAnswers));
+    'INSERT INTO mbti_results (id, user_id, type_result, raw_answers, questions_snapshot) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, userId, typeResult, JSON.stringify(rawAnswers), questionsJson);
+  // Prune to keep only last 3
+  const toKeep = db.prepare(
+    'SELECT id FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+  ).all(userId, MBTI_RESULTS_LIMIT) as { id: string }[];
+  if (toKeep.length >= MBTI_RESULTS_LIMIT) {
+    const ids = toKeep.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    db.prepare(
+      `DELETE FROM mbti_results WHERE user_id = ? AND id NOT IN (${placeholders})`
+    ).run(userId, ...ids);
+  }
 }
 
 export default getDb;

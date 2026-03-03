@@ -18,10 +18,19 @@ export async function GET() {
       return Response.json({ hasResult: false });
     }
 
+    const questionsSnapshot = (() => {
+      try {
+        return JSON.parse(row.questions_snapshot || '[]');
+      } catch {
+        return [];
+      }
+    })();
+
     return Response.json({
       hasResult: true,
       type: row.type_result,
       rawAnswers: JSON.parse(row.raw_answers || '{}'),
+      questionsSnapshot,
       createdAt: row.created_at,
     });
   } catch (error) {
@@ -48,7 +57,15 @@ export async function POST(req: Request) {
     }
 
     const result = calculateMBTIResult(questions, answers);
-    saveMBTIResult(userId, result.type, answers);
+    const questionsSnapshot = questions.map((q) => ({
+      id: q.id,
+      dimension: q.dimension,
+      question: q.question,
+      optionA: q.optionA,
+      optionB: q.optionB,
+      order: q.order,
+    }));
+    saveMBTIResult(userId, result.type, answers, questionsSnapshot);
 
     return Response.json({
       type: result.type,

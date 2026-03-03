@@ -5,8 +5,6 @@ import { useSession } from 'next-auth/react';
 import SideNav from './SideNav';
 import { useSideNav } from '@/contexts/SideNavContext';
 
-const HIDE_SIDENAV_PATHS = ['/auth', '/configure', '/start', '/profile/test', '/profile/mbti'];
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -23,7 +21,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     lastMbtiTest,
   } = useSideNav();
 
-  const hideSideNav = HIDE_SIDENAV_PATHS.some((p) => pathname.startsWith(p)) || !session;
+  const hideSideNav =
+    ['/auth', '/configure', '/start'].some((p) => pathname.startsWith(p)) ||
+    pathname.startsWith('/profile/test') ||
+    pathname === '/profile/mbti' || // test only; /profile/mbti/results shows nav
+    !session;
 
   if (hideSideNav) {
     return <>{children}</>;

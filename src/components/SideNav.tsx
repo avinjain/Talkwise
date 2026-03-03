@@ -122,11 +122,17 @@ export default function SideNav({
                   </button>
                   <div className="ml-6 pl-2 mt-1 border-l border-slate-200">
                     <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Last test</p>
-                    <p className="text-xs text-slate-600">
-                      {lastMbtiTest?.hasResult && lastMbtiTest?.date
-                        ? new Date(lastMbtiTest.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                        : 'Not yet taken'}
-                    </p>
+                    {lastMbtiTest?.hasResult && lastMbtiTest?.date ? (
+                      <button
+                        onClick={() => router.push('/profile/mbti/results')}
+                        className="text-xs text-violet-600 hover:text-violet-700 hover:underline text-left"
+                      >
+                        {new Date(lastMbtiTest.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <span className="ml-1 text-slate-400">→</span>
+                      </button>
+                    ) : (
+                      <p className="text-xs text-slate-600">Not yet taken</p>
+                    )}
                   </div>
                 </div>
               </div>
