@@ -192,8 +192,8 @@ export default function MBTITestPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader backHref="/profile" backLabel="Back" />
-      <div className="flex-1 py-8 px-6 lg:px-10">
-        <div className="max-w-5xl mx-auto w-full flex flex-col lg:flex-row lg:gap-10">
+      <div className="flex-1 py-8 px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:gap-12">
           {/* Main: question + options */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center mb-6">
@@ -213,8 +213,8 @@ export default function MBTITestPage() {
               </div>
             )}
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 mb-6 shadow-sm">
-              <h2 className="text-lg lg:text-xl font-bold text-slate-900 mb-6 leading-relaxed">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-10 mb-6 shadow-sm">
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-6 leading-relaxed">
                 &ldquo;{question?.question}&rdquo;
               </h2>
               <p className="text-xs text-slate-500 mb-4">Which describes you better?</p>
@@ -280,7 +280,7 @@ export default function MBTITestPage() {
           </div>
 
           {/* Sidebar: progress ring + dimension viz + question grid */}
-          <div className="lg:w-64 shrink-0 mt-8 lg:mt-0">
+          <div className="lg:w-72 xl:w-80 shrink-0 mt-8 lg:mt-0">
             <div className="lg:sticky lg:top-8 space-y-6">
               <div className="flex flex-col items-center">
                 <MBTIProgressRing

@@ -5,6 +5,7 @@ interface MBTIProgressRingProps {
   total: number;
   size?: number;
   strokeWidth?: number;
+  variant?: 'brand' | 'violet';
 }
 
 export default function MBTIProgressRing({
@@ -12,11 +13,17 @@ export default function MBTIProgressRing({
   total,
   size = 80,
   strokeWidth = 6,
+  variant = 'violet',
 }: MBTIProgressRingProps) {
   const progress = total > 0 ? current / total : 0;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
+  const gradientId = `progressRing-${variant}`;
+
+  const gradient = variant === 'brand'
+    ? { start: '#0ed7b5', end: '#2e7dd1' }
+    : { start: '#8b5cf6', end: '#d946ef' };
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -34,7 +41,7 @@ export default function MBTIProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="url(#mbtiProgressGradient)"
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -42,9 +49,9 @@ export default function MBTIProgressRing({
           className="transition-all duration-500 ease-out"
         />
         <defs>
-          <linearGradient id="mbtiProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#d946ef" />
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={gradient.start} />
+            <stop offset="100%" stopColor={gradient.end} />
           </linearGradient>
         </defs>
       </svg>

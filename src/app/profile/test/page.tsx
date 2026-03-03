@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
 import { QUESTIONS, DIMENSIONS, LIKERT_OPTIONS, calculateScores } from '@/lib/personality-test';
+import MBTIProgressRing from '@/components/MBTIProgressRing';
 
 interface UserContext {
   role: string;
@@ -70,7 +71,6 @@ export default function PersonalityTestPage() {
 
   const question = QUESTIONS[currentIndex];
   const total = QUESTIONS.length;
-  const progress = ((currentIndex) / total) * 100;
   const answered = answers[question?.id] !== undefined;
 
   const dimInfo = DIMENSIONS.find((d) => d.key === question?.dimension);
@@ -144,8 +144,8 @@ export default function PersonalityTestPage() {
     return (
       <div className="min-h-screen flex flex-col">
         <AppHeader backHref="/profile" backLabel="Back" />
-        <div className="flex-1 py-8 px-6">
-        <div className="max-w-xl mx-auto">
+        <div className="flex-1 py-8 px-6 lg:px-12">
+        <div className="max-w-2xl mx-auto">
 
           {/* Hero */}
           <div className="text-center mb-8">
@@ -297,156 +297,170 @@ export default function PersonalityTestPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <div className="flex-1 py-8 px-6">
-      <div className="max-w-xl mx-auto">
-        {/* Navigation */}
-        <div className="flex items-center mb-6">
-          <button
-            onClick={handleBackInTest}
-            className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-          >
-            &larr; {currentIndex === 0 ? 'Edit Profile' : 'Previous'}
-          </button>
-        </div>
+      <div className="flex-1 py-8 px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:gap-12">
+          {/* Main: question + Likert scale */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center mb-6">
+              <button
+                onClick={handleBackInTest}
+                className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
+              >
+                &larr; {currentIndex === 0 ? 'Edit Profile' : 'Previous'}
+              </button>
+            </div>
 
-        {/* Progress bar */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-slate-500">
-              Question {currentIndex + 1} of {total}
-            </span>
-            <span className="text-xs text-slate-400">
-              {Object.keys(answers).length}/{total} answered
-            </span>
-          </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-brand-500 to-accent-500 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Dimension badge */}
-        {dimInfo && (
-          <div className="mb-4">
-            <span
-              className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{
-                color: dimInfo.color,
-                backgroundColor: `${dimInfo.color}15`,
-                border: `1px solid ${dimInfo.color}30`,
-              }}
-            >
-              {dimInfo.label}
-            </span>
-          </div>
-        )}
-
-        {/* Question */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-1 leading-relaxed">
-            &ldquo;{question?.question}&rdquo;
-          </h2>
-          {question?.reversed && (
-            <p className="text-[10px] text-slate-300 mt-1">*</p>
-          )}
-        </div>
-
-        {/* Likert Scale */}
-        <div className="mb-8">
-          <div className="flex justify-between mb-3 px-1">
-            <span className="text-[10px] text-slate-400 font-medium">Strongly Disagree</span>
-            <span className="text-[10px] text-slate-400 font-medium">Strongly Agree</span>
-          </div>
-          <div className="flex gap-2">
-            {LIKERT_OPTIONS.map((opt) => {
-              const isSelected = answers[question?.id] === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => handleSelect(opt.value)}
-                  className={`flex-1 py-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1.5 ${
-                    isSelected
-                      ? 'border-brand-500 bg-brand-50 shadow-sm scale-105'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-                  }`}
+            {dimInfo && (
+              <div className="mb-4">
+                <span
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{
+                    color: dimInfo.color,
+                    backgroundColor: `${dimInfo.color}15`,
+                    border: `1px solid ${dimInfo.color}30`,
+                  }}
                 >
-                  <span className={`text-lg font-bold ${
-                    isSelected ? 'text-brand-600' : 'text-slate-400'
-                  }`}>
-                    {opt.value}
-                  </span>
-                  <span className={`text-[10px] font-medium leading-tight text-center px-1 ${
-                    isSelected ? 'text-brand-600' : 'text-slate-400'
-                  }`}>
-                    {opt.label.split(' ').map((w, i) => <span key={i} className="block">{w}</span>)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-
-          <div className="flex gap-2">
-            {!isLast ? (
-              <button
-                onClick={handleNext}
-                disabled={!answered}
-                className="px-6 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!allAnswered || submitting}
-                className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
-              >
-                {submitting ? 'Analyzing your profile...' : 'See My Results'}
-              </button>
+                  {dimInfo.label}
+                </span>
+              </div>
             )}
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-10 mb-6 shadow-sm">
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1 leading-relaxed">
+                &ldquo;{question?.question}&rdquo;
+              </h2>
+              {question?.reversed && (
+                <p className="text-[10px] text-slate-300 mt-1">*</p>
+              )}
+            </div>
+
+            <div className="mb-8">
+              <div className="flex justify-between mb-3 px-1">
+                <span className="text-xs text-slate-400 font-medium">Strongly Disagree</span>
+                <span className="text-xs text-slate-400 font-medium">Strongly Agree</span>
+              </div>
+              <div className="flex gap-2">
+                {LIKERT_OPTIONS.map((opt) => {
+                  const isSelected = answers[question?.id] === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSelect(opt.value)}
+                      className={`flex-1 py-5 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-1.5 ${
+                        isSelected
+                          ? 'border-brand-500 bg-brand-50 shadow-sm scale-105'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <span className={`text-xl font-bold ${
+                        isSelected ? 'text-brand-600' : 'text-slate-400'
+                      }`}>
+                        {opt.value}
+                      </span>
+                      <span className={`text-[10px] font-medium leading-tight text-center px-1 ${
+                        isSelected ? 'text-brand-600' : 'text-slate-400'
+                      }`}>
+                        {opt.label.split(' ').map((w, i) => <span key={i} className="block">{w}</span>)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+
+              <div className="flex gap-2">
+                {!isLast ? (
+                  <button
+                    onClick={handleNext}
+                    disabled={!answered}
+                    className="px-6 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!allAnswered || submitting}
+                    className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+                  >
+                    {submitting ? 'Analyzing your profile...' : 'See My Results'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar: progress + dimension + question grid */}
+          <div className="lg:w-72 xl:w-80 shrink-0 mt-8 lg:mt-0">
+            <div className="lg:sticky lg:top-8 space-y-6">
+              <div className="flex flex-col items-center">
+                <MBTIProgressRing
+                  current={Object.keys(answers).length}
+                  total={total}
+                  size={88}
+                  strokeWidth={8}
+                  variant="brand"
+                />
+                <p className="text-xs font-medium text-slate-500 mt-2">Answered</p>
+              </div>
+              {dimInfo && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Current dimension</h4>
+                  <div
+                    className="p-3 rounded-xl border-2"
+                    style={{
+                      backgroundColor: `${dimInfo.color}10`,
+                      borderColor: `${dimInfo.color}40`,
+                    }}
+                  >
+                    <p className="text-sm font-semibold text-slate-800">{dimInfo.label}</p>
+                    <p className="text-xs text-slate-600 mt-1">{dimInfo.description}</p>
+                  </div>
+                </div>
+              )}
+              <div>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Questions</h4>
+                <div className="grid grid-cols-9 gap-1.5">
+                  {QUESTIONS.map((q, i) => {
+                    const isAnswered = answers[q.id] !== undefined;
+                    const isCurrent = i === currentIndex;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => setCurrentIndex(i)}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-[10px] font-medium transition-all ${
+                          isCurrent
+                            ? 'bg-brand-500 text-white ring-2 ring-brand-300'
+                            : isAnswered
+                            ? 'bg-brand-200 text-brand-800'
+                            : 'bg-slate-100 text-slate-400'
+                        }`}
+                        title={`Question ${i + 1}`}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Quick navigation dots */}
-        <div className="flex justify-center gap-1 mt-8">
-          {QUESTIONS.map((q, i) => {
-            const isAnswered = answers[q.id] !== undefined;
-            const isCurrent = i === currentIndex;
-            return (
-              <button
-                key={q.id}
-                onClick={() => setCurrentIndex(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  isCurrent
-                    ? 'bg-brand-500 w-4'
-                    : isAnswered
-                    ? 'bg-brand-300'
-                    : 'bg-slate-200'
-                }`}
-              />
-            );
-          })}
-        </div>
-      </div>
       </div>
     </div>
   );
