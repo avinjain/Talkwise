@@ -97,7 +97,17 @@ Respond with valid JSON only (no markdown, no code fences):
     }));
     insertMBTIQuestions(toInsert);
 
-    return Response.json({ count: toInsert.length });
+    // Return questions so client can use them immediately (avoids second fetch / serverless DB isolation)
+    const questionsForClient = toInsert.map((q) => ({
+      id: q.id,
+      dimension: q.dimension,
+      question: q.question_text,
+      optionA: q.option_a,
+      optionB: q.option_b,
+      order: q.question_order,
+    }));
+
+    return Response.json({ count: toInsert.length, questions: questionsForClient });
   } catch (error) {
     console.error('MBTI generate-questions error:', error);
     const message = error instanceof Error ? error.message : 'Failed to generate questions';

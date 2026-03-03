@@ -9,6 +9,8 @@ import ProfileDetailsPanel from '@/components/ProfileDetailsPanel';
 import { ProfileResult, DIMENSIONS } from '@/lib/personality-test';
 import { MBTI_DIMENSIONS } from '@/lib/mbti';
 import { useSideNav } from '@/contexts/SideNavContext';
+import MBTIDimensionVisual from '@/components/MBTIDimensionVisual';
+import MBTITypeBadge from '@/components/MBTITypeBadge';
 
 const TestIcon = () => (
   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -129,16 +131,19 @@ export default function ProfilePage() {
       )}
       <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
         <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">What this test measures</h4>
-        <p className="text-sm text-slate-600 mb-3 leading-relaxed">
+        <p className="text-sm text-slate-600 mb-4 leading-relaxed">
           27 questions across 9 dimensions, 5-point scale. Traits that predict effectiveness in professional and personal communication.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {DIMENSIONS.map((d) => (
-            <div key={d.key} className="flex gap-2 p-2 rounded-lg bg-white border border-slate-100">
-              <div className="w-1.5 h-1.5 rounded-full mt-1 shrink-0" style={{ backgroundColor: d.color }} />
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-800 truncate">{d.label}</p>
-                <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{d.description}</p>
+            <div
+              key={d.key}
+              className="flex gap-3 p-3 rounded-xl bg-white border border-slate-100 overflow-hidden"
+              style={{ borderLeftWidth: 4, borderLeftColor: d.color }}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-800 truncate">{d.label}</p>
+                <p className="text-[11px] text-slate-500 leading-snug line-clamp-2 mt-0.5">{d.description}</p>
               </div>
             </div>
           ))}
@@ -173,14 +178,12 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shrink-0">
-              <span className="text-2xl font-bold text-white">{mbtiResult.type}</span>
-            </div>
+          <div className="flex items-center gap-6 mb-4">
+            <MBTITypeBadge type={mbtiResult.type} size="md" showBreakdown />
             <div>
               <h3 className="text-base font-semibold text-slate-900">Your MBTI type</h3>
               {mbtiResult.createdAt && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {new Date(mbtiResult.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               )}
@@ -196,17 +199,10 @@ export default function ProfilePage() {
       )}
       <div className="p-4 rounded-xl bg-violet-50/30 border border-violet-100">
         <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">What this test measures</h4>
-        <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-          ~24 forced-choice questions across 4 dichotomies. AI-generated questions for a fresh assessment each time.
+        <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+          ~24 forced-choice questions across 4 dichotomies. Pick the option that describes you better.
         </p>
-        <div className="space-y-2">
-          {MBTI_DIMENSIONS.map((d) => (
-            <div key={d.key} className="flex gap-2 p-2 rounded-lg bg-white/80 border border-violet-100">
-              <span className="text-xs font-semibold text-violet-600 shrink-0">{d.a}/{d.b}</span>
-              <p className="text-xs text-slate-700">{d.label}</p>
-            </div>
-          ))}
-        </div>
+        <MBTIDimensionVisual />
       </div>
     </div>
   );
