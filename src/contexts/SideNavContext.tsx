@@ -23,8 +23,10 @@ interface SideNavContextValue {
   setOnEditPersonality: (fn: (() => void) | undefined) => void;
   messagesCount: number;
   setMessagesCount: (n: number) => void;
-  lastTestResult: LastTestResult | null;
-  setLastTestResult: (r: LastTestResult | null) => void;
+  lastPersonalityTest: LastTestResult | null;
+  lastMbtiTest: LastTestResult | null;
+  setLastPersonalityTest: (r: LastTestResult | null) => void;
+  setLastMbtiTest: (r: LastTestResult | null) => void;
 }
 
 const defaultContext: SideNavContextValue = {
@@ -38,8 +40,10 @@ const defaultContext: SideNavContextValue = {
   setOnEditPersonality: () => {},
   messagesCount: 0,
   setMessagesCount: () => {},
-  lastTestResult: null,
-  setLastTestResult: () => {},
+  lastPersonalityTest: null,
+  lastMbtiTest: null,
+  setLastPersonalityTest: () => {},
+  setLastMbtiTest: () => {},
 };
 
 const SideNavContext = createContext<SideNavContextValue>(defaultContext);
@@ -51,7 +55,8 @@ export function SideNavProvider({ children }: { children: ReactNode }) {
   const [onGetFeedback, setOnGetFeedbackState] = useState<(() => void) | undefined>();
   const [onEditPersonality, setOnEditPersonalityState] = useState<(() => void) | undefined>();
   const [messagesCount, setMessagesCount] = useState(0);
-  const [lastTestResult, setLastTestResult] = useState<LastTestResult | null>(null);
+  const [lastPersonalityTest, setLastPersonalityTest] = useState<LastTestResult | null>(null);
+  const [lastMbtiTest, setLastMbtiTest] = useState<LastTestResult | null>(null);
 
   const setOnGetFeedback = useCallback((fn: (() => void) | undefined) => {
     setOnGetFeedbackState(() => fn);
@@ -76,8 +81,10 @@ export function SideNavProvider({ children }: { children: ReactNode }) {
         setOnEditPersonality,
         messagesCount,
         setMessagesCount,
-        lastTestResult,
-        setLastTestResult,
+        lastPersonalityTest,
+        lastMbtiTest,
+        setLastPersonalityTest,
+        setLastMbtiTest,
       }}
     >
       {children}
