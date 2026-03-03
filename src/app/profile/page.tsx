@@ -7,9 +7,16 @@ import AppHeader from '@/components/AppHeader';
 import RadarChart from '@/components/RadarChart';
 import ProfileDetailsPanel from '@/components/ProfileDetailsPanel';
 import { ProfileResult } from '@/lib/personality-test';
+import { useSideNav } from '@/contexts/SideNavContext';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { setVariant, profileTab, setProfileTab } = useSideNav();
+
+  useEffect(() => {
+    setVariant('profile');
+    return () => setVariant('default');
+  }, [setVariant]);
   const [scores, setScores] = useState<ProfileResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasResult, setHasResult] = useState(false);
@@ -113,7 +120,11 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <ProfileDetailsPanel personalityContent={personalitySection} />
+          <ProfileDetailsPanel
+            personalityContent={personalitySection}
+            activeTab={profileTab}
+            onTabChange={setProfileTab}
+          />
 
           <div className="mt-10 flex justify-center">
             <button

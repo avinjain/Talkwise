@@ -8,11 +8,16 @@ type ProfileNavTab = 'personality' | 'resume';
 interface ProfileDetailsPanelProps {
   /** Content for Test your personality tab */
   personalityContent?: ReactNode;
+  /** Controlled tab (from side nav) */
+  activeTab?: ProfileNavTab;
+  onTabChange?: (tab: ProfileNavTab) => void;
 }
 
 /** Profile page: Side nav (Test your personality | Resume and LinkedIn), main area switches by tab */
-export default function ProfileDetailsPanel({ personalityContent }: ProfileDetailsPanelProps) {
-  const [activeTab, setActiveTab] = useState<ProfileNavTab>('personality');
+export default function ProfileDetailsPanel({ personalityContent, activeTab: controlledTab, onTabChange }: ProfileDetailsPanelProps) {
+  const [internalTab, setInternalTab] = useState<ProfileNavTab>('personality');
+  const activeTab = controlledTab ?? internalTab;
+  const setActiveTab = onTabChange ?? setInternalTab;
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState('');
@@ -226,39 +231,7 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
 
   return (
     <div className="flex flex-col">
-      {/* Top tab navigation */}
-      <nav className="flex gap-1 p-1 bg-slate-100 rounded-xl mb-6 w-full sm:w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab('personality')}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-1 sm:flex-initial ${
-            activeTab === 'personality'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
-          }`}
-        >
-          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
-          </svg>
-          Test your personality
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('resume')}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-1 sm:flex-initial ${
-            activeTab === 'resume'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
-          }`}
-        >
-          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-          Resume and LinkedIn
-        </button>
-      </nav>
-
-      {/* Main content area */}
+      {/* Main content area — tabs are in side nav */}
       <main className="flex-1 min-w-0">
         {activeTab === 'personality' && (
           <div className="max-w-2xl">
