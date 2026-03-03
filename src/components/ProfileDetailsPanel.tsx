@@ -225,13 +225,13 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
   );
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Side navigation pane */}
-      <nav className="flex flex-row lg:flex-col gap-1 p-1 bg-slate-100 rounded-xl shrink-0 lg:w-52 lg:sticky lg:top-24 lg:self-start">
+    <div className="flex flex-col">
+      {/* Top tab navigation */}
+      <nav className="flex gap-1 p-1 bg-slate-100 rounded-xl mb-6 w-full sm:w-fit">
         <button
           type="button"
           onClick={() => setActiveTab('personality')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-1 sm:flex-initial ${
             activeTab === 'personality'
               ? 'bg-white text-slate-900 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
@@ -245,7 +245,7 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
         <button
           type="button"
           onClick={() => setActiveTab('resume')}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-1 sm:flex-initial ${
             activeTab === 'resume'
               ? 'bg-white text-slate-900 shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50/50'
@@ -271,12 +271,48 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
             {/* Top: Resume & LinkedIn inputs */}
             {resumeInputSection}
 
-            {/* Bottom: 3 stacked analysis sections */}
+            {/* Bottom: 3 stacked analysis sections — order: overview → resume → speaking points */}
             <div className="space-y-6">
-              {/* Resume optimisation */}
+              {/* 1. Analyze profile & improvement tips — overview first */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                  <h3 className="text-sm font-semibold text-slate-800">Resume optimisation</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">1. Analyze profile & improvement tips</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Resume & LinkedIn alignment, keywords, action items</p>
+                </div>
+                <div className="p-4">
+                  {hasInput ? (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={handleAnalyzeProfile}
+                        disabled={analyzing}
+                        className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
+                      >
+                        {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
+                      </button>
+                      {profileAnalysis ? (
+                        <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <AnalysisDisplay content={profileAnalysis} />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400 text-center py-3">
+                          Click the button above to see personalized improvement tips.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Add your resume and/or LinkedIn above to get started.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Resume optimisation — resume deep dive */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                  <h3 className="text-sm font-semibold text-slate-800">2. Resume optimisation</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Strengths, gaps, story bank & one-line pitch</p>
                 </div>
                 <div className="p-4">
                   {hasResume ? (
@@ -328,44 +364,11 @@ export default function ProfileDetailsPanel({ personalityContent }: ProfileDetai
                 </div>
               </div>
 
-              {/* Analyze profile & improvement tips */}
+              {/* 3. Core positioning — speaking points for interviews */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                  <h3 className="text-sm font-semibold text-slate-800">Analyze profile & improvement tips</h3>
-                </div>
-                <div className="p-4">
-                  {hasInput ? (
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={handleAnalyzeProfile}
-                        disabled={analyzing}
-                        className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-50 transition-all"
-                      >
-                        {analyzing ? 'Analyzing...' : 'Analyze profile & get tips'}
-                      </button>
-                      {profileAnalysis ? (
-                        <div className="max-h-[50vh] overflow-y-auto p-4 rounded-lg bg-slate-50 border border-slate-100">
-                          <AnalysisDisplay content={profileAnalysis} />
-                        </div>
-                      ) : (
-                        <p className="text-sm text-slate-400 text-center py-3">
-                          Click the button above to see personalized improvement tips.
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400 text-center py-4">
-                      Add your resume and/or LinkedIn above to get started.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Core positioning */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                  <h3 className="text-sm font-semibold text-slate-800">Core positioning</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">3. Core positioning</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Speaking points for interviews</p>
                 </div>
                 <div className="p-4">
                   {hasResume ? (
