@@ -128,7 +128,7 @@ export default function PersonalityTestPage() {
       const scores = data.scores || calculateScores(answers);
       sessionStorage.setItem('profileScores', JSON.stringify(scores));
 
-      router.push('/profile');
+      router.push('/profile/test/results');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

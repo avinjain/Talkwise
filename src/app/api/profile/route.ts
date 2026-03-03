@@ -24,7 +24,7 @@ function buildFeedbackPrompt(
     ? 'personal and social life (dating, friendships, social situations)'
     : 'professional career (workplace, leadership, negotiations)';
 
-  return `You are an expert psychologist and communication coach. A user has completed a psychometric personality assessment measuring 9 key constructs. Based on their profile and personal context, provide deeply personalized, actionable feedback.
+  return `You are an expert psychologist and communication coach. A user has completed a psychometric personality assessment measuring 9 key constructs. Tie feedback directly to their profession and prioritize what will help them grow fastest.
 
 USER CONTEXT:
 - Role/Occupation: ${context.role || 'Not specified'}
@@ -49,26 +49,32 @@ The 9 constructs measure:
 Provide your feedback as valid JSON with this exact schema (no markdown, no code fences):
 
 {
-  "summary": "<3-4 sentence overview of their personality profile. Be warm but honest. Reference their role and how their trait pattern plays out in their ${context.focus === 'personal' ? 'social life' : 'career'}. Mention their strongest and weakest areas naturally.>",
+  "summary": "<3-4 sentence overview. Explicitly connect their trait pattern to their role (${context.role || 'their work'}). How does their profile show up in ${context.focus === 'personal' ? 'relationships' : 'their profession'}? Be warm but honest.>",
   "topStrengths": [
-    { "dimension": "<dimension name>", "insight": "<2 sentences on how this strength specifically benefits them in their ${context.focus === 'personal' ? 'relationships' : 'professional life'}, given their role. Be specific, not generic.>" }
+    { "dimension": "<dimension name>", "insight": "<2 sentences on how this strength helps them specifically as a ${context.role || 'professional'}. Use their role—e.g. for a Software Engineer: 'helps in code reviews and pair programming'; for a Sales Manager: 'builds trust with clients'.>" }
   ],
   "growthAreas": [
-    { "dimension": "<dimension name>", "insight": "<1-2 sentences on why this area matters for them specifically>", "tip": "<A specific, behavioral action step they can take this week. Not a vague platitude — something concrete and measurable.>" }
+    { "dimension": "<dimension name>", "insight": "<1-2 sentences on why this matters for their role and goal (${context.goal})>", "tip": "<One concrete, behavioral action they can take this week. Specific to their profession.>" }
   ],
-  "professionalInsight": "<2-3 sentences on how their overall trait pattern impacts their professional effectiveness. Reference specific trait combinations (e.g., 'Your high assertiveness paired with moderate agreeableness means...').>",
-  "personalInsight": "<2-3 sentences on how their trait pattern affects personal relationships and social dynamics. Be genuine and helpful.>",
-  "practiceScenario": "<Suggest one specific TalkWise conversation scenario they should practice, tailored to their lowest-scoring area and their focus (${context.focus}). Include the persona traits and scenario they should set up.>"
+  "professionInsight": "<2-3 sentences: How does their personality profile specifically impact success in ${context.role || 'their field'}? What do people in this role typically need? Where does their pattern help or hinder?>",
+  "fastestGrowthTips": [
+    "<#1 change that would accelerate their growth most, given their role and lowest scores. One sentence, actionable.>",
+    "<#2 change. Second highest impact.>",
+    "<#3 change. Third.>"
+  ],
+  "professionalInsight": "<2-3 sentences on trait combinations and professional effectiveness.>",
+  "personalInsight": "<2-3 sentences on personal relationships and social dynamics.>",
+  "practiceScenario": "<One TalkWise scenario tailored to their lowest area and role. Include persona traits and setup.>"
 }
 
 Rules:
 - Include 2-3 items in topStrengths (highest scores)
 - Include 2-3 items in growthAreas (lowest scores)
+- fastestGrowthTips: exactly 3 items, ordered by impact. Each is one sentence. Tie to profession.
+- professionInsight: must reference their specific role (${context.role || 'their work'})
 - Be encouraging but honest — avoid toxic positivity
-- Reference their specific role and goal throughout
-- Make tips behavioral and actionable ("Practice saying X in situation Y")
-- The practiceScenario should be directly actionable in TalkWise
-- Consider trait interactions (e.g., low assertiveness + high agreeableness = people-pleasing pattern)`;
+- Make all tips behavioral and actionable
+- Consider trait interactions (e.g., low assertiveness + high agreeableness = people-pleasing)`;
 }
 
 // GET /api/profile — get current user's profile results

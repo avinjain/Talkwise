@@ -116,6 +116,101 @@ export default function MBTIResultsPage() {
             </div>
           </div>
 
+          {/* Key characteristics */}
+          {typeInfo?.keyCharacteristics && typeInfo.keyCharacteristics.length > 0 && (
+            <div className="mb-10 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Key characteristics</h2>
+              <div className="flex flex-wrap gap-2">
+                {typeInfo.keyCharacteristics.map((c, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-violet-50 text-violet-700 border border-violet-100"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Strengths & Weaknesses */}
+          {(typeInfo?.strengths?.length || typeInfo?.weaknesses?.length) ? (
+            <div className="mb-10 grid sm:grid-cols-2 gap-6">
+              {typeInfo?.strengths && typeInfo.strengths.length > 0 && (
+                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <span className="text-green-500">✓</span> Strengths
+                  </h2>
+                  <ul className="space-y-2">
+                    {typeInfo.strengths.map((s, i) => (
+                      <li key={i} className="text-slate-600 text-sm flex gap-2">
+                        <span className="text-green-500 shrink-0">•</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {typeInfo?.weaknesses && typeInfo.weaknesses.length > 0 && (
+                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <span className="text-amber-500">!</span> Areas to watch
+                  </h2>
+                  <ul className="space-y-2">
+                    {typeInfo.weaknesses.map((w, i) => (
+                      <li key={i} className="text-slate-600 text-sm flex gap-2">
+                        <span className="text-amber-500 shrink-0">•</span>
+                        <span>{w}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Growth: Profession & Personal */}
+          {(typeInfo?.professionGrowth?.length || typeInfo?.personalGrowth?.length) ? (
+            <div className="mb-10 p-6 bg-violet-50/30 rounded-2xl border border-violet-100">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span className="text-xl">🚀</span>
+                Growth tips for you
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {typeInfo?.professionGrowth && typeInfo.professionGrowth.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-violet-700 uppercase tracking-wider mb-3">In your profession</h3>
+                    <ol className="space-y-2">
+                      {typeInfo.professionGrowth.map((tip, i) => (
+                        <li key={i} className="flex gap-2 text-slate-700 text-sm">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-200 text-violet-800 text-xs font-bold flex items-center justify-center">
+                            {i + 1}
+                          </span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {typeInfo?.personalGrowth && typeInfo.personalGrowth.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-violet-700 uppercase tracking-wider mb-3">In personal life</h3>
+                    <ol className="space-y-2">
+                      {typeInfo.personalGrowth.map((tip, i) => (
+                        <li key={i} className="flex gap-2 text-slate-700 text-sm">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-violet-200 text-violet-800 text-xs font-bold flex items-center justify-center">
+                            {i + 1}
+                          </span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+
           {/* Questions answered */}
           <div>
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Your answers</h2>

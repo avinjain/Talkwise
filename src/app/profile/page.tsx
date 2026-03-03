@@ -121,12 +121,20 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-          <button
-            onClick={() => router.push('/profile/test')}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200/50 transition-colors w-fit"
-          >
-            Retake test
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => router.push('/profile/test/results')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-colors"
+            >
+              View full report
+            </button>
+            <button
+              onClick={() => router.push('/profile/test')}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200/50 transition-colors"
+            >
+              Retake test
+            </button>
+          </div>
         </div>
       )}
       <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
