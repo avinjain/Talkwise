@@ -21,9 +21,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [hasResult, setHasResult] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [mbtiResult, setMbtiResult] = useState<{ type: string; createdAt: string } | null>(null);
 
   useEffect(() => {
     fetchProfile();
+    fetchMBTI();
   }, []);
 
   const fetchProfile = async () => {
@@ -44,6 +46,20 @@ export default function ProfilePage() {
       console.error('Failed to fetch profile:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMBTI = async () => {
+    try {
+      const res = await fetch('/api/mbti');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasResult) {
+          setMbtiResult({ type: data.type, createdAt: data.createdAt });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch MBTI:', err);
     }
   };
 
@@ -135,6 +151,65 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* MBTI section */}
+      <div className="mt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-sm">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">MBTI Type</h2>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Discover your Myers-Briggs type with AI-generated questions
+            </p>
+          </div>
+        </div>
+        {!mbtiResult ? (
+          <div
+            onClick={() => router.push('/profile/mbti')}
+            className="group cursor-pointer bg-white rounded-2xl border-2 border-dashed border-slate-200 hover:border-violet-300 hover:bg-violet-50/30 p-8 text-center transition-all duration-200"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mx-auto mb-4 shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" />
+              </svg>
+            </div>
+            <p className="text-slate-600 font-medium mb-1">Discover your MBTI type</p>
+            <p className="text-sm text-slate-500 mb-4">AI-generated questions &middot; 4 dichotomies &middot; ~24 questions</p>
+            <span className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 transition-all shadow-md shadow-violet-500/25">
+              Take MBTI test
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </span>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-8 flex flex-col sm:flex-row items-center gap-6">
+              <div className="flex-shrink-0 w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">{mbtiResult.type}</span>
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <p className="text-base font-medium text-slate-700 mb-1">Your MBTI type</p>
+                {mbtiResult.createdAt && (
+                  <p className="text-sm text-slate-500 mb-2">
+                    Completed {new Date(mbtiResult.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )}
+                <button
+                  onClick={() => router.push('/profile/mbti')}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200/50 transition-colors"
+                >
+                  Retake MBTI test
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 

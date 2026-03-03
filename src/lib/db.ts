@@ -109,12 +109,31 @@ function initTables(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS mbti_questions (
+      id TEXT PRIMARY KEY,
+      dimension TEXT NOT NULL,
+      question_text TEXT NOT NULL,
+      option_a TEXT NOT NULL,
+      option_b TEXT NOT NULL,
+      question_order INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS mbti_results (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      type_result TEXT NOT NULL,
+      raw_answers TEXT DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_usage_created ON usage_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_user ON saved_personas(user_id);
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
+    CREATE INDEX IF NOT EXISTS idx_mbti_results_user ON mbti_results(user_id);
   `);
 
   // ── Migration: add has_completed_onboarding to users ──
@@ -484,6 +503,61 @@ export function saveProfileResult(
       JSON.stringify(rawAnswers), JSON.stringify(userContext), aiFeedback
     );
   }
+}
+
+// ── MBTI Questions & Results ──
+
+export interface MBTIQuestionRow {
+  id: string;
+  dimension: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  question_order: number;
+}
+
+export function getMBTIQuestions(): MBTIQuestionRow[] {
+  const db = getDb();
+  return db.prepare(
+    'SELECT * FROM mbti_questions ORDER BY question_order ASC, id ASC'
+  ).all() as MBTIQuestionRow[];
+}
+
+export function insertMBTIQuestions(questions: Array<{
+  id: string;
+  dimension: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  question_order: number;
+}>) {
+  const db = getDb();
+  const stmt = db.prepare(
+    'INSERT OR REPLACE INTO mbti_questions (id, dimension, question_text, option_a, option_b, question_order) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  for (const q of questions) {
+    stmt.run(q.id, q.dimension, q.question_text, q.option_a, q.option_b, q.question_order);
+  }
+}
+
+export function clearMBTIQuestions() {
+  const db = getDb();
+  db.prepare('DELETE FROM mbti_questions').run();
+}
+
+export function getMBTIResult(userId: string): { type_result: string; raw_answers: string; created_at: string } | undefined {
+  const db = getDb();
+  return db.prepare(
+    'SELECT type_result, raw_answers, created_at FROM mbti_results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+  ).get(userId) as { type_result: string; raw_answers: string; created_at: string } | undefined;
+}
+
+export function saveMBTIResult(userId: string, typeResult: string, rawAnswers: Record<string, string>) {
+  const db = getDb();
+  const id = crypto.randomUUID();
+  db.prepare(
+    'INSERT INTO mbti_results (id, user_id, type_result, raw_answers) VALUES (?, ?, ?, ?)'
+  ).run(id, userId, typeResult, JSON.stringify(rawAnswers));
 }
 
 export default getDb;

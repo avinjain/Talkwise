@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import SideNav from './SideNav';
 import { useSideNav } from '@/contexts/SideNavContext';
 
-const HIDE_SIDENAV_PATHS = ['/auth', '/configure', '/start', '/profile/test'];
+const HIDE_SIDENAV_PATHS = ['/auth', '/configure', '/start', '/profile/test', '/profile/mbti'];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

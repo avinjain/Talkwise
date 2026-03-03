@@ -95,6 +95,15 @@ export default function SideNav({
               Test your personality
             </button>
             <button
+              onClick={() => router.push('/profile/mbti')}
+              className="flex items-center gap-2 w-full px-2 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
+              </svg>
+              MBTI test
+            </button>
+            <button
               onClick={() => onProfileTabChange?.('resume')}
               className={`flex items-center gap-2 w-full px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
                 profileTab === 'resume'
