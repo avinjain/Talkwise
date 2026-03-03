@@ -234,7 +234,7 @@ export default function ProfileDetailsPanel({ personalityContent, activeTab: con
       {/* Main content area — tabs are in side nav */}
       <main className="flex-1 min-w-0">
         {activeTab === 'personality' && (
-          <div className="max-w-2xl">
+          <div className="w-full">
             {personalityContent}
           </div>
         )}

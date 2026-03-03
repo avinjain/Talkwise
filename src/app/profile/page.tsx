@@ -39,7 +39,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch('/api/profile');
+      const res = await fetch('/api/profile', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.hasResult) {
@@ -60,7 +60,7 @@ export default function ProfilePage() {
 
   const fetchMBTI = async () => {
     try {
-      const res = await fetch('/api/mbti');
+      const res = await fetch('/api/mbti', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.hasResult) {
@@ -233,7 +233,7 @@ export default function ProfilePage() {
     <div className="min-h-screen flex flex-col bg-slate-50/50">
       <AppHeader backHref="/" backLabel="Home" />
       <div className="flex-1 py-8 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full max-w-6xl xl:max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
             <p className="text-sm text-slate-500 mt-1">

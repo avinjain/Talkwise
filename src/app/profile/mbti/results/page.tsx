@@ -39,7 +39,7 @@ export default function MBTIResultsPage() {
 
   const fetchResult = async () => {
     try {
-      const res = await fetch('/api/mbti');
+      const res = await fetch('/api/mbti', { cache: 'no-store' });
       const data = await res.json();
       if (data.hasResult) {
         setResult({

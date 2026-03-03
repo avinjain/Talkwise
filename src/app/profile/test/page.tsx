@@ -297,10 +297,10 @@ export default function PersonalityTestPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <div className="flex-1 py-8 px-6 lg:px-16 xl:px-24">
-        <div className="w-full max-w-[min(100%,_1800px)] mx-auto flex flex-col lg:flex-row lg:gap-12">
+      <div className="flex-1 py-8 px-6 lg:px-12 xl:px-20">
+        <div className="w-full max-w-[min(100%,_1800px)] mx-auto flex flex-col lg:flex-row lg:gap-16 xl:gap-20">
           {/* Main: question + Likert scale */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 max-w-2xl xl:max-w-3xl">
             <div className="flex items-center mb-6">
               <button
                 onClick={handleBackInTest}
@@ -435,7 +435,7 @@ export default function PersonalityTestPage() {
               )}
               <div>
                 <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Questions</h4>
-                <div className="grid grid-cols-9 gap-1.5">
+                <div className="grid grid-cols-6 sm:grid-cols-9 gap-1.5">
                   {QUESTIONS.map((q, i) => {
                     const isAnswered = answers[q.id] !== undefined;
                     const isCurrent = i === currentIndex;

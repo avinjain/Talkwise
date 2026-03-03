@@ -1,7 +1,8 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const DB_DIR = process.env.DB_DIR || process.cwd();
+// Prefer Railway volume mount path when available (persistent storage)
+const DB_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DB_DIR || process.cwd();
 const DB_PATH = path.join(DB_DIR, 'talkwise.db');
 
 let _db: Database.Database | null = null;
@@ -9,6 +10,9 @@ let _db: Database.Database | null = null;
 function getDb(): Database.Database {
   if (!_db) {
     _db = new Database(DB_PATH);
+    if (process.env.NODE_ENV !== 'test') {
+      console.log('[db] SQLite at', DB_PATH);
+    }
     _db.pragma('journal_mode = WAL');
     // Foreign keys disabled — with JWT sessions, user_id may reference
     // rows that no longer exist after a DB rebuild on deploy. Data integrity
