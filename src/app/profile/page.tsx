@@ -245,7 +245,7 @@ export default function ProfilePage() {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Your resume, LinkedIn, personality, and interview-ready insights.
+              Personality tests, new-job preparation, and interview-ready insights.
             </p>
           </div>
 
