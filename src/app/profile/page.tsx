@@ -84,9 +84,9 @@ export default function ProfilePage() {
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-4xl">
           <header className="mb-10">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">My profile</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Know yourself</h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              Your communication style and MBTI type. Take both for the fullest picture.
+              Two short tests — your communication style and MBTI type. Take both for the fullest picture.
             </p>
           </header>
 
@@ -225,14 +225,14 @@ export default function ProfilePage() {
           {/* Cross-link to other top-level pages */}
           <div className="grid gap-3 rounded-xl border border-slate-100 bg-white p-4 sm:grid-cols-2">
             <CrossLink
-              title="Prepare for a new job"
-              description="Resume, LinkedIn, and a personalised kickoff plan."
+              title="Prepare for interview"
+              description="A 2-minute kickoff turns your resume into a personalised plan."
               onClick={() => router.push('/prepare')}
             />
             <CrossLink
-              title="My usage"
-              description="Your AI usage and billing for TalkWise."
-              onClick={() => router.push('/usage')}
+              title="Build my resume"
+              description="Sharpen your resume, align it with LinkedIn, and pull out stories."
+              onClick={() => router.push('/resume')}
             />
           </div>
         </div>

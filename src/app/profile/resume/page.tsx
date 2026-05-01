@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-/** Legacy redirect — new-job prep now lives at /prepare. */
+/** Legacy redirect — resume tooling now lives at /resume (Build my resume). */
 export default function ProfileResumePage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/prepare');
+    router.replace('/resume');
   }, [router]);
   return null;
 }

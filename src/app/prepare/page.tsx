@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
-import AnalysisDisplay from '@/components/AnalysisDisplay';
 import type {
   KickoffSummary,
   KickoffTrack,
@@ -18,10 +17,9 @@ import type {
 // Page
 // ─────────────────────────────────────────────────────────────
 
-export default function PreparePage() {
+export default function PrepareForInterviewPage() {
   const router = useRouter();
 
-  // ── Kickoff state ─────────────────────────────────────────
   const [kickoffLoading, setKickoffLoading] = useState(true);
   const [savedKickoff, setSavedKickoff] = useState<{
     summary: KickoffSummary;
@@ -30,25 +28,6 @@ export default function PreparePage() {
   } | null>(null);
   const [showWizard, setShowWizard] = useState(false);
 
-  // ── Job-prep tools (resume + LinkedIn) ────────────────────
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [resumePaste, setResumePaste] = useState('');
-  const [linkedInUrl, setLinkedInUrl] = useState('');
-  const [linkedInPaste, setLinkedInPaste] = useState('');
-  const [profileAnalysis, setProfileAnalysis] = useState<string | null>(null);
-  const [resumeOptimisation, setResumeOptimisation] = useState<string | null>(null);
-  const [resumeOptRole, setResumeOptRole] = useState('');
-  const [resumeOptJd, setResumeOptJd] = useState('');
-  const [pitches, setPitches] = useState<Array<{ name: string; hook?: string; bullets?: string[] }>>([]);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [optimisingResume, setOptimisingResume] = useState(false);
-  const [loadingPitches, setLoadingPitches] = useState(false);
-
-  const hasResume = !!(resumeFile || resumePaste.trim());
-  const hasLinkedIn = !!(linkedInUrl.trim() || linkedInPaste.trim());
-  const hasJobInput = hasResume || hasLinkedIn;
-
-  // ── Fetch saved kickoff state ─────────────────────────────
   const fetchKickoff = useCallback(async () => {
     try {
       const res = await fetch('/api/kickoff', { cache: 'no-store' });
@@ -73,103 +52,21 @@ export default function PreparePage() {
     fetchKickoff();
   }, [fetchKickoff]);
 
-  // ── Job-prep handlers ─────────────────────────────────────
-  const extractResumeText = async (): Promise<string> => {
-    let resumeText = resumePaste.trim();
-    if (!resumeText && resumeFile) {
-      try {
-        const fd = new FormData();
-        fd.set('file', resumeFile);
-        const r = await fetch('/api/interview/extract-resume', { method: 'POST', body: fd });
-        const d = await r.json();
-        if (r.ok && d.text) resumeText = d.text;
-      } catch {
-        return '';
-      }
-    }
-    return resumeText;
-  };
-
-  const handleAnalyzeProfile = async () => {
-    if (!hasJobInput) return;
-    setAnalyzing(true);
-    setProfileAnalysis(null);
-    try {
-      const formData = new FormData();
-      if (resumeFile) formData.set('resumeFile', resumeFile);
-      else if (resumePaste.trim()) formData.set('resume', resumePaste.trim());
-      if (linkedInUrl.trim()) formData.set('linkedInUrl', linkedInUrl.trim());
-      else if (linkedInPaste.trim()) formData.set('linkedIn', linkedInPaste.trim());
-
-      const res = await fetch('/api/interview/analyze-profile', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Analysis failed');
-      setProfileAnalysis(data.analysis || 'Analysis complete.');
-    } catch (e) {
-      setProfileAnalysis(e instanceof Error ? e.message : 'Could not analyze. Please try again.');
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleOptimizeResume = async () => {
-    const resumeText = await extractResumeText();
-    if (!resumeText) return;
-    setOptimisingResume(true);
-    setResumeOptimisation(null);
-    try {
-      const res = await fetch('/api/interview/analyze-resume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resume: resumeText,
-          ...(resumeOptRole.trim() && { role: resumeOptRole.trim() }),
-          ...(resumeOptJd.trim() && { jd: resumeOptJd.trim() }),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Optimisation failed');
-      setResumeOptimisation(data.analysis || 'Analysis complete.');
-    } catch (e) {
-      setResumeOptimisation(e instanceof Error ? e.message : 'Could not optimise. Please try again.');
-    } finally {
-      setOptimisingResume(false);
-    }
-  };
-
-  const handleGeneratePitches = async () => {
-    const resumeText = await extractResumeText();
-    if (!resumeText) return;
-    setLoadingPitches(true);
-    setPitches([]);
-    try {
-      const formData = new FormData();
-      if (resumeFile) formData.set('resumeFile', resumeFile);
-      else formData.set('resume', resumeText);
-      const res = await fetch('/api/interview/core-positioning', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.pitches)) setPitches(data.pitches);
-    } catch {
-      /* ignore */
-    } finally {
-      setLoadingPitches(false);
-    }
-  };
-
-  // ── Plan-item action routing ─────────────────────────────
   const runPlanAction = (item: KickoffPlanItem) => {
     switch (item.command) {
       case 'speaking_points':
       case 'pitch':
       case 'stories':
-        scrollTo('speaking-points');
+      case 'hype':
+        router.push('/resume#speaking-points');
         break;
       case 'optimise_resume':
-        scrollTo('resume-optimisation');
+      case 'decode':
+        router.push('/resume#resume-optimisation');
         break;
       case 'analyse_profile':
       case 'concerns':
-        scrollTo('profile-alignment');
+        router.push('/resume#profile-alignment');
         break;
       case 'practice':
         router.push('/configure');
@@ -178,12 +75,8 @@ export default function PreparePage() {
       case 'research':
         router.push('/interview/prep');
         break;
-      case 'decode':
-        scrollTo('resume-optimisation');
-        break;
-      case 'hype':
       default:
-        scrollTo('speaking-points');
+        router.push('/resume');
     }
   };
 
@@ -195,217 +88,54 @@ export default function PreparePage() {
     );
   }
 
-  // ──────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <AppHeader backHref="/" backLabel="Home" />
 
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-4xl">
-          <header className="mb-10">
+          <header className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-              Prepare for a new job
+              Prepare for interview
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              A short kickoff builds your plan. Then sharpen your resume, LinkedIn, and interview stories.
+              A 2-minute kickoff turns your resume into a personalised plan — what to fix, what to
+              practise, and where you&rsquo;re likely to get tripped up.
             </p>
           </header>
 
-          {/* ── Kickoff section ───────────────────────────── */}
-          <section id="kickoff" className="mb-12 scroll-mt-24">
-            {savedKickoff && !showWizard ? (
-              <KickoffSummaryView
-                summary={savedKickoff.summary}
-                updatedAt={savedKickoff.updatedAt}
-                onRerun={() => setShowWizard(true)}
-                onAction={runPlanAction}
-              />
-            ) : (
-              <KickoffWizard
-                initial={savedKickoff?.inputs}
-                onCancel={savedKickoff ? () => setShowWizard(false) : undefined}
-                onComplete={async () => {
-                  await fetchKickoff();
-                }}
-              />
-            )}
-          </section>
+          {savedKickoff && !showWizard ? (
+            <KickoffSummaryView
+              summary={savedKickoff.summary}
+              updatedAt={savedKickoff.updatedAt}
+              onRerun={() => setShowWizard(true)}
+              onAction={runPlanAction}
+            />
+          ) : (
+            <KickoffWizard
+              initial={savedKickoff?.inputs}
+              onCancel={savedKickoff ? () => setShowWizard(false) : undefined}
+              onComplete={async () => {
+                await fetchKickoff();
+              }}
+            />
+          )}
 
-          {/* ── Tools (resume / LinkedIn / pitches) ──────── */}
-          <section className="space-y-6">
-            <SectionDivider label="Tools" />
-
-            {/* Inputs */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-base font-semibold text-slate-900">Resume & LinkedIn</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Drop your resume and LinkedIn once. Every tool below uses them.
-              </p>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                <FormField label="Resume" hint=".pdf, .docx, or .txt — or paste below.">
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.txt"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      setResumeFile(f || null);
-                      setProfileAnalysis(null);
-                      setResumeOptimisation(null);
-                      setPitches([]);
-                      e.target.value = '';
-                    }}
-                    className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
-                  />
-                  {resumeFile && <p className="mt-1.5 text-xs text-slate-500">{resumeFile.name}</p>}
-                  <details className="mt-2">
-                    <summary className="cursor-pointer select-none text-xs text-slate-400 hover:text-slate-600">
-                      Or paste resume text
-                    </summary>
-                    <textarea
-                      value={resumePaste}
-                      onChange={(e) => {
-                        setResumePaste(e.target.value);
-                        setProfileAnalysis(null);
-                        setResumeOptimisation(null);
-                        setPitches([]);
-                      }}
-                      placeholder="Paste resume text..."
-                      rows={4}
-                      className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                    />
-                  </details>
-                </FormField>
-
-                <FormField label="LinkedIn profile" hint="Public URL — or paste your About section.">
-                  <input
-                    type="url"
-                    value={linkedInUrl}
-                    onChange={(e) => {
-                      setLinkedInUrl(e.target.value);
-                      setProfileAnalysis(null);
-                    }}
-                    placeholder="https://linkedin.com/in/yourprofile"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                  />
-                  <details className="mt-2">
-                    <summary className="cursor-pointer select-none text-xs text-slate-400 hover:text-slate-600">
-                      Or paste your About section
-                    </summary>
-                    <textarea
-                      value={linkedInPaste}
-                      onChange={(e) => {
-                        setLinkedInPaste(e.target.value);
-                        setProfileAnalysis(null);
-                      }}
-                      placeholder="Paste LinkedIn About, headline, or key sections..."
-                      rows={3}
-                      className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                    />
-                  </details>
-                </FormField>
+          {/* Quiet cross-link */}
+          <div className="mt-10">
+            <button
+              onClick={() => router.push('/resume')}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Build my resume →</p>
+                <p className="text-xs text-slate-500">
+                  Sharpen your resume, align it with LinkedIn, and pull out interview stories.
+                </p>
               </div>
-
-              {hasJobInput && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResumeFile(null);
-                    setResumePaste('');
-                    setLinkedInUrl('');
-                    setLinkedInPaste('');
-                    setProfileAnalysis(null);
-                    setResumeOptimisation(null);
-                    setPitches([]);
-                  }}
-                  className="mt-4 text-xs text-slate-400 hover:text-slate-700"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-
-            <ActionCard
-              id="profile-alignment"
-              step={1}
-              title="Profile alignment"
-              description="Compare resume and LinkedIn. Find gaps, missing keywords, and quick wins."
-              disabled={!hasJobInput}
-              disabledReason="Add a resume or LinkedIn above."
-              actionLabel={analyzing ? 'Analysing…' : 'Analyse profile'}
-              onAction={handleAnalyzeProfile}
-              pending={analyzing}
-              output={profileAnalysis}
-            />
-
-            <ActionCard
-              id="resume-optimisation"
-              step={2}
-              title="Resume optimisation"
-              description="Strengths, gaps, story bank, and a one-line pitch. Optionally target a specific role."
-              disabled={!hasResume}
-              disabledReason="Add your resume above."
-              actionLabel={optimisingResume ? 'Optimising…' : 'Optimise resume'}
-              onAction={handleOptimizeResume}
-              pending={optimisingResume}
-              output={resumeOptimisation}
-              extra={
-                <details className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                  <summary className="cursor-pointer select-none text-xs font-medium text-slate-600 hover:text-slate-900">
-                    Target a specific role (optional)
-                  </summary>
-                  <div className="mt-3 space-y-2">
-                    <input
-                      type="text"
-                      value={resumeOptRole}
-                      onChange={(e) => setResumeOptRole(e.target.value)}
-                      placeholder="e.g. Product Manager"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                    />
-                    <textarea
-                      value={resumeOptJd}
-                      onChange={(e) => setResumeOptJd(e.target.value)}
-                      placeholder="Paste job description for targeted feedback..."
-                      rows={3}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                    />
-                  </div>
-                </details>
-              }
-            />
-
-            <ActionCard
-              id="speaking-points"
-              step={3}
-              title="Speaking points"
-              description="Punchy interview hooks plus 2-3 supporting bullets per pitch — drawn from your resume."
-              disabled={!hasResume}
-              disabledReason="Add your resume above."
-              actionLabel={loadingPitches ? 'Generating…' : 'Generate speaking points'}
-              onAction={handleGeneratePitches}
-              pending={loadingPitches}
-              customOutput={
-                pitches.length > 0 ? (
-                  <ul className="space-y-3">
-                    {pitches.map((p, i) => (
-                      <li key={i} className="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
-                        <h4 className="text-sm font-semibold text-slate-800">{p.name}</h4>
-                        {p.hook && (
-                          <p className="mt-1 text-sm italic text-slate-600">&ldquo;{p.hook}&rdquo;</p>
-                        )}
-                        {p.bullets && p.bullets.length > 0 && (
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                            {p.bullets.map((b, j) => (
-                              <li key={j} className="leading-relaxed">{b}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null
-              }
-            />
-          </section>
+              <span className="text-slate-400">→</span>
+            </button>
+          </div>
         </div>
       </main>
 
@@ -414,11 +144,6 @@ export default function PreparePage() {
       </footer>
     </div>
   );
-}
-
-function scrollTo(id: string) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -449,20 +174,17 @@ function KickoffWizard({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1
   const [targetRoles, setTargetRoles] = useState(initial?.targetRoles || '');
   const [timeline, setTimeline] = useState<KickoffTimeline>(initial?.timeline || '1_2w');
   const [feedbackDirectness, setFeedbackDirectness] = useState(initial?.feedbackDirectness ?? 5);
   const [biggestConcern, setBiggestConcern] = useState(initial?.biggestConcern || '');
   const [track, setTrack] = useState<KickoffTrack>(initial?.track || 'full_system');
 
-  // Step 2
   const [interviewHistory, setInterviewHistory] = useState<InterviewHistory>(
     initial?.interviewHistory || 'first_time'
   );
   const [stallingStage, setStallingStage] = useState<StallingStage>(initial?.stallingStage || '');
 
-  // Step 3
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
   const [linkedInPaste, setLinkedInPaste] = useState('');
@@ -520,11 +242,12 @@ function KickoffWizard({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
           <h2 className="text-base font-semibold text-slate-900">Kickoff</h2>
-          <p className="text-xs text-slate-500">A 2-minute setup. Builds your personalised plan.</p>
+          <p className="text-xs text-slate-500">
+            A 2-minute setup. Builds your personalised plan.
+          </p>
         </div>
         <div className="flex items-center gap-1.5">
           {[1, 2, 3].map((n) => (
@@ -539,7 +262,6 @@ function KickoffWizard({
       </div>
 
       <div className="p-6">
-        {/* Step 1 */}
         {step === 1 && (
           <div className="space-y-5">
             <h3 className="text-sm font-semibold text-slate-900">Tell me about you</h3>
@@ -565,7 +287,7 @@ function KickoffWizard({
               />
             </FormField>
 
-            <FormField label="Feedback style" hint="5 = high candor, 1 = gentle. We default to high candor.">
+            <FormField label="Feedback style" hint="5 = high candor, 1 = gentle. Default: high candor.">
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -612,7 +334,6 @@ function KickoffWizard({
           </div>
         )}
 
-        {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-5">
             <h3 className="text-sm font-semibold text-slate-900">Where are you in your search?</h3>
@@ -666,7 +387,6 @@ function KickoffWizard({
           </div>
         )}
 
-        {/* Step 3 */}
         {step === 3 && (
           <div className="space-y-5">
             <h3 className="text-sm font-semibold text-slate-900">Drop your context</h3>
@@ -776,7 +496,6 @@ function KickoffSummaryView({
       </div>
 
       <div className="space-y-6 p-6">
-        {/* Recommended next */}
         <div className="rounded-xl border border-slate-900/5 bg-slate-900 p-5 text-white">
           <p className="text-[10px] font-medium uppercase tracking-wider text-slate-300">
             Highest-leverage next move
@@ -794,7 +513,6 @@ function KickoffSummaryView({
           )}
         </div>
 
-        {/* Reality check & transition (if any) */}
         {summary.targetRealityCheck && (
           <Callout tone="amber" title={`Target reality check: ${summary.targetRealityCheck.target}`}>
             <p className="text-sm text-amber-900">{summary.targetRealityCheck.gap}</p>
@@ -808,7 +526,6 @@ function KickoffSummaryView({
           </Callout>
         )}
 
-        {/* Profile snapshot */}
         <div className="grid gap-4 sm:grid-cols-2">
           <SnapshotList title="Positioning strengths" items={summary.profile.positioningStrengths} tone="brand" />
           <SnapshotList title="Likely interviewer concerns" items={summary.profile.likelyConcerns} tone="amber" />
@@ -818,14 +535,12 @@ function KickoffSummaryView({
           <SnapshotList title="Story seeds" items={summary.profile.storySeeds} tone="accent" />
         </div>
 
-        {/* Readiness */}
         <div className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-3">
           <ReadinessStat label="Current readiness" value={summary.readiness.current} />
           <ReadinessStat label="Biggest risk" value={summary.readiness.biggestRisk} />
           <ReadinessStat label="Biggest asset" value={summary.readiness.biggestAsset} />
         </div>
 
-        {/* Plan */}
         <div className="space-y-4">
           <PlanGroup label="Right now" items={summary.plan.immediate} onAction={onAction} />
           <PlanGroup label="This week" items={summary.plan.thisWeek} onAction={onAction} />
@@ -1019,85 +734,11 @@ function Callout({
   tone: 'brand' | 'amber';
 }) {
   const styles =
-    tone === 'amber'
-      ? 'border-amber-200 bg-amber-50'
-      : 'border-brand-200 bg-brand-50';
+    tone === 'amber' ? 'border-amber-200 bg-amber-50' : 'border-brand-200 bg-brand-50';
   return (
     <div className={`rounded-xl border ${styles} p-4`}>
       <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
       <div className="mt-1.5">{children}</div>
-    </div>
-  );
-}
-
-function SectionDivider({ label }: { label: string }) {
-  return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>
-      <span className="h-px flex-1 bg-slate-200" />
-    </div>
-  );
-}
-
-function ActionCard({
-  id,
-  step,
-  title,
-  description,
-  disabled,
-  disabledReason,
-  actionLabel,
-  onAction,
-  pending,
-  output,
-  customOutput,
-  extra,
-}: {
-  id: string;
-  step: number;
-  title: string;
-  description: string;
-  disabled?: boolean;
-  disabledReason?: string;
-  actionLabel: string;
-  onAction: () => void;
-  pending?: boolean;
-  output?: string | null;
-  customOutput?: React.ReactNode;
-  extra?: React.ReactNode;
-}) {
-  return (
-    <div id={id} className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white">
-      <div className="flex items-start gap-3 px-5 py-4">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
-          {step}
-        </span>
-        <div className="flex-1">
-          <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-          <p className="mt-0.5 text-xs text-slate-500">{description}</p>
-        </div>
-      </div>
-      <div className="space-y-3 border-t border-slate-100 bg-slate-50/40 px-5 py-4">
-        {extra}
-        {disabled ? (
-          <p className="text-xs text-slate-400">{disabledReason}</p>
-        ) : (
-          <button
-            type="button"
-            onClick={onAction}
-            disabled={pending}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-          >
-            {actionLabel}
-          </button>
-        )}
-        {output && (
-          <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
-            <AnalysisDisplay content={output} />
-          </div>
-        )}
-        {customOutput}
-      </div>
     </div>
   );
 }
