@@ -55,14 +55,14 @@ function PersonalitySnapshot({
         : null;
 
   const title = personalityPreviewTitle(name);
-  const { headline, bullets } = buildPersonalityNarrative(track, traits, lifeContext);
+  const { headline, summary } = buildPersonalityNarrative(track, traits, lifeContext);
 
   return (
     <div className={`rounded-2xl border p-5 shadow-sm ${shellClass} ${className}`}>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live preview</p>
       <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
       <p className="mt-2 text-xs leading-relaxed text-slate-600">
-        Summary of how these traits read together — extremes on a slider mean a strong lean that way.
+        One combined personality read — every slider below feeds into this summary.
       </p>
 
       <div className="mt-4 rounded-xl border border-slate-100/90 bg-white/90 px-3 py-3 backdrop-blur-[2px]">
@@ -78,11 +78,7 @@ function PersonalitySnapshot({
           )}
         </div>
         <p className="mt-3 text-sm font-semibold leading-snug text-slate-900">{headline}</p>
-        <ul className="mt-3 list-disc space-y-2 pl-4 text-xs leading-relaxed text-slate-600 marker:text-slate-300">
-          {bullets.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul>
+        <p className="mt-3 text-xs leading-relaxed text-slate-600">{summary}</p>
       </div>
     </div>
   );
@@ -355,20 +351,51 @@ export default function ConfigurePage() {
                 />
               </div>
             ) : (
-              <div>
-                <label htmlFor="life-context" className="mb-2 block text-xs font-medium text-slate-600">
-                  Context
-                </label>
-                <select
-                  id="life-context"
-                  value={lifeContext}
-                  onChange={(e) => setLifeContext(e.target.value as LifeContext)}
-                  className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
-                >
-                  <option value="dating">Dating</option>
-                  <option value="social">Social</option>
-                </select>
-              </div>
+              <fieldset className="min-w-0">
+                <legend className="mb-3 block text-xs font-medium text-slate-600">Context</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <label
+                    className={`relative flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all focus-within:ring-2 focus-within:ring-orange-400/35 ${
+                      lifeContext === 'dating'
+                        ? 'border-pink-400 bg-white shadow-sm ring-1 ring-pink-400/25'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="life-context"
+                      value="dating"
+                      checked={lifeContext === 'dating'}
+                      onChange={() => setLifeContext('dating')}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-semibold text-slate-900">Dating</span>
+                    <span className="mt-0.5 text-[11px] leading-snug text-slate-500">
+                      Romantic / match-style practice
+                    </span>
+                  </label>
+                  <label
+                    className={`relative flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-all focus-within:ring-2 focus-within:ring-orange-400/35 ${
+                      lifeContext === 'social'
+                        ? 'border-orange-400 bg-white shadow-sm ring-1 ring-orange-400/25'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="life-context"
+                      value="social"
+                      checked={lifeContext === 'social'}
+                      onChange={() => setLifeContext('social')}
+                      className="sr-only"
+                    />
+                    <span className="text-sm font-semibold text-slate-900">Social</span>
+                    <span className="mt-0.5 text-[11px] leading-snug text-slate-500">
+                      Friends, parties, casual circles
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
             )}
           </div>
 
