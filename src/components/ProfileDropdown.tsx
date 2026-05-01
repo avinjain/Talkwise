@@ -16,9 +16,13 @@ export default function ProfileDropdown({ compact = false }: ProfileDropdownProp
 
   if (!session?.user) return null;
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setMenuOpen(false);
-    signOut({ callbackUrl: '/' });
+    // Avoid NextAuth's redirect: it resolves callbackUrl against NEXTAUTH_URL on the server,
+    // which on Railway is often *.up.railway.app — users on talkwise.life would land there.
+    await signOut({ redirect: false });
+    router.push('/');
+    router.refresh();
   };
 
   return (
