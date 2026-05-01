@@ -333,7 +333,7 @@ function KickoffWizard({
                   step={1}
                   value={feedbackDirectness}
                   onChange={(e) => setFeedbackDirectness(Number(e.target.value))}
-                  className="flex-1"
+                  className="flex-1 slider-theme-work"
                 />
                 <span className="w-10 text-right text-sm font-semibold text-slate-700">
                   {feedbackDirectness}

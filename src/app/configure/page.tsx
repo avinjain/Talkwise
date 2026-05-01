@@ -23,6 +23,95 @@ const DEFAULT_PERSONAL_TRAITS = {
   pickiness: 5,
 };
 
+function PersonalitySnapshot({
+  attributes,
+  traits,
+  name,
+  isLife,
+  className = '',
+}: {
+  attributes: ReturnType<typeof getPersonaAttributes>;
+  traits: Record<string, number>;
+  name: string;
+  isLife: boolean;
+  className?: string;
+}) {
+  const values = attributes.map((a) => traits[a.key] ?? 5);
+  const avg = values.reduce((s, v) => s + v, 0) / Math.max(values.length, 1);
+  const pct = (avg / 10) * 100;
+
+  let headline = 'Balanced presence';
+  let sub =
+    'Traits sit near the middle — flexible reactions without leaning hard toward extremes.';
+  if (avg <= 3.5) {
+    headline = 'Soft baseline';
+    sub =
+      'Lower-intensity defaults — gentler edges and more forgiving behaviours overall.';
+  } else if (avg >= 7) {
+    headline = 'Strong signal';
+    sub =
+      'Higher-intensity tendencies — more decisive flavour and sharper contrasts between behaviours.';
+  }
+
+  const shellClass = isLife
+    ? 'border-orange-200/90 bg-gradient-to-b from-orange-50/50 via-white to-white shadow-orange-500/10'
+    : 'border-brand-200/90 bg-gradient-to-b from-brand-50/50 via-white to-white shadow-brand-500/10';
+
+  const barFill = isLife ? 'bg-gradient-to-r from-pink-400 to-orange-400' : 'bg-gradient-to-r from-brand-400 to-accent-500';
+
+  const label = name.trim() ? name.trim() : 'This character';
+
+  return (
+    <div className={`rounded-2xl border p-5 shadow-sm ${shellClass} ${className}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live preview</p>
+      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">How they&apos;re shaping up</h2>
+      <p className="mt-2 text-xs leading-relaxed text-slate-600">
+        A readout of how sliders combine — it updates as you adjust each trait.
+      </p>
+
+      <div className="mt-4 rounded-xl border border-slate-100/90 bg-white/90 px-3 py-3 backdrop-blur-[2px]">
+        <p className="truncate text-xs font-medium text-slate-500">{label}</p>
+        <p className="mt-2 text-sm font-semibold text-slate-900">{headline}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">{sub}</p>
+        <div className="mt-3">
+          <div className="mb-1 flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            <span>Overall intensity</span>
+            <span className="tabular-nums text-slate-500">{avg.toFixed(1)} / 10</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full transition-[width] duration-200 ease-out ${barFill}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Trait mix</p>
+        {attributes.map((attr) => {
+          const v = traits[attr.key] ?? 5;
+          const w = (v / 10) * 100;
+          return (
+            <div key={attr.key}>
+              <div className="mb-1 flex justify-between gap-2 text-[11px] text-slate-600">
+                <span className="min-w-0 truncate font-medium">{attr.label}</span>
+                <span className="shrink-0 tabular-nums text-slate-400">{v}</span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full opacity-[0.92] transition-[width] duration-150 ease-out ${barFill}`}
+                  style={{ width: `${w}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ConfigurePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -129,7 +218,7 @@ export default function ConfigurePage() {
     ? 'bg-gradient-to-r from-pink-50 to-orange-50 text-orange-950 ring-1 ring-orange-200/70'
     : 'bg-brand-50 text-brand-800 ring-1 ring-brand-100/90';
 
-  const sliderAccentClass = isLife ? 'accent-orange-500' : 'accent-brand-500';
+  const sliderThemeClass = isLife ? 'slider-theme-life' : 'slider-theme-work';
 
   const nameFocusClass = isLife
     ? 'focus:border-orange-400 focus:ring-orange-400/25'
@@ -139,11 +228,14 @@ export default function ConfigurePage() {
     ? 'bg-gradient-to-r from-pink-500 to-orange-500 shadow-orange-500/25 hover:from-pink-600 hover:to-orange-600'
     : 'bg-gradient-brand shadow-brand-500/25 hover:bg-gradient-brand-hover';
 
+  const snapshotProps = { attributes, traits, name, isLife };
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-lg">
-          <header className="mb-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+          <div className="min-w-0 flex-1 lg:max-w-xl">
+            <header className="mb-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Practice conversations
             </p>
@@ -283,7 +375,7 @@ export default function ConfigurePage() {
                       step={1}
                       value={value}
                       onChange={(e) => handleSliderChange(attr.key, Number(e.target.value))}
-                      className={`h-2 w-full cursor-pointer touch-manipulation ${sliderAccentClass}`}
+                      className={`h-2 w-full cursor-pointer touch-manipulation ${sliderThemeClass}`}
                     />
                     <div className="mt-1 flex justify-between text-[10px] text-slate-400">
                       <span>{attr.lowLabel}</span>
@@ -294,6 +386,8 @@ export default function ConfigurePage() {
               })}
             </div>
           </div>
+
+          <PersonalitySnapshot {...snapshotProps} className="lg:hidden" />
 
           {saveError && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{saveError}</div>
@@ -307,6 +401,11 @@ export default function ConfigurePage() {
           >
             {saving ? 'Saving...' : editPersonaId ? 'Save changes' : 'Finish building'}
           </button>
+          </div>
+
+          <aside className="mx-auto hidden w-full max-w-md shrink-0 lg:sticky lg:top-[calc(3.5rem+1.5rem)] lg:block lg:max-w-[380px] lg:self-start">
+            <PersonalitySnapshot {...snapshotProps} />
+          </aside>
         </div>
       </div>
     </div>

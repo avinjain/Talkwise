@@ -72,7 +72,7 @@ export default function EditPersonalityModal({ config, onSave, onClose }: EditPe
                     step={1}
                     value={value}
                     onChange={(e) => handleSliderChange(attr.key, Number(e.target.value))}
-                    className="w-full"
+                    className={`w-full ${(config.track || 'professional') === 'personal' ? 'slider-theme-life' : 'slider-theme-work'}`}
                   />
                 </div>
               );

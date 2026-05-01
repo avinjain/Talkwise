@@ -231,7 +231,7 @@ export default function StartPage() {
               step={1}
               value={toughnessLevel}
               onChange={(e) => setToughness(Number(e.target.value))}
-              className="w-full"
+              className="w-full slider-theme-work"
             />
             <p className="text-xs text-slate-500 mt-1.5">
               {toughnessInfo.desc}
