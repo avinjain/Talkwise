@@ -7,6 +7,12 @@ import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
 import { SavedPersona, Track, ENABLE_INTERVIEW_PREP } from '@/lib/types';
 
+const RESUME_ICON = (
+  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+  </svg>
+);
+
 // ─────────────────────────────────────────────────────────────
 // Small UI primitives (kept local for now to avoid churn)
 // ─────────────────────────────────────────────────────────────
@@ -285,37 +291,45 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* What you get — 3 pillar cards */}
+        {/* What you get — four things, mirrors the left-nav once you sign in */}
         <section className="border-t border-slate-100 bg-slate-50/60 px-6 py-16">
           <div className="mx-auto max-w-5xl">
             <div className="mb-10 text-center">
-              <h2 className="text-2xl font-semibold text-slate-900">Three things, one place</h2>
+              <h2 className="text-2xl font-semibold text-slate-900">Everything in one place</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Pick what you need. You can always come back for the others.
+                Pick what you need. The rest is one click away.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <PillarCard
                 tone="brand"
                 icon={ICONS.chat}
                 title="Practice conversations"
-                description="Build a character — boss, date, client — and rehearse the talk that matters. Get feedback at the end."
-                ctaLabel="See how it works"
+                description="Build a character — boss, date, client — and rehearse the talk that matters."
+                ctaLabel="Try it"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/configure')}
               />
               <PillarCard
                 tone="amber"
                 icon={ICONS.briefcase}
-                title="Prepare for a new job"
-                description="A 2-minute kickoff builds your plan. Then resume, LinkedIn, and an interview story bank."
-                ctaLabel="Get coaching"
+                title="Prepare for interview"
+                description="A 2-minute kickoff turns your resume into a personalised interview plan."
+                ctaLabel="Get a plan"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/prepare')}
+              />
+              <PillarCard
+                tone="amber"
+                icon={RESUME_ICON}
+                title="Build my resume"
+                description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
+                ctaLabel="Sharpen it"
+                onClick={() => router.push('/auth?mode=signup&callbackUrl=/resume')}
               />
               <PillarCard
                 tone="accent"
                 icon={ICONS.brain}
                 title="Know yourself"
-                description="A short communication-style test plus MBTI. See your strengths, blind spots, and how to grow."
+                description="A short communication-style test plus MBTI. Strengths, blind spots, growth tips."
                 ctaLabel="Take the test"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/profile/test')}
               />
@@ -372,7 +386,7 @@ export default function LandingPage() {
                 Hi {userName} — what do you want to work on?
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                Practice a conversation, prep for interviews, or learn your style.
+                Practice, prep for an interview, sharpen your resume, or learn your style.
               </p>
             </div>
             <button
@@ -384,13 +398,13 @@ export default function LandingPage() {
             </button>
           </section>
 
-          {/* What do you want to do — intent cards */}
+          {/* Intent cards — mirror the left-nav destinations */}
           <section className="mb-12">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <PillarCard
                 tone="brand"
                 icon={ICONS.chat}
-                title="Practice a conversation"
+                title="Practice conversations"
                 description="Salary talks, tough feedback, hard chats with friends or family."
                 ctaLabel="Build a character"
                 onClick={() => handleCreateCharacter('professional')}
@@ -398,15 +412,23 @@ export default function LandingPage() {
               <PillarCard
                 tone="amber"
                 icon={ICONS.briefcase}
-                title="Prepare for a new job"
-                description="2-minute kickoff, then resume, LinkedIn, and your interview story bank."
-                ctaLabel="Open coaching"
+                title="Prepare for interview"
+                description="A 2-minute kickoff turns your resume into a personalised interview plan."
+                ctaLabel="Get a plan"
                 onClick={() => router.push('/prepare')}
+              />
+              <PillarCard
+                tone="amber"
+                icon={RESUME_ICON}
+                title="Build my resume"
+                description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
+                ctaLabel="Sharpen it"
+                onClick={() => router.push('/resume')}
               />
               <PillarCard
                 tone="accent"
                 icon={ICONS.brain}
-                title="Know your style"
+                title="Know yourself"
                 description="Communication test + MBTI. Strengths, blind spots, growth tips."
                 ctaLabel="Open profile"
                 onClick={() => router.push('/profile')}
