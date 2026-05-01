@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = searchParams.get('callbackUrl') || '/home';
   const [mode, setMode] = useState<'login' | 'signup'>(searchParams.get('mode') === 'signup' ? 'signup' : 'login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,8 +64,7 @@ function AuthForm() {
             <div className="flex justify-center">
               <Logo size={96} />
             </div>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-gradient">TalkWise</h1>
-            <p className="mt-0.5 text-xs font-medium tracking-wide text-slate-400">talkwise.life</p>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-gradient">Talkwise</h1>
             <p className="mt-3 text-sm text-slate-500">
               {mode === 'login' ? 'Welcome back' : 'Create your account'}
             </p>

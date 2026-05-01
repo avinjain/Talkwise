@@ -19,7 +19,7 @@ export default function StartPage() {
   useEffect(() => {
     const stored = sessionStorage.getItem('startPersonaData');
     if (!stored) {
-      router.push('/');
+      router.push('/home');
       return;
     }
     try {
@@ -42,7 +42,7 @@ export default function StartPage() {
         }
       }
     } catch {
-      router.push('/');
+      router.push('/home');
     }
   }, [router]);
 
@@ -131,7 +131,7 @@ export default function StartPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/'} backLabel="Back" />
+      <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/home'} backLabel="Back" />
       <div className="flex-1 py-8 px-6">
       <div className="max-w-xl mx-auto">
 

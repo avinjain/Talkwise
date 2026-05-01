@@ -19,17 +19,12 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6">
       <Link
-        href={loggedIn ? '/' : '/'}
-        aria-label="TalkWise home"
+        href={loggedIn ? '/home' : '/'}
+        aria-label="Talkwise home"
         className="group flex items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
       >
         <Logo size={28} />
-        <div className="flex flex-col leading-none">
-          <span className="text-base font-extrabold tracking-tight text-gradient">TalkWise</span>
-          <span className="hidden text-[10px] font-medium tracking-wide text-slate-400 sm:block">
-            talkwise.life
-          </span>
-        </div>
+        <span className="text-base font-extrabold tracking-tight text-gradient">Talkwise</span>
       </Link>
 
       <div className="flex items-center gap-2">

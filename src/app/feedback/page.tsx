@@ -17,7 +17,7 @@ export default function FeedbackPage() {
     const storedUserName = sessionStorage.getItem('userName');
 
     if (!configStr || !messagesStr) {
-      router.push('/');
+      router.push('/home');
       return;
     }
 
@@ -58,7 +58,7 @@ export default function FeedbackPage() {
 
   const handleNewSession = () => {
     sessionStorage.removeItem('chatMessages');
-    router.push('/');
+    router.push('/home');
   };
 
   if (loading) {
@@ -232,7 +232,7 @@ export default function FeedbackPage() {
             New Session
           </button>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/home')}
             className="px-6 py-2.5 rounded-lg text-sm border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors"
           >
             Home

@@ -35,7 +35,7 @@ export default function SideNav({
   const router = useRouter();
   const pathname = usePathname();
 
-  const isHome = pathname === '/';
+  const isHome = pathname === '/home' || pathname === '/';
   const isPractice = pathname.startsWith('/configure');
   const isPrepare = pathname.startsWith('/prepare');
   const isResume = pathname.startsWith('/resume');
@@ -54,7 +54,7 @@ export default function SideNav({
           <NavLink
             label="Home"
             active={isHome}
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/home')}
             icon={
               <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -130,7 +130,7 @@ export default function SideNav({
             </ol>
             <button
               type="button"
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/home')}
               className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
               <span>Your characters</span>

@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { SavedPersona, Track, ENABLE_INTERVIEW_PREP } from '@/lib/types';
 
 const RESUME_ICON = (
   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -173,21 +172,6 @@ const ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
     </svg>
   ),
-  pencil: (
-    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-    </svg>
-  ),
-  trash: (
-    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-  ),
-  plus: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-  ),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -197,121 +181,12 @@ const ICONS = {
 export default function LandingPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [personas, setPersonas] = useState<SavedPersona[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [trackFilter, setTrackFilter] = useState<Track | 'all'>('all');
-
-  const fetchPersonas = useCallback(async () => {
-    try {
-      const res = await fetch('/api/personas');
-      if (res.ok) {
-        const data = await res.json();
-        setPersonas(data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch personas:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    if (session?.user?.name) {
-      sessionStorage.setItem('userName', session.user.name);
-    }
     if (session) {
-      fetchPersonas();
+      router.replace('/home');
     }
-  }, [session, fetchPersonas]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && session) fetchPersonas();
-    };
-    const handleFocus = () => { if (session) fetchPersonas(); };
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [session, fetchPersonas]);
-
-  const handleDeletePersona = async (id: string) => {
-    if (!confirm('Delete this character?')) return;
-    setDeleting(id);
-    try {
-      const res = await fetch(`/api/personas/${id}`, { method: 'DELETE' });
-      if (res.ok) setPersonas((prev) => prev.filter((p) => p.id !== id));
-    } catch (err) {
-      console.error('Failed to delete persona:', err);
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  const filteredPersonas =
-    trackFilter === 'all'
-      ? personas
-      : personas.filter((p) => (p.track || 'professional') === trackFilter);
-
-  const handleSelectPersona = (persona: SavedPersona) => {
-    sessionStorage.setItem('userName', session?.user?.name || 'there');
-    sessionStorage.setItem(
-      'startPersonaData',
-      JSON.stringify({
-        track: persona.track || 'professional',
-        name: persona.name,
-        difficultyLevel: persona.difficultyLevel,
-        decisionOrientation: persona.decisionOrientation,
-        communicationStyle: persona.communicationStyle,
-        authorityPosture: persona.authorityPosture,
-        temperamentStability: persona.temperamentStability,
-        socialPresence: persona.socialPresence,
-        interestLevel: persona.interestLevel,
-        flirtatiousness: persona.flirtatiousness,
-        communicationEffort: persona.communicationEffort,
-        emotionalOpenness: persona.emotionalOpenness,
-        humorStyle: persona.humorStyle,
-        pickiness: persona.pickiness,
-      })
-    );
-    router.push('/start');
-  };
-
-  const handleEditPersona = (persona: SavedPersona) => {
-    sessionStorage.setItem('userName', session?.user?.name || 'there');
-    sessionStorage.setItem('editPersonaId', persona.id);
-    sessionStorage.setItem(
-      'editPersonaData',
-      JSON.stringify({
-        track: persona.track || 'professional',
-        name: persona.name,
-        difficultyLevel: persona.difficultyLevel,
-        decisionOrientation: persona.decisionOrientation,
-        communicationStyle: persona.communicationStyle,
-        authorityPosture: persona.authorityPosture,
-        temperamentStability: persona.temperamentStability,
-        socialPresence: persona.socialPresence,
-        interestLevel: persona.interestLevel,
-        flirtatiousness: persona.flirtatiousness,
-        communicationEffort: persona.communicationEffort,
-        emotionalOpenness: persona.emotionalOpenness,
-        humorStyle: persona.humorStyle,
-        pickiness: persona.pickiness,
-      })
-    );
-    router.push('/configure');
-  };
-
-  const handleCreateCharacter = (track: Track = 'professional') => {
-    sessionStorage.setItem('userName', session?.user?.name || 'there');
-    sessionStorage.removeItem('editPersonaId');
-    sessionStorage.setItem('editPersonaData', JSON.stringify({ track }));
-    if (track === 'interview') router.push('/interview/prep');
-    else router.push('/configure');
-  };
+  }, [session, router]);
 
   if (status === 'loading') {
     return (
@@ -321,11 +196,18 @@ export default function LandingPage() {
     );
   }
 
+  if (session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50/60">
+        <Logo size={80} className="animate-pulse" />
+      </div>
+    );
+  }
+
   // ════════════════════════════════════════════════════════════
   // PUBLIC LANDING (logged out) — calm hero, single primary CTA
   // ════════════════════════════════════════════════════════════
-  if (!session) {
-    return (
+  return (
       <div className="flex min-h-screen flex-col bg-white">
         {/* Hero */}
         <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-24">
@@ -488,178 +370,5 @@ export default function LandingPage() {
           TalkWise · Practice makes confident
         </footer>
       </div>
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // LOGGED-IN DASHBOARD — one primary action, intent-organised
-  // ════════════════════════════════════════════════════════════
-  const userName = session.user?.name?.split(' ')[0] || 'there';
-
-  return (
-    <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <div className="flex-1 px-6 py-10">
-        <div className="mx-auto max-w-5xl">
-          {/* Greeting */}
-          <section className="relative mb-10 overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-7 sm:px-8 sm:py-8">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-brand-100 via-accent-50 to-amber-50 opacity-70 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-40 rounded-full bg-gradient-to-br from-amber-50 to-brand-50 opacity-60 blur-2xl"
-            />
-
-            <div className="relative">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                Hi {userName} — what do you want to work on?
-              </h1>
-              <p className="mt-1.5 text-sm text-slate-500">
-                Pick any of the four — practice, prep for an interview, sharpen your resume, or
-                learn your style.
-              </p>
-            </div>
-          </section>
-
-          {/* Intent cards — mirror the left-nav destinations */}
-          <section className="mb-12">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <PillarCard
-                tone="brand"
-                icon={ICONS.chat}
-                title="Practice conversations"
-                description="Salary talks, tough feedback, hard chats with friends or family."
-                ctaLabel="Practise a conversation"
-                onClick={() => handleCreateCharacter('professional')}
-              />
-              <PillarCard
-                tone="amber"
-                icon={ICONS.briefcase}
-                title="Prepare for interview"
-                description="A 2-minute kickoff turns your resume into a personalised interview plan."
-                ctaLabel="Build my plan"
-                onClick={() => router.push('/prepare')}
-              />
-              <PillarCard
-                tone="emerald"
-                icon={RESUME_ICON}
-                title="Build my resume"
-                description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
-                ctaLabel="Sharpen my resume"
-                onClick={() => router.push('/resume')}
-              />
-              <PillarCard
-                tone="accent"
-                icon={ICONS.sparkle}
-                title="Know yourself"
-                description="Communication test + MBTI. Strengths, blind spots, growth tips."
-                ctaLabel="Take the tests"
-                onClick={() => router.push('/profile')}
-              />
-            </div>
-          </section>
-
-          {/* Continue practising — only show if there are personas */}
-          {(loading || personas.length > 0) && (
-            <section>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Your characters</h2>
-                  <p className="text-xs text-slate-500">Pick one to keep practising, or create a new one.</p>
-                </div>
-                <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 text-xs">
-                  {(['all', 'professional', 'personal', ...(ENABLE_INTERVIEW_PREP ? ['interview' as Track] : [])] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTrackFilter(t as Track | 'all')}
-                      className={`rounded px-2.5 py-1 font-medium capitalize transition-colors ${
-                        trackFilter === t
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-500 hover:text-slate-900'
-                      }`}
-                    >
-                      {t === 'professional' ? 'Work' : t === 'personal' ? 'Life' : t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="rounded-2xl border border-slate-200 bg-white py-12 text-center text-sm text-slate-400">
-                  Loading…
-                </div>
-              ) : filteredPersonas.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-                  <h3 className="text-sm font-semibold text-slate-700">No characters here yet</h3>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Create one to start practising.
-                  </p>
-                  <button
-                    onClick={() => handleCreateCharacter(trackFilter === 'all' ? 'professional' : (trackFilter as Track))}
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-                  >
-                    {ICONS.plus} New character
-                  </button>
-                </div>
-              ) : (
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {filteredPersonas.map((p) => {
-                    const track = p.track || 'professional';
-                    const trackLabel =
-                      track === 'personal' ? 'Life' : track === 'interview' ? 'Interview' : 'Work';
-                    const trackBadge =
-                      track === 'personal'
-                        ? 'bg-pink-50 text-pink-700'
-                        : track === 'interview'
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-brand-50 text-brand-700';
-                    return (
-                      <li
-                        key={p.id}
-                        onClick={() => handleSelectPersona(p)}
-                        className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 transition-all hover:border-slate-300 hover:shadow-sm"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="truncate text-sm font-semibold text-slate-900">{p.name}</h3>
-                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${trackBadge}`}>
-                              {trackLabel}
-                            </span>
-                          </div>
-                          <p className="mt-0.5 text-xs text-slate-500 group-hover:text-slate-700">
-                            Continue practising →
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEditPersona(p); }}
-                            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                            title="Edit"
-                          >
-                            {ICONS.pencil}
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeletePersona(p.id); }}
-                            disabled={deleting === p.id}
-                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                            title="Delete"
-                          >
-                            {ICONS.trash}
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          )}
-        </div>
-      </div>
-      <footer className="border-t border-slate-100 bg-white px-6 py-4 text-center text-xs text-slate-400">
-        TalkWise · Practice makes confident
-      </footer>
-    </div>
   );
 }

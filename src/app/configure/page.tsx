@@ -113,7 +113,7 @@ export default function ConfigurePage() {
 
       sessionStorage.removeItem('editPersonaId');
       sessionStorage.removeItem('editPersonaData');
-      router.push('/');
+      router.push('/home');
     } catch (err) {
       console.error('Failed to save persona:', err);
       setSaveError(err instanceof Error ? err.message : 'Network error. Please check your connection.');

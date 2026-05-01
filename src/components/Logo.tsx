@@ -15,7 +15,7 @@ export default function Logo({
     <div className={`inline-flex items-center gap-3 ${className}`}>
       <Image
         src="/logo.png"
-        alt="TalkWise"
+        alt="Talkwise"
         width={size}
         height={size}
         className="mix-blend-multiply"
@@ -26,7 +26,7 @@ export default function Logo({
           className="font-extrabold tracking-tight text-gradient"
           style={{ fontSize: size * 0.55 }}
         >
-          TalkWise
+          Talkwise
         </span>
       )}
     </div>
