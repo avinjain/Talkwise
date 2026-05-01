@@ -149,9 +149,9 @@ export default function InterviewPrepPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="flex-1 py-8 px-6">
+      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Interview prep</h1>
+          <h1 className="mb-2 text-2xl font-bold text-slate-900 sm:text-3xl">Interview prep</h1>
           <p className="text-sm text-slate-500 mb-6">
             Share context so the mock interview feels real. We use this (not personality sliders) to shape the interviewer.
           </p>

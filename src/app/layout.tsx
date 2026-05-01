@@ -1,6 +1,14 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Providers from '@/components/Providers';
 import './globals.css';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  themeColor: '#f8fafc',
+};
 
 export const metadata: Metadata = {
   title: 'TalkWise — Communication Training Platform',
@@ -18,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen">
+      <body className="min-h-screen overflow-x-hidden antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

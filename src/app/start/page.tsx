@@ -132,11 +132,11 @@ export default function StartPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/home'} backLabel="Back" />
-      <div className="flex-1 py-8 px-6">
+      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
       <div className="max-w-xl mx-auto">
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-slate-900 mb-1">
+          <h1 className="mb-1 text-2xl font-bold text-slate-900 sm:text-3xl">
             Talk to <span className="text-gradient">{personaName}</span>
           </h1>
           {track !== 'interview' && (

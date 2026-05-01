@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import SideNav from './SideNav';
@@ -18,12 +19,15 @@ import { useSideNav } from '@/contexts/SideNavContext';
  *   │  in)     │                                             │
  *   └──────────┴─────────────────────────────────────────────┘
  *
+ * On mobile, SideNav becomes a drawer toggled from TopBar (< lg breakpoint).
+ *
  * On focused, full-screen flows (auth, conversation start, the personality
  * tests themselves) we hide everything so the page can take over.
  */
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const {
     variant,
     profileTab,
@@ -36,6 +40,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     lastPersonalityTest,
     lastMbtiTest,
   } = useSideNav();
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen || !session) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen, session]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileNavOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileNavOpen]);
 
   const isFullScreen =
     pathname.startsWith('/auth') ||
@@ -51,7 +77,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/50">
-      <TopBar />
+      <TopBar onOpenMobileNav={showSideNav ? () => setMobileNavOpen(true) : undefined} />
       <div className="flex flex-1">
         {showSideNav && (
           <SideNav
@@ -65,9 +91,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             messagesCount={messagesCount}
             lastPersonalityTest={lastPersonalityTest}
             lastMbtiTest={lastMbtiTest}
+            mobileOpen={mobileNavOpen}
+            onMobileClose={() => setMobileNavOpen(false)}
           />
         )}
-        <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+        <main className="flex min-w-0 flex-1 flex-col">{children}</main>
       </div>
     </div>
   );

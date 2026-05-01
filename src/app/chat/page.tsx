@@ -241,7 +241,7 @@ export default function ChatPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50">
       {/* ── Header ── */}
-      <header className="flex-shrink-0 border-b border-slate-200 bg-white px-6 py-3 shadow-sm">
+      <header className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <Logo size={44} />
@@ -260,7 +260,7 @@ export default function ChatPage() {
       </header>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.map((message) => (
             <div
@@ -294,7 +294,7 @@ export default function ChatPage() {
       </div>
 
       {/* ── Input ── */}
-      <div className="flex-shrink-0 border-t border-slate-200 bg-white px-6 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+      <div className="flex-shrink-0 border-t border-slate-200 bg-white px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] sm:px-6">
         <div className="max-w-3xl mx-auto space-y-2">
           <div className="flex gap-2">
             {speechSupported && (

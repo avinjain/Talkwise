@@ -45,7 +45,7 @@ function AuthForm() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white px-6">
+    <div className="relative min-h-screen overflow-hidden bg-white px-4 pb-[env(safe-area-inset-bottom)] sm:px-6">
       {/* Decorative gradient blobs — same palette as the public landing so the
           two pages feel like one site, not two. */}
       <div

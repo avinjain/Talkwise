@@ -21,10 +21,11 @@ export default function AppHeader({ backHref, backLabel }: AppHeaderProps) {
   if (!backHref) return null;
 
   return (
-    <div className="border-b border-slate-100 bg-white/80 px-6 py-2.5">
+    <div className="border-b border-slate-100 bg-white/80 px-4 py-3 sm:px-6 sm:py-2.5">
       <button
+        type="button"
         onClick={() => router.push(backHref)}
-        className="text-sm text-slate-400 transition-colors hover:text-slate-700"
+        className="touch-manipulation min-h-[44px] px-1 text-left text-sm text-slate-400 transition-colors hover:text-slate-700 sm:min-h-0"
       >
         &larr; {backLabel || 'Back'}
       </button>

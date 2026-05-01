@@ -83,7 +83,7 @@ export default function FeedbackPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="flex min-h-screen items-center justify-center px-4 sm:px-6">
         <div className="text-center max-w-sm">
           <h1 className="text-lg font-bold text-red-600 mb-2">Analysis Failed</h1>
           <p className="text-sm text-slate-500 mb-4">{error}</p>
@@ -118,14 +118,14 @@ export default function FeedbackPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="flex-1 py-8 px-6">
+      <div className="flex-1 px-4 py-8 sm:px-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-4">
             <Logo size={64} />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1 className="mb-2 text-2xl font-bold text-slate-900 sm:text-3xl">
             Session Feedback
           </h1>
           <p className="text-slate-500">

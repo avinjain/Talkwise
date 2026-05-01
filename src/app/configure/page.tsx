@@ -126,13 +126,13 @@ export default function ConfigurePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <div className="flex-1 px-6 py-8">
+      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto max-w-lg">
           <header className="mb-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Practice conversations
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               {editPersonaId ? (
                 <>
                   Edit <span className="text-gradient">{name || 'character'}</span>

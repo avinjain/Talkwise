@@ -120,10 +120,10 @@ export default function PrepareForInterviewPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">
           <header className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Prepare for interview
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">

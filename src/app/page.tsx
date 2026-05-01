@@ -55,8 +55,9 @@ function PillarCard({
   const t = toneMap[tone];
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`group relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg ${t.glow}`}
+      className={`group relative flex min-h-[52px] w-full touch-manipulation flex-col items-start gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:min-h-0 sm:p-6 ${t.glow}`}
     >
       <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${t.iconBg}`}>
         {icon}
@@ -208,9 +209,9 @@ export default function LandingPage() {
   // PUBLIC LANDING (logged out) — calm hero, single primary CTA
   // ════════════════════════════════════════════════════════════
   return (
-      <div className="flex min-h-screen flex-col bg-white">
+      <div className="flex min-h-screen flex-col bg-white pb-[env(safe-area-inset-bottom)]">
         {/* Hero */}
-        <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-24">
+        <section className="relative overflow-hidden px-4 pb-12 pt-14 sm:px-6 sm:pb-16 sm:pt-20 lg:pt-24">
           {/* Decorative gradient blobs */}
           <div
             aria-hidden
@@ -227,7 +228,7 @@ export default function LandingPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
                 AI Communication Coach
               </span>
-              <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+              <h1 className="mt-5 text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
                 Practice tough conversations
                 <br />
                 <span className="text-gradient">before they happen.</span>
@@ -236,17 +237,19 @@ export default function LandingPage() {
                 Job interviews, salary talks, hard feedback, first dates. Talk to an AI partner,
                 then get specific feedback on what to say differently.
               </p>
-              <div className="mt-8 flex items-center justify-center gap-3 lg:justify-start">
+              <div className="mt-8 flex w-full max-w-md flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center lg:justify-start">
                 <button
+                  type="button"
                   onClick={() => router.push('/auth?mode=signup')}
-                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+                  className="inline-flex min-h-[48px] touch-manipulation items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 sm:min-h-0"
                 >
                   Start practicing free
                   {ICONS.arrow}
                 </button>
                 <button
+                  type="button"
                   onClick={() => router.push('/auth')}
-                  className="rounded-xl px-5 py-3 text-base font-medium text-slate-600 hover:text-slate-900"
+                  className="min-h-[48px] touch-manipulation rounded-xl px-5 py-3 text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 sm:min-h-0 sm:hover:bg-transparent"
                 >
                   Sign in
                 </button>
@@ -264,7 +267,7 @@ export default function LandingPage() {
         </section>
 
         {/* What you get — four things, mirrors the left-nav once you sign in */}
-        <section className="border-t border-slate-100 bg-slate-50/60 px-6 py-16">
+        <section className="border-t border-slate-100 bg-slate-50/60 px-4 py-12 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-5xl">
             <div className="mb-10 text-center">
               <h2 className="text-2xl font-semibold text-slate-900">Everything in one place</h2>
@@ -310,7 +313,7 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section className="px-6 py-20">
+        <section className="px-4 py-14 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-4xl">
             <div className="mb-12 text-center">
               <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">How it works</h2>
@@ -366,7 +369,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <footer className="border-t border-slate-100 px-6 py-6 text-center text-xs text-slate-400">
+        <footer className="border-t border-slate-100 px-4 py-6 text-center text-xs text-slate-400 sm:px-6">
           TalkWise · Practice makes confident
         </footer>
       </div>

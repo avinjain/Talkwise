@@ -58,7 +58,7 @@ function PillarCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg ${t.glow}`}
+      className={`group relative flex min-h-[52px] w-full touch-manipulation flex-col items-start gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:min-h-0 sm:p-6 ${t.glow}`}
     >
       <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${t.iconBg}`}>{icon}</div>
       <div className="space-y-1">
@@ -267,9 +267,9 @@ export default function HomeDashboard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <div className="flex-1 px-6 py-10">
+      <div className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-5xl">
-          <section className="relative mb-10 overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-7 sm:px-8 sm:py-8">
+          <section className="relative mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-6 sm:rounded-3xl sm:px-8 sm:py-8">
             <div
               aria-hidden
               className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-brand-100 via-accent-50 to-amber-50 opacity-70 blur-3xl"
@@ -280,7 +280,7 @@ export default function HomeDashboard() {
             />
 
             <div className="relative">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Hi {userName} — what do you want to work on?
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
@@ -434,7 +434,7 @@ export default function HomeDashboard() {
           )}
         </div>
       </div>
-      <footer className="border-t border-slate-100 bg-white px-6 py-4 text-center text-xs text-slate-400">
+      <footer className="border-t border-slate-100 bg-white px-4 py-4 text-center text-xs text-slate-400 sm:px-6">
         TalkWise · Practice makes confident
       </footer>
     </div>

@@ -28,8 +28,9 @@ export default function ProfileDropdown({ compact = false }: ProfileDropdownProp
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setMenuOpen(!menuOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 transition-all"
+        className="touch-manipulation flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-2 transition-all hover:border-slate-300 hover:bg-slate-50 sm:px-3 sm:py-1.5"
       >
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white text-xs font-bold">
           {(session.user?.name || session.user?.email || '?')[0].toUpperCase()}
@@ -53,8 +54,10 @@ export default function ProfileDropdown({ compact = false }: ProfileDropdownProp
 
       {menuOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-200/50 z-20 py-1 overflow-hidden">
+          <div className="fixed inset-0 z-[80] bg-slate-900/25" aria-hidden onClick={() => setMenuOpen(false)} />
+          <div
+            className={`z-[90] rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-200/50 max-lg:fixed max-lg:left-3 max-lg:right-3 max-lg:top-[3.625rem] max-lg:max-h-[min(70vh,calc(100dvh-5rem))] max-lg:overflow-y-auto max-lg:overscroll-contain sm:max-lg:left-auto sm:max-lg:right-4 sm:max-lg:w-56 lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-56 lg:max-h-none lg:overflow-visible`}
+          >
             <div className="px-4 py-3 border-b border-slate-100">
               <p className="text-sm font-semibold text-slate-900 truncate">{session.user?.name}</p>
               <p className="text-xs text-slate-400 truncate">{session.user?.email}</p>
