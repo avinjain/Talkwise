@@ -123,6 +123,21 @@ export default function ConfigurePage() {
   };
 
   const attributes = getPersonaAttributes(track);
+  const isLife = track === 'personal';
+
+  const traitPillClass = isLife
+    ? 'bg-gradient-to-r from-pink-50 to-orange-50 text-orange-950 ring-1 ring-orange-200/70'
+    : 'bg-brand-50 text-brand-800 ring-1 ring-brand-100/90';
+
+  const sliderAccentClass = isLife ? 'accent-orange-500' : 'accent-brand-500';
+
+  const nameFocusClass = isLife
+    ? 'focus:border-orange-400 focus:ring-orange-400/25'
+    : 'focus:border-brand-500 focus:ring-brand-500/20';
+
+  const primaryCtaClass = isLife
+    ? 'bg-gradient-to-r from-pink-500 to-orange-500 shadow-orange-500/25 hover:from-pink-600 hover:to-orange-600'
+    : 'bg-gradient-brand shadow-brand-500/25 hover:bg-gradient-brand-hover';
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
@@ -241,7 +256,7 @@ export default function ConfigurePage() {
                   ? 'e.g., Emma — outgoing, values honesty'
                   : 'e.g., Sarah Chen, VP of Engineering'
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
             />
           </div>
 
@@ -257,7 +272,7 @@ export default function ConfigurePage() {
                   <div key={attr.key} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <span className="text-xs font-medium text-slate-700">{attr.label}</span>
-                      <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800">
+                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${traitPillClass}`}>
                         {traitName}
                       </span>
                     </div>
@@ -268,7 +283,7 @@ export default function ConfigurePage() {
                       step={1}
                       value={value}
                       onChange={(e) => handleSliderChange(attr.key, Number(e.target.value))}
-                      className="h-2 w-full cursor-pointer accent-brand-500"
+                      className={`h-2 w-full cursor-pointer touch-manipulation ${sliderAccentClass}`}
                     />
                     <div className="mt-1 flex justify-between text-[10px] text-slate-400">
                       <span>{attr.lowLabel}</span>
@@ -288,7 +303,7 @@ export default function ConfigurePage() {
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="mt-6 w-full rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className={`mt-6 w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-40 ${primaryCtaClass}`}
           >
             {saving ? 'Saving...' : editPersonaId ? 'Save changes' : 'Finish building'}
           </button>
