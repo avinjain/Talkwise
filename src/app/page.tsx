@@ -5,7 +5,99 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
-import { SavedPersona, Track, getPersonaAttributes, ENABLE_INTERVIEW_PREP } from '@/lib/types';
+import { SavedPersona, Track, ENABLE_INTERVIEW_PREP } from '@/lib/types';
+
+// ─────────────────────────────────────────────────────────────
+// Small UI primitives (kept local for now to avoid churn)
+// ─────────────────────────────────────────────────────────────
+
+function PillarCard({
+  icon,
+  title,
+  description,
+  ctaLabel,
+  onClick,
+  tone = 'brand',
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  onClick: () => void;
+  tone?: 'brand' | 'accent' | 'amber';
+}) {
+  const toneMap = {
+    brand: { iconBg: 'bg-brand-50 text-brand-600', cta: 'text-brand-700 hover:text-brand-800' },
+    accent: { iconBg: 'bg-accent-50 text-accent-600', cta: 'text-accent-700 hover:text-accent-800' },
+    amber: { iconBg: 'bg-amber-50 text-amber-600', cta: 'text-amber-700 hover:text-amber-800' },
+  } as const;
+  const t = toneMap[tone];
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-6 text-left transition-all hover:border-slate-300 hover:shadow-sm"
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${t.iconBg}`}>
+        {icon}
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <p className="text-sm leading-relaxed text-slate-500">{description}</p>
+      </div>
+      <span className={`mt-1 inline-flex items-center gap-1 text-sm font-medium ${t.cta}`}>
+        {ctaLabel}
+        <span className="transition-transform group-hover:translate-x-0.5">→</span>
+      </span>
+    </button>
+  );
+}
+
+const ICONS = {
+  chat: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.6A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  ),
+  briefcase: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m-12.5 8.006a2.18 2.18 0 00.75-1.661V8.706c0-1.081.768-2.015 1.837-2.175a48.114 48.114 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894" />
+    </svg>
+  ),
+  brain: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104a24.301 24.301 0 014.5 0m-4.5 0c-.251.023-.501.05-.75.082m5.25-.082c.252.023.502.05.75.082m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" />
+    </svg>
+  ),
+  spark: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+    </svg>
+  ),
+  arrow: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+    </svg>
+  ),
+  pencil: (
+    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+    </svg>
+  ),
+  trash: (
+    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  ),
+  plus: (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  ),
+};
+
+// ─────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const router = useRouter();
@@ -13,7 +105,7 @@ export default function LandingPage() {
   const [personas, setPersonas] = useState<SavedPersona[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [activeTrack, setActiveTrack] = useState<Track>('professional');
+  const [trackFilter, setTrackFilter] = useState<Track | 'all'>('all');
 
   const fetchPersonas = useCallback(async () => {
     try {
@@ -40,14 +132,10 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && session) {
-        fetchPersonas();
-      }
+      if (document.visibilityState === 'visible' && session) fetchPersonas();
     };
+    const handleFocus = () => { if (session) fetchPersonas(); };
     document.addEventListener('visibilitychange', handleVisibility);
-    const handleFocus = () => {
-      if (session) fetchPersonas();
-    };
     window.addEventListener('focus', handleFocus);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
@@ -60,9 +148,7 @@ export default function LandingPage() {
     setDeleting(id);
     try {
       const res = await fetch(`/api/personas/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setPersonas((prev) => prev.filter((p) => p.id !== id));
-      }
+      if (res.ok) setPersonas((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error('Failed to delete persona:', err);
     } finally {
@@ -70,9 +156,10 @@ export default function LandingPage() {
     }
   };
 
-  const filteredPersonas = personas.filter(
-    (p) => (p.track || 'professional') === activeTrack
-  );
+  const filteredPersonas =
+    trackFilter === 'all'
+      ? personas
+      : personas.filter((p) => (p.track || 'professional') === trackFilter);
 
   const handleSelectPersona = (persona: SavedPersona) => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
@@ -123,449 +210,331 @@ export default function LandingPage() {
     router.push('/configure');
   };
 
-  const handleCreateNew = () => {
+  const handleCreateCharacter = (track: Track = 'professional') => {
     sessionStorage.setItem('userName', session?.user?.name || 'there');
     sessionStorage.removeItem('editPersonaId');
-    sessionStorage.setItem('editPersonaData', JSON.stringify({ track: activeTrack }));
-    if (activeTrack === 'interview') router.push('/interview/prep');
+    sessionStorage.setItem('editPersonaData', JSON.stringify({ track }));
+    if (track === 'interview') router.push('/interview/prep');
     else router.push('/configure');
   };
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <Logo size={80} className="animate-pulse" />
       </div>
     );
   }
 
-  // ════════════════════════════════════════════
-  // PUBLIC LANDING PAGE (not logged in)
-  // ════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════
+  // PUBLIC LANDING (logged out) — calm hero, single primary CTA
+  // ════════════════════════════════════════════════════════════
   if (!session) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
-        <header className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
-          <Logo size={36} />
-          <div className="flex gap-2">
-            <button onClick={() => router.push('/auth')} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Sign in</button>
-            <button onClick={() => router.push('/auth?mode=signup')} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover">Sign up</button>
+      <div className="flex min-h-screen flex-col bg-white">
+        <header className="flex items-center justify-between border-b border-slate-100 px-6 py-3">
+          <Logo size={32} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push('/auth')}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              Sign in
+            </button>
+            <button
+              onClick={() => router.push('/auth?mode=signup')}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Get started
+            </button>
           </div>
         </header>
-        <div className="flex-shrink-0 px-6 pt-12 pb-10 text-center">
-          <Logo size={100} />
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gradient mt-2 mb-2">
-            TalkWise
-          </h1>
-          <p className="text-sm font-medium tracking-widest uppercase text-slate-400 mb-4">
-            Your AI Communication Coach
-          </p>
-          <p className="text-base md:text-lg text-slate-500 max-w-xl mx-auto leading-relaxed mb-8">
-            Practice tough conversations before they happen — job interviews,
-            salary talks, difficult dates, and more. Get real-time feedback
-            to communicate with confidence.
-          </p>
 
-          {/* Primary CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
-            <button
-              onClick={() => router.push('/auth?callbackUrl=/configure')}
-              className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-base w-full sm:w-auto"
-            >
-              Create a character & start
-            </button>
-            {ENABLE_INTERVIEW_PREP && (
-            <button
-              onClick={() => router.push('/auth?callbackUrl=/interview/prep')}
-              className="px-8 py-3.5 rounded-xl font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-all text-base w-full sm:w-auto"
-            >
-              Interview prep
-            </button>
-            )}
-            <button
-              onClick={() => router.push('/auth?callbackUrl=/profile/test')}
-              className="px-8 py-3.5 rounded-xl font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 transition-all text-base w-full sm:w-auto"
-            >
-              Take the personality test
-            </button>
+        {/* Hero */}
+        <section className="px-6 pb-16 pt-20 sm:pt-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+              AI Communication Coach
+            </span>
+            <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+              Practice tough conversations
+              <br />
+              <span className="text-gradient">before they happen.</span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
+              Job interviews, salary talks, hard feedback, first dates. Talk to
+              an AI partner, then get specific feedback on what to say differently.
+            </p>
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button
+                onClick={() => router.push('/auth?mode=signup')}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+              >
+                Start practicing free
+                {ICONS.arrow}
+              </button>
+              <button
+                onClick={() => router.push('/auth')}
+                className="rounded-xl px-5 py-3 text-base font-medium text-slate-600 hover:text-slate-900"
+              >
+                Sign in
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">No credit card. ~1 minute to first conversation.</p>
           </div>
-          <p className="text-xs text-slate-400">Free to use &middot; Sign in to get started</p>
-        </div>
+        </section>
 
-        {/* ── How It Works ── */}
-        <div className="bg-slate-50 border-t border-slate-100 px-6 py-12">
-          <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
-            How it works
-          </h2>
-
-          <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Step 1 */}
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
-                <span className="text-2xl">🎭</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">Create a character</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Build someone to practice with — a tough boss, a first date, a client. Set their personality with sliders.
+        {/* What you get — 3 pillar cards */}
+        <section className="border-t border-slate-100 bg-slate-50/60 px-6 py-16">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-10 text-center">
+              <h2 className="text-2xl font-semibold text-slate-900">Three things, one place</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Pick what you need. You can always come back for the others.
               </p>
             </div>
-
-            {/* Step 2 */}
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
-                <span className="text-2xl">💬</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">Have the conversation</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Pick a scenario — salary negotiation, conflict, small talk — and chat naturally with the AI character.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center mx-auto mb-3 shadow-md shadow-brand-500/20">
-                <span className="text-2xl">📊</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 mb-1">Get feedback</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                AI reviews your conversation and tells you what you did well, what to improve, and gives a confidence score.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Features ── */}
-        <div className="px-6 py-12">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 text-center mb-8">
-              What you can do
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xl mt-0.5">💼</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Work conversations</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Salary talks, tough feedback, interviews, team conflicts</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xl mt-0.5">💬</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Life conversations</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">First dates, awkward chats, making new friends</p>
-                </div>
-              </div>
-
-              {ENABLE_INTERVIEW_PREP && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xl mt-0.5">🎤</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Interview prep</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Mock interviews with 5-dimension scoring (Substance, Structure, Relevance, Credibility, Differentiation)</p>
-                </div>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <PillarCard
+                tone="brand"
+                icon={ICONS.chat}
+                title="Practice conversations"
+                description="Build a character — boss, date, client — and rehearse the talk that matters. Get feedback at the end."
+                ctaLabel="See how it works"
+                onClick={() => router.push('/auth?mode=signup&callbackUrl=/configure')}
+              />
+              {ENABLE_INTERVIEW_PREP ? (
+                <PillarCard
+                  tone="amber"
+                  icon={ICONS.briefcase}
+                  title="Prepare for interviews"
+                  description="Mock interviews scored on Substance, Structure, Relevance, Credibility, Differentiation. Resume + LinkedIn coaching."
+                  ctaLabel="Try interview prep"
+                  onClick={() => router.push('/auth?mode=signup&callbackUrl=/interview/prep')}
+                />
+              ) : (
+                <PillarCard
+                  tone="amber"
+                  icon={ICONS.briefcase}
+                  title="Prepare for a new job"
+                  description="Resume and LinkedIn coaching, alignment, keywords, and an interview-ready story bank."
+                  ctaLabel="Get coaching"
+                  onClick={() => router.push('/auth?mode=signup&callbackUrl=/profile')}
+                />
               )}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xl mt-0.5">🧠</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">Personality test</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Discover your communication strengths and blind spots with a quick 8-minute test</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-xl mt-0.5">📈</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-0.5">AI growth advice</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">Get personalized recommendations based on your role, goals, and personality</p>
-                </div>
-              </div>
+              <PillarCard
+                tone="accent"
+                icon={ICONS.brain}
+                title="Know yourself"
+                description="A short communication-style test plus MBTI. See your strengths, blind spots, and how to grow."
+                ctaLabel="Take the test"
+                onClick={() => router.push('/auth?mode=signup&callbackUrl=/profile/test')}
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* ── Bottom CTA ── */}
-        <div className="bg-gradient-to-br from-brand-50 via-white to-accent-50 border-t border-brand-100 px-6 py-10 text-center">
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Ready to practice?</h2>
-          <p className="text-sm text-slate-500 mb-5">Sign in and start your first conversation in under a minute.</p>
-          <button
-            onClick={() => router.push('/auth')}
-            className="px-8 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-lg shadow-brand-500/25 text-base"
-          >
-            Get Started
-          </button>
-        </div>
+        {/* How it works — calmer, fewer emojis */}
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-10 text-center">
+              <h2 className="text-2xl font-semibold text-slate-900">How it works</h2>
+              <p className="mt-2 text-sm text-slate-500">Three steps. No setup beyond signing in.</p>
+            </div>
+            <ol className="grid gap-6 sm:grid-cols-3">
+              {[
+                { n: 1, title: 'Pick a scenario', body: 'Choose what you want to practice — interview, tough feedback, a hard chat.' },
+                { n: 2, title: 'Have the conversation', body: 'Talk naturally with an AI partner you can dial up or down in toughness.' },
+                { n: 3, title: 'Get feedback', body: 'Specific, line-by-line notes on what worked and how to phrase it better.' },
+              ].map((step) => (
+                <li key={step.n} className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700">
+                    {step.n}
+                  </div>
+                  <h3 className="mt-3 text-sm font-semibold text-slate-900">{step.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-500">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-        <footer className="text-center py-4 text-slate-400 text-xs">
-          Practice makes confident &middot; Powered by AI
+        <footer className="border-t border-slate-100 px-6 py-6 text-center text-xs text-slate-400">
+          TalkWise · Practice makes confident
         </footer>
       </div>
     );
   }
 
-  // ════════════════════════════════════════════
-  // LOGGED-IN DASHBOARD
-  // ════════════════════════════════════════════
-  const userName = session.user?.name || 'there';
+  // ════════════════════════════════════════════════════════════
+  // LOGGED-IN DASHBOARD — one primary action, intent-organised
+  // ════════════════════════════════════════════════════════════
+  const userName = session.user?.name?.split(' ')[0] || 'there';
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col bg-slate-50/60">
       <AppHeader />
-
-      <div className="flex-1 px-6 py-8">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-900 mb-6">
-            Welcome back, <span className="text-gradient">{userName}</span>
-          </h1>
-
-          <div className={`grid gap-4 mb-8 ${ENABLE_INTERVIEW_PREP ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            <button
-              onClick={() => setActiveTrack('professional')}
-              className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                activeTrack === 'professional'
-                  ? 'border-brand-500 bg-gradient-to-br from-brand-50 to-accent-50 shadow-md shadow-brand-500/10'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                  activeTrack === 'professional'
-                    ? 'bg-gradient-to-br from-brand-500 to-accent-500 shadow-sm'
-                    : 'bg-slate-100'
-                }`}>
-                  <span>💼</span>
-                </div>
-                <div>
-                  <h3 className={`text-sm font-bold ${
-                    activeTrack === 'professional' ? 'text-slate-900' : 'text-slate-600'
-                  }`}>Work</h3>
-                  <p className={`text-xs ${
-                    activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
-                  }`}>Career &amp; workplace</p>
-                </div>
-              </div>
-              <p className={`text-xs leading-relaxed ${
-                activeTrack === 'professional' ? 'text-slate-500' : 'text-slate-400'
-              }`}>
-                Salary talks, tough feedback, interviews, team conflicts
+      <div className="flex-1 px-6 py-10">
+        <div className="mx-auto max-w-5xl">
+          {/* Greeting + primary action */}
+          <section className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                Hi {userName} — what do you want to work on?
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-500">
+                Practice a conversation, prep for interviews, or learn your style.
               </p>
-              {activeTrack === 'professional' && (
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-brand flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTrack('personal')}
-              className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                activeTrack === 'personal'
-                  ? 'border-pink-400 bg-gradient-to-br from-pink-50 to-orange-50 shadow-md shadow-pink-400/10'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                  activeTrack === 'personal'
-                    ? 'bg-gradient-to-br from-pink-400 to-orange-400 shadow-sm'
-                    : 'bg-slate-100'
-                }`}>
-                  <span>💬</span>
-                </div>
-                <div>
-                  <h3 className={`text-sm font-bold ${
-                    activeTrack === 'personal' ? 'text-slate-900' : 'text-slate-600'
-                  }`}>Life</h3>
-                  <p className={`text-xs ${
-                    activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
-                  }`}>Dating &amp; social</p>
-                </div>
-              </div>
-              <p className={`text-xs leading-relaxed ${
-                activeTrack === 'personal' ? 'text-slate-500' : 'text-slate-400'
-              }`}>
-                First dates, awkward chats, making new friends
-              </p>
-              {activeTrack === 'personal' && (
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </button>
-
-            {ENABLE_INTERVIEW_PREP && (
-              <button
-                onClick={() => setActiveTrack('interview')}
-                className={`relative p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                  activeTrack === 'interview'
-                    ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 shadow-md shadow-amber-500/10'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                    activeTrack === 'interview' ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm' : 'bg-slate-100'
-                  }`}>🎤</div>
-                  <div>
-                    <h3 className={`text-sm font-bold ${activeTrack === 'interview' ? 'text-slate-900' : 'text-slate-600'}`}>Interview</h3>
-                    <p className={`text-xs ${activeTrack === 'interview' ? 'text-slate-500' : 'text-slate-400'}`}>Job interviews</p>
-                  </div>
-                </div>
-                <p className={`text-xs leading-relaxed ${activeTrack === 'interview' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  TMAY, behavioral, salary, system design
-                </p>
-                {activeTrack === 'interview' && (
-                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* ── Personas Section ── */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-slate-700">
-              People you practice with
-            </h2>
-            <button
-              onClick={handleCreateNew}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-sm"
-            >
-              + New character
-            </button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-16 text-slate-400">
-              Loading...
             </div>
-          ) : filteredPersonas.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl">
-              <div className="text-4xl mb-3">
-                {activeTrack === 'personal' ? '💬' : activeTrack === 'interview' ? '🎤' : '💼'}
-              </div>
-              <h3 className="text-lg font-semibold text-slate-700 mb-1">No one here yet</h3>
-              <p className="text-sm text-slate-400 mb-5">
-                Create a character to practice {activeTrack === 'personal' ? 'social' : activeTrack === 'interview' ? 'interview' : 'work'} conversations with.
-              </p>
-              <button
-                onClick={handleCreateNew}
-                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover transition-all shadow-md"
-              >
-                Create your first character
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredPersonas.map((persona) => {
-                const attrs = getPersonaAttributes(persona.track || 'professional');
-                const isPersonal = persona.track === 'personal';
-                const isInterview = persona.track === 'interview';
-                const accentBorder = isPersonal ? 'border-l-pink-400' : isInterview ? 'border-l-amber-500' : 'border-l-brand-500';
+            <button
+              onClick={() => handleCreateCharacter('professional')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+            >
+              {ICONS.plus}
+              New conversation
+            </button>
+          </section>
 
-                return (
-                  <div
-                    key={persona.id}
-                    onClick={() => handleSelectPersona(persona)}
-                    className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${accentBorder} overflow-hidden hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-200 cursor-pointer`}
+          {/* What do you want to do — intent cards */}
+          <section className="mb-12">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <PillarCard
+                tone="brand"
+                icon={ICONS.chat}
+                title="Practice a conversation"
+                description="Salary talks, tough feedback, hard chats with friends or family."
+                ctaLabel="Build a character"
+                onClick={() => handleCreateCharacter('professional')}
+              />
+              {ENABLE_INTERVIEW_PREP ? (
+                <PillarCard
+                  tone="amber"
+                  icon={ICONS.briefcase}
+                  title="Interview prep"
+                  description="Mock interviews with structured scoring across 5 dimensions."
+                  ctaLabel="Start prep"
+                  onClick={() => router.push('/interview/prep')}
+                />
+              ) : (
+                <PillarCard
+                  tone="amber"
+                  icon={ICONS.briefcase}
+                  title="Prepare for a new job"
+                  description="Resume + LinkedIn coaching, alignment, and story bank."
+                  ctaLabel="Open coaching"
+                  onClick={() => router.push('/profile')}
+                />
+              )}
+              <PillarCard
+                tone="accent"
+                icon={ICONS.brain}
+                title="Know your style"
+                description="Communication test + MBTI. Strengths, blind spots, growth tips."
+                ctaLabel="Open profile"
+                onClick={() => router.push('/profile')}
+              />
+            </div>
+          </section>
+
+          {/* Continue practising — only show if there are personas */}
+          {(loading || personas.length > 0) && (
+            <section>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Your characters</h2>
+                  <p className="text-xs text-slate-500">Pick one to keep practising, or create a new one.</p>
+                </div>
+                <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 text-xs">
+                  {(['all', 'professional', 'personal', ...(ENABLE_INTERVIEW_PREP ? ['interview' as Track] : [])] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTrackFilter(t as Track | 'all')}
+                      className={`rounded px-2.5 py-1 font-medium capitalize transition-colors ${
+                        trackFilter === t
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      {t === 'professional' ? 'Work' : t === 'personal' ? 'Life' : t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="rounded-2xl border border-slate-200 bg-white py-12 text-center text-sm text-slate-400">
+                  Loading…
+                </div>
+              ) : filteredPersonas.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                  <h3 className="text-sm font-semibold text-slate-700">No characters here yet</h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Create one to start practising.
+                  </p>
+                  <button
+                    onClick={() => handleCreateCharacter(trackFilter === 'all' ? 'professional' : (trackFilter as Track))}
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
                   >
-                    <div className="px-5 pt-4 pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2.5 min-w-0 pr-16">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
-                            isPersonal ? 'bg-pink-50 text-pink-500' : isInterview ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'
-                          }`}>
-                            {isPersonal ? '💬' : isInterview ? '🎤' : '💼'}
+                    {ICONS.plus} New character
+                  </button>
+                </div>
+              ) : (
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {filteredPersonas.map((p) => {
+                    const track = p.track || 'professional';
+                    const trackLabel =
+                      track === 'personal' ? 'Life' : track === 'interview' ? 'Interview' : 'Work';
+                    const trackBadge =
+                      track === 'personal'
+                        ? 'bg-pink-50 text-pink-700'
+                        : track === 'interview'
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-brand-50 text-brand-700';
+                    return (
+                      <li
+                        key={p.id}
+                        onClick={() => handleSelectPersona(p)}
+                        className="group flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 transition-all hover:border-slate-300 hover:shadow-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="truncate text-sm font-semibold text-slate-900">{p.name}</h3>
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${trackBadge}`}>
+                              {trackLabel}
+                            </span>
                           </div>
-                          <h3 className="text-sm font-bold text-slate-900 truncate">
-                            {persona.name}
-                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-500 group-hover:text-slate-700">
+                            Continue practising →
+                          </p>
                         </div>
-
-                        <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleEditPersona(persona); }}
-                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-brand-100 text-slate-400 hover:text-brand-600 flex items-center justify-center transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handleEditPersona(p); }}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                             title="Edit"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
+                            {ICONS.pencil}
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDeletePersona(persona.id); }}
-                            disabled={deleting === persona.id}
-                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handleDeletePersona(p.id); }}
+                            disabled={deleting === p.id}
+                            className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                             title="Delete"
                           >
-                            {deleting === persona.id ? (
-                              <span className="text-xs">...</span>
-                            ) : (
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            )}
+                            {ICONS.trash}
                           </button>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="px-5 pb-3">
-                      <div className="grid grid-cols-3 gap-x-4 gap-y-1.5">
-                        {attrs.slice(0, 3).map((attr) => {
-                          const value = (persona as unknown as Record<string, number>)[attr.key] ?? 5;
-                          const traitName = attr.traitNames[value];
-                          const barColor = isPersonal ? 'bg-pink-400' : isInterview ? 'bg-amber-500' : 'bg-brand-500';
-                          return (
-                            <div key={attr.key}>
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-[10px] text-slate-400 truncate">{attr.label}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${barColor}`}
-                                    style={{ width: `${(value / 10) * 100}%` }}
-                                  />
-                                </div>
-                                <span className="text-[10px] font-medium text-slate-500 w-14 text-right truncate">
-                                  {traitName}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className={`px-5 py-2.5 border-t border-slate-100 ${
-                      isPersonal ? 'bg-gradient-to-r from-pink-50/50 to-transparent' : isInterview ? 'bg-gradient-to-r from-amber-50/50 to-transparent' : 'bg-gradient-to-r from-brand-50/50 to-transparent'
-                    }`}>
-                      <span className={`text-xs font-semibold group-hover:translate-x-1 transition-transform inline-block ${
-                        isPersonal ? 'text-pink-500' : isInterview ? 'text-amber-600' : 'text-brand-600'
-                      }`}>
-                        Start practicing &rarr;
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
           )}
         </div>
       </div>
-
-      <footer className="text-center py-4 text-slate-400 text-xs">
-        Practice makes confident &middot; Powered by AI
+      <footer className="border-t border-slate-100 bg-white px-6 py-4 text-center text-xs text-slate-400">
+        TalkWise · Practice makes confident
       </footer>
     </div>
   );
