@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import AppHeader from '@/components/AppHeader';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 export default function BuildResumePage() {
@@ -125,8 +124,6 @@ export default function BuildResumePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <AppHeader backHref="/" backLabel="Home" />
-
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-4xl">
           <header className="mb-10">

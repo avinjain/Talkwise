@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import AppHeader from '@/components/AppHeader';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 const FORMATS = [
@@ -150,7 +149,6 @@ export default function InterviewPrepPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AppHeader backHref="/" backLabel="Home" />
       <div className="flex-1 py-8 px-6">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Interview prep</h1>

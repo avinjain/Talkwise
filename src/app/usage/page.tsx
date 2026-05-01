@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Logo from '@/components/Logo';
-import AppHeader from '@/components/AppHeader';
-
 interface UsageBlock {
   requests: number;
   tokens: number;
@@ -48,8 +46,6 @@ export default function UsagePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <AppHeader backHref="/" backLabel="Home" />
-
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-3xl">
           <header className="mb-8 flex items-end justify-between gap-4">

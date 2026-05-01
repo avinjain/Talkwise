@@ -1,32 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Logo from './Logo';
-import ProfileDropdown from './ProfileDropdown';
 
 interface AppHeaderProps {
+  /** Optional href for a "← Back" link rendered above the page content. */
   backHref?: string;
+  /** Label shown next to the back arrow. Defaults to "Back". */
   backLabel?: string;
 }
 
+/**
+ * Lightweight in-page sub-header. The global brand chrome (logo,
+ * TalkWise wordmark, profile menu) lives in {@link TopBar}, so this
+ * component now only renders an optional back affordance for nested
+ * routes. Pages that don't need a back link can drop it entirely.
+ */
 export default function AppHeader({ backHref, backLabel }: AppHeaderProps) {
   const router = useRouter();
 
+  if (!backHref) return null;
+
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-white">
-      <div className="flex items-center gap-3">
-        {backHref ? (
-          <button
-            onClick={() => router.push(backHref)}
-            className="text-slate-400 hover:text-slate-700 text-sm transition-colors"
-          >
-            &larr; {backLabel || 'Back'}
-          </button>
-        ) : (
-          <Logo size={36} />
-        )}
-      </div>
-      <ProfileDropdown />
-    </header>
+    <div className="border-b border-slate-100 bg-white/80 px-6 py-2.5">
+      <button
+        onClick={() => router.push(backHref)}
+        className="text-sm text-slate-400 transition-colors hover:text-slate-700"
+      >
+        &larr; {backLabel || 'Back'}
+      </button>
+    </div>
   );
 }

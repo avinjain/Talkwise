@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import AppHeader from '@/components/AppHeader';
 import type {
   KickoffSummary,
   KickoffTrack,
@@ -121,8 +120,6 @@ export default function PrepareForInterviewPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <AppHeader backHref="/" backLabel="Home" />
-
       <main className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-4xl">
           <header className="mb-8">

@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import AppHeader from '@/components/AppHeader';
 import { SavedPersona, Track, ENABLE_INTERVIEW_PREP } from '@/lib/types';
 
 const RESUME_ICON = (
@@ -328,24 +327,6 @@ export default function LandingPage() {
   if (!session) {
     return (
       <div className="flex min-h-screen flex-col bg-white">
-        <header className="flex items-center justify-between border-b border-slate-100 px-6 py-3">
-          <Logo size={32} />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/auth')}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-            >
-              Sign in
-            </button>
-            <button
-              onClick={() => router.push('/auth?mode=signup')}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-            >
-              Get started
-            </button>
-          </div>
-        </header>
-
         {/* Hero */}
         <section className="relative overflow-hidden px-6 pb-16 pt-20 sm:pt-24">
           {/* Decorative gradient blobs */}
@@ -517,7 +498,6 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <AppHeader />
       <div className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-5xl">
           {/* Greeting */}

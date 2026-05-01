@@ -45,18 +45,31 @@ function AuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-5">
-          <div className="flex justify-center">
-            <Logo size={120} />
+    <div className="relative min-h-screen overflow-hidden bg-white px-6">
+      {/* Decorative gradient blobs — same palette as the public landing so the
+          two pages feel like one site, not two. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-100 via-accent-50 to-amber-50 opacity-60 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[420px] w-[420px] rounded-full bg-gradient-to-br from-amber-100 to-brand-50 opacity-50 blur-3xl"
+      />
+
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-full max-w-sm">
+          {/* Brand — owl + TalkWise + canonical URL */}
+          <div className="mb-6 text-center">
+            <div className="flex justify-center">
+              <Logo size={96} />
+            </div>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-gradient">TalkWise</h1>
+            <p className="mt-0.5 text-xs font-medium tracking-wide text-slate-400">talkwise.life</p>
+            <p className="mt-3 text-sm text-slate-500">
+              {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gradient">TalkWise</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
-          </p>
-        </div>
 
         {/* Error */}
         {error && (
@@ -155,6 +168,7 @@ function AuthForm() {
             </>
           )}
         </p>
+        </div>
       </div>
     </div>
   );

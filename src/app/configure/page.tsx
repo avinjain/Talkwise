@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import AppHeader from '@/components/AppHeader';
 import { Track, getPersonaAttributes } from '@/lib/types';
 
 const DEFAULT_PROFESSIONAL_TRAITS = {
@@ -127,7 +126,6 @@ export default function ConfigurePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
-      <AppHeader backHref="/" backLabel="Home" />
       <div className="flex-1 px-6 py-8">
         <div className="mx-auto max-w-lg">
           <header className="mb-8">

@@ -48,7 +48,7 @@ export default function SideNav({
   );
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside className="sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col self-start border-r border-slate-200 bg-white">
       <nav className="flex-1 space-y-6 overflow-y-auto p-3">
         <div className="space-y-0.5">
           <NavLink
