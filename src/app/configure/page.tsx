@@ -126,161 +126,175 @@ export default function ConfigurePage() {
   const attributes = getPersonaAttributes(track);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <AppHeader backHref="/" backLabel="Back" />
-      <div className="flex-1 py-8 px-6">
-      <div className="max-w-xl mx-auto">
+    <div className="flex min-h-screen flex-col bg-slate-50/60">
+      <AppHeader backHref="/" backLabel="Home" />
+      <div className="flex-1 px-6 py-8">
+        <div className="mx-auto max-w-lg">
+          <header className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Practice conversations
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+              {editPersonaId ? (
+                <>
+                  Edit <span className="text-gradient">{name || 'character'}</span>
+                </>
+              ) : (
+                <>Build a character</>
+              )}
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              {track === 'personal'
+                ? 'Give them a name and set how they act in social situations.'
+                : 'Give them a name and set how they behave at work.'}
+            </p>
+          </header>
 
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">
-          {editPersonaId ? (
-            <>Edit <span className="text-gradient">{name || 'character'}</span></>
-          ) : (
-            <>Build a character</>
+          {!editPersonaId && (
+            <div className="mb-8">
+              <p className="mb-3 text-xs font-medium text-slate-600">Track</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTrack('professional')}
+                  className={`relative flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                    track === 'professional'
+                      ? 'border-brand-500 bg-white shadow-sm ring-1 ring-brand-500/20'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      track === 'professional'
+                        ? 'bg-gradient-to-br from-brand-500 to-accent-500 text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m-12.5 8.006a2.18 2.18 0 00.75-1.661V8.706c0-1.081.768-2.015 1.837-2.175a48.114 48.114 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0">
+                    <span
+                      className={`block text-sm font-semibold ${track === 'professional' ? 'text-slate-900' : 'text-slate-600'}`}
+                    >
+                      Work
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">Career &amp; workplace</span>
+                  </span>
+                  {track === 'professional' && (
+                    <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-white">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTrack('personal')}
+                  className={`relative flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                    track === 'personal'
+                      ? 'border-pink-400 bg-white shadow-sm ring-1 ring-pink-400/25'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      track === 'personal'
+                        ? 'bg-gradient-to-br from-pink-400 to-orange-400 text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.6A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm font-semibold ${track === 'personal' ? 'text-slate-900' : 'text-slate-600'}`}>
+                      Life
+                    </span>
+                    <span className="mt-0.5 block text-xs text-slate-500">Dating &amp; social</span>
+                  </span>
+                  {track === 'personal' && (
+                    <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-orange-400 text-white">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
           )}
-        </h1>
-        <p className="text-sm text-slate-400 mb-6">
-          {track === 'personal' ? 'Give them a name and set how they act in social situations.' : 'Give them a name and set how they behave at work.'}
-        </p>
 
-        {!editPersonaId && (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              onClick={() => setTrack('professional')}
-              className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
-                track === 'professional'
-                  ? 'border-brand-500 bg-brand-50/50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                track === 'professional' ? 'bg-gradient-to-br from-brand-500 to-accent-500' : 'bg-slate-100'
-              }`}>
-                💼
-              </div>
-              <div>
-                <span className={`text-sm font-semibold ${track === 'professional' ? 'text-slate-900' : 'text-slate-600'}`}>
-                  Work
-                </span>
-                <p className={`text-[10px] ${track === 'professional' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Career &amp; workplace
-                </p>
-              </div>
-              {track === 'professional' && (
-                <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-gradient-brand flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </button>
-            <button
-              onClick={() => setTrack('personal')}
-              className={`relative flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
+          <div className="mb-8">
+            <label htmlFor="persona-name" className="mb-2 block text-xs font-medium text-slate-600">
+              Name
+            </label>
+            <input
+              id="persona-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={
                 track === 'personal'
-                  ? 'border-pink-400 bg-pink-50/50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                track === 'personal' ? 'bg-gradient-to-br from-pink-400 to-orange-400' : 'bg-slate-100'
-              }`}>
-                💬
-              </div>
-              <div>
-                <span className={`text-sm font-semibold ${track === 'personal' ? 'text-slate-900' : 'text-slate-600'}`}>
-                  Life
-                </span>
-                <p className={`text-[10px] ${track === 'personal' ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Dating &amp; social
-                </p>
-              </div>
-              {track === 'personal' && (
-                <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </button>
+                  ? 'e.g., Emma — outgoing, values honesty'
+                  : 'e.g., Sarah Chen, VP of Engineering'
+              }
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            />
           </div>
-        )}
 
-        {/* Persona Name */}
-        <div className="mb-6">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={
-              track === 'personal' ? 'e.g., Emma, 26, loves hiking and coffee' : 'e.g., Sarah Chen, VP of Engineering'
-            }
-            className="w-full px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-          />
-        </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-sm font-semibold text-slate-900">How do they behave?</h2>
 
-        {/* Personality Sliders */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">
-            How do they behave?
-          </h2>
+            <div className="space-y-6">
+              {attributes.map((attr) => {
+                const value = traits[attr.key] ?? 5;
+                const traitName = attr.traitNames[value];
 
-          <div className="space-y-5">
-            {attributes.map((attr) => {
-              const value = traits[attr.key] ?? 5;
-              const traitName = attr.traitNames[value];
-
-              return (
-                <div key={attr.key}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-slate-600">
-                      {attr.label}
-                    </span>
-                    <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
-                      {traitName}
-                    </span>
+                return (
+                  <div key={attr.key} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-slate-700">{attr.label}</span>
+                      <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800">
+                        {traitName}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={value}
+                      onChange={(e) => handleSliderChange(attr.key, Number(e.target.value))}
+                      className="h-2 w-full cursor-pointer accent-brand-500"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                      <span>{attr.lowLabel}</span>
+                      <span>{attr.highLabel}</span>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={value}
-                    onChange={(e) =>
-                      handleSliderChange(attr.key, Number(e.target.value))
-                    }
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
-                    <span>{attr.lowLabel}</span>
-                    <span>{attr.highLabel}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
+
+          {saveError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{saveError}</div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim() || saving}
+            className="mt-6 w-full rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {saving ? 'Saving...' : editPersonaId ? 'Save changes' : 'Finish building'}
+          </button>
         </div>
-
-        {/* Error message */}
-        {saveError && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-            {saveError}
-          </div>
-        )}
-
-        {/* Save Button */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!name.trim() || saving}
-          className="w-full mt-4 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
-        >
-          {saving
-            ? 'Saving...'
-            : editPersonaId
-            ? 'Save changes'
-            : 'Finish building'}
-        </button>
-      </div>
       </div>
     </div>
   );
