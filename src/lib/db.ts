@@ -157,6 +157,25 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
     CREATE INDEX IF NOT EXISTS idx_mbti_results_user ON mbti_results(user_id);
 
+    CREATE TABLE IF NOT EXISTS kickoff_states (
+      user_id TEXT PRIMARY KEY,
+      track TEXT NOT NULL,
+      target_roles TEXT NOT NULL,
+      timeline TEXT NOT NULL,
+      feedback_directness INTEGER DEFAULT 5,
+      biggest_concern TEXT DEFAULT '',
+      interview_history TEXT NOT NULL,
+      stalling_stage TEXT DEFAULT '',
+      resume_text TEXT DEFAULT '',
+      linkedin_text TEXT DEFAULT '',
+      target_companies TEXT DEFAULT '[]',
+      summary_json TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_kickoff_user ON kickoff_states(user_id);
+
     CREATE TABLE IF NOT EXISTS profile_result_attempts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -404,6 +423,89 @@ export function getRecentRequestCount(userId: string, windowSeconds: number): nu
      WHERE user_id = ? AND created_at >= datetime('now', '-' || ? || ' seconds')`
   ).get(userId, windowSeconds) as { cnt: number };
   return row.cnt;
+}
+
+// ── Kickoff state ──
+
+export interface KickoffStateRow {
+  user_id: string;
+  track: string;
+  target_roles: string;
+  timeline: string;
+  feedback_directness: number;
+  biggest_concern: string;
+  interview_history: string;
+  stalling_stage: string;
+  resume_text: string;
+  linkedin_text: string;
+  target_companies: string;
+  summary_json: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveKickoffInput {
+  userId: string;
+  track: string;
+  targetRoles: string;
+  timeline: string;
+  feedbackDirectness: number;
+  biggestConcern: string;
+  interviewHistory: string;
+  stallingStage?: string;
+  resumeText?: string;
+  linkedInText?: string;
+  targetCompanies?: string[];
+  summary: unknown;
+}
+
+export function saveKickoffState(input: SaveKickoffInput) {
+  const db = getDb();
+  db.prepare(
+    `INSERT INTO kickoff_states
+       (user_id, track, target_roles, timeline, feedback_directness, biggest_concern,
+        interview_history, stalling_stage, resume_text, linkedin_text, target_companies,
+        summary_json, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id) DO UPDATE SET
+       track = excluded.track,
+       target_roles = excluded.target_roles,
+       timeline = excluded.timeline,
+       feedback_directness = excluded.feedback_directness,
+       biggest_concern = excluded.biggest_concern,
+       interview_history = excluded.interview_history,
+       stalling_stage = excluded.stalling_stage,
+       resume_text = excluded.resume_text,
+       linkedin_text = excluded.linkedin_text,
+       target_companies = excluded.target_companies,
+       summary_json = excluded.summary_json,
+       updated_at = datetime('now')`
+  ).run(
+    input.userId,
+    input.track,
+    input.targetRoles,
+    input.timeline,
+    input.feedbackDirectness,
+    input.biggestConcern || '',
+    input.interviewHistory,
+    input.stallingStage || '',
+    input.resumeText || '',
+    input.linkedInText || '',
+    JSON.stringify(input.targetCompanies || []),
+    JSON.stringify(input.summary)
+  );
+}
+
+export function getKickoffState(userId: string): KickoffStateRow | undefined {
+  const db = getDb();
+  return db.prepare('SELECT * FROM kickoff_states WHERE user_id = ?').get(userId) as
+    | KickoffStateRow
+    | undefined;
+}
+
+export function deleteKickoffState(userId: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM kickoff_states WHERE user_id = ?').run(userId);
 }
 
 // ── Saved Personas ──
