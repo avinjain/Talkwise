@@ -62,7 +62,7 @@ function PersonalitySnapshot({
       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live preview</p>
       <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
       <p className="mt-2 text-xs leading-relaxed text-slate-600">
-        A qualitative read on how traits combine — not a repeat of each slider&apos;s number.
+        Summary of how these traits read together — extremes on a slider mean a strong lean that way.
       </p>
 
       <div className="mt-4 rounded-xl border border-slate-100/90 bg-white/90 px-3 py-3 backdrop-blur-[2px]">
