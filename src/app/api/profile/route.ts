@@ -1,7 +1,7 @@
 import { getAuthUserId } from '@/lib/session';
 import { getProfileResult, saveProfileResult } from '@/lib/db';
 import { calculateScores, DIMENSIONS } from '@/lib/personality-test';
-import { getOpenAI } from '@/lib/openai';
+import { getOpenAI, pickModel } from '@/lib/openai';
 
 export const runtime = 'nodejs';
 
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
     // Generate AI feedback
     let aiFeedback = '';
     try {
-      const model = process.env.GPT_MODEL || 'gpt-4o';
+      const model = pickModel('profile_test');
       const prompt = buildFeedbackPrompt(scores as unknown as Record<string, number>, userContext || {
         role: '', experience: '', goal: '', focus: 'professional',
       });

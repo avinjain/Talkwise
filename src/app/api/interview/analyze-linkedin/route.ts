@@ -3,7 +3,7 @@ import { getAuthUserId } from '@/lib/session';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { logUsage } from '@/lib/db';
 import { estimateCost } from '@/lib/costs';
-import { getOpenAI } from '@/lib/openai';
+import { getOpenAI, pickModel } from '@/lib/openai';
 
 export const runtime = 'nodejs';
 
@@ -117,7 +117,7 @@ Sections (use ## for each):
 
 Keep it actionable and under 500 words.`;
 
-    const model = process.env.GPT_MODEL || 'gpt-4o';
+    const model = pickModel('analyze_linkedin');
     const response = await getOpenAI().chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],

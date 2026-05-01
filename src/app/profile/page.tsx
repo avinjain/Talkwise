@@ -31,6 +31,12 @@ export default function ProfilePage() {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [mbtiResult, setMbtiResult] = useState<{ type: string; createdAt: string } | null>(null);
 
+  // Usage stats
+  const [usage, setUsage] = useState<{
+    today: { requests: number; tokens: number; cost: number };
+    allTime: { requests: number; tokens: number; cost: number };
+  } | null>(null);
+
   // New-job prep (resume + LinkedIn)
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
@@ -89,10 +95,20 @@ export default function ProfilePage() {
     }
   }, [setLastMbtiTest]);
 
+  const fetchUsage = useCallback(async () => {
+    try {
+      const res = await fetch('/api/usage', { cache: 'no-store' });
+      if (res.ok) setUsage(await res.json());
+    } catch (err) {
+      console.error('Failed to fetch usage:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfile();
     fetchMBTI();
-  }, [fetchProfile, fetchMBTI]);
+    fetchUsage();
+  }, [fetchProfile, fetchMBTI, fetchUsage]);
 
   // ── new-job prep handlers ─────────────────────────────────
   const handleAnalyzeProfile = async () => {
@@ -212,8 +228,44 @@ export default function ProfilePage() {
               >
                 Prepare for a new job
               </a>
+              <a
+                href="#usage"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900"
+              >
+                Usage
+              </a>
             </nav>
           </header>
+
+          {/* Usage tile — small, calm */}
+          {usage && (
+            <section id="usage" className="mb-10 scroll-mt-24">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-900">Your AI usage</h2>
+                    <p className="text-xs text-slate-500">
+                      What you&rsquo;ve spent on TalkWise so far. Updated after each request.
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchUsage}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <UsageStat label="Requests today" value={usage.today.requests.toLocaleString()} />
+                  <UsageStat label="Tokens today" value={usage.today.tokens.toLocaleString()} />
+                  <UsageStat label="Cost today" value={`$${usage.today.cost.toFixed(4)}`} />
+                  <UsageStat label="Requests all-time" value={usage.allTime.requests.toLocaleString()} subtle />
+                  <UsageStat label="Tokens all-time" value={usage.allTime.tokens.toLocaleString()} subtle />
+                  <UsageStat label="Cost all-time" value={`$${usage.allTime.cost.toFixed(4)}`} subtle />
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* ── Section 1: Personality tests ───────────────── */}
           <section id="personality" className="mb-14 scroll-mt-24">
@@ -538,6 +590,15 @@ export default function ProfilePage() {
 // ─────────────────────────────────────────────────────────────
 // Local UI helpers
 // ─────────────────────────────────────────────────────────────
+
+function UsageStat({ label, value, subtle }: { label: string; value: string; subtle?: boolean }) {
+  return (
+    <div className={`rounded-xl border ${subtle ? 'border-slate-100 bg-slate-50/60' : 'border-slate-200 bg-white'} px-4 py-3`}>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">{label}</p>
+      <p className={`mt-1 text-lg font-semibold ${subtle ? 'text-slate-700' : 'text-slate-900'}`}>{value}</p>
+    </div>
+  );
+}
 
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (

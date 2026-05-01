@@ -1,6 +1,6 @@
 import { getAuthUserId } from '@/lib/session';
 import { getMBTIQuestions, clearMBTIQuestions, insertMBTIQuestions } from '@/lib/db';
-import { getOpenAI } from '@/lib/openai';
+import { getOpenAI, pickModel } from '@/lib/openai';
 
 export const runtime = 'nodejs';
 
@@ -21,7 +21,7 @@ export async function POST() {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const model = process.env.GPT_MODEL || 'gpt-4o';
+    const model = pickModel('mbti_questions');
     const prompt = `You are an expert in Myers-Briggs Type Indicator (MBTI) assessments. Generate 24 forced-choice questions for an MBTI-style personality test.
 
 Requirements:
