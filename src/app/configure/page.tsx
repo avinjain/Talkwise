@@ -135,7 +135,7 @@ export default function ConfigurePage() {
           {editPersonaId ? (
             <>Edit <span className="text-gradient">{name || 'character'}</span></>
           ) : (
-            <>Create a character</>
+            <>Build a character</>
           )}
         </h1>
         <p className="text-sm text-slate-400 mb-6">
@@ -278,7 +278,7 @@ export default function ConfigurePage() {
             ? 'Saving...'
             : editPersonaId
             ? 'Save changes'
-            : 'Save character'}
+            : 'Finish building'}
         </button>
       </div>
       </div>

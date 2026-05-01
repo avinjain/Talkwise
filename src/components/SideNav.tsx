@@ -36,9 +36,16 @@ export default function SideNav({
   const pathname = usePathname();
 
   const isHome = pathname === '/';
+  const isPractice = pathname.startsWith('/configure');
   const isPrepare = pathname.startsWith('/prepare');
   const isResume = pathname.startsWith('/resume');
   const isProfile = pathname.startsWith('/profile');
+
+  const ChatBubbleIcon = (
+    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.6A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  );
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -53,6 +60,12 @@ export default function SideNav({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
               </svg>
             }
+          />
+          <NavLink
+            label="Practice conversations"
+            active={isPractice}
+            onClick={() => router.push('/configure')}
+            icon={ChatBubbleIcon}
           />
           <NavLink
             label="Prepare for interview"
@@ -85,6 +98,26 @@ export default function SideNav({
             }
           />
         </div>
+
+        {/* Practice configure — mirrors intent card + explains this screen */}
+        {isPractice && (
+          <SectionGroup label="Practice conversations">
+            <div className="space-y-2 px-3">
+              <p className="text-xs leading-relaxed text-slate-500">
+                Build who you will practise with: choose{' '}
+                <span className="font-medium text-slate-700">Work</span> or{' '}
+                <span className="font-medium text-slate-700">Life</span>, give them a name, adjust behaviour — then save.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Your characters on Home →
+              </button>
+            </div>
+          </SectionGroup>
+        )}
 
         {/* Chat variant: Work/Life + actions */}
         {variant === 'chat' && pathname === '/chat' && (
