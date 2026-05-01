@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-/** Redirect to My Profile — new-job prep lives on the main profile page */
+/** Legacy redirect — new-job prep now lives at /prepare. */
 export default function ProfileResumePage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/profile');
+    router.replace('/prepare');
   }, [router]);
   return null;
 }

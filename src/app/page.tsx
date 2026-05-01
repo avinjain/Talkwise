@@ -303,25 +303,14 @@ export default function LandingPage() {
                 ctaLabel="See how it works"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/configure')}
               />
-              {ENABLE_INTERVIEW_PREP ? (
-                <PillarCard
-                  tone="amber"
-                  icon={ICONS.briefcase}
-                  title="Prepare for interviews"
-                  description="Mock interviews scored on Substance, Structure, Relevance, Credibility, Differentiation. Resume + LinkedIn coaching."
-                  ctaLabel="Try interview prep"
-                  onClick={() => router.push('/auth?mode=signup&callbackUrl=/interview/prep')}
-                />
-              ) : (
-                <PillarCard
-                  tone="amber"
-                  icon={ICONS.briefcase}
-                  title="Prepare for a new job"
-                  description="Resume and LinkedIn coaching, alignment, keywords, and an interview-ready story bank."
-                  ctaLabel="Get coaching"
-                  onClick={() => router.push('/auth?mode=signup&callbackUrl=/profile')}
-                />
-              )}
+              <PillarCard
+                tone="amber"
+                icon={ICONS.briefcase}
+                title="Prepare for a new job"
+                description="A 2-minute kickoff builds your plan. Then resume, LinkedIn, and an interview story bank."
+                ctaLabel="Get coaching"
+                onClick={() => router.push('/auth?mode=signup&callbackUrl=/prepare')}
+              />
               <PillarCard
                 tone="accent"
                 icon={ICONS.brain}
@@ -406,25 +395,14 @@ export default function LandingPage() {
                 ctaLabel="Build a character"
                 onClick={() => handleCreateCharacter('professional')}
               />
-              {ENABLE_INTERVIEW_PREP ? (
-                <PillarCard
-                  tone="amber"
-                  icon={ICONS.briefcase}
-                  title="Interview prep"
-                  description="Mock interviews with structured scoring across 5 dimensions."
-                  ctaLabel="Start prep"
-                  onClick={() => router.push('/interview/prep')}
-                />
-              ) : (
-                <PillarCard
-                  tone="amber"
-                  icon={ICONS.briefcase}
-                  title="Prepare for a new job"
-                  description="Resume + LinkedIn coaching, alignment, and story bank."
-                  ctaLabel="Open coaching"
-                  onClick={() => router.push('/profile')}
-                />
-              )}
+              <PillarCard
+                tone="amber"
+                icon={ICONS.briefcase}
+                title="Prepare for a new job"
+                description="2-minute kickoff, then resume, LinkedIn, and your interview story bank."
+                ctaLabel="Open coaching"
+                onClick={() => router.push('/prepare')}
+              />
               <PillarCard
                 tone="accent"
                 icon={ICONS.brain}
