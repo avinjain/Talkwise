@@ -21,8 +21,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     lastMbtiTest,
   } = useSideNav();
 
+  // Hide the side nav on focused, full-screen flows where chrome would distract:
+  // auth, the conversation start screen, and personality tests.
+  // /configure (Practice conversations setup) keeps the side nav so users
+  // never feel stranded.
   const hideSideNav =
-    ['/auth', '/configure', '/start'].some((p) => pathname.startsWith(p)) ||
+    ['/auth', '/start'].some((p) => pathname.startsWith(p)) ||
     pathname.startsWith('/profile/test') ||
     pathname === '/profile/mbti' || // test only; /profile/mbti/results shows nav
     !session;

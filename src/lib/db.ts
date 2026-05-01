@@ -176,6 +176,17 @@ function initTables(db: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_kickoff_user ON kickoff_states(user_id);
 
+    CREATE TABLE IF NOT EXISTS coach_artifacts (
+      user_id TEXT NOT NULL,
+      command TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, command),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_coach_user ON coach_artifacts(user_id);
+
     CREATE TABLE IF NOT EXISTS profile_result_attempts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -506,6 +517,46 @@ export function getKickoffState(userId: string): KickoffStateRow | undefined {
 export function deleteKickoffState(userId: string) {
   const db = getDb();
   db.prepare('DELETE FROM kickoff_states WHERE user_id = ?').run(userId);
+}
+
+// ── Coach artifacts (prep / concerns / questions) ──
+
+export interface CoachArtifactRow {
+  user_id: string;
+  command: string;
+  payload_json: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function saveCoachArtifact(userId: string, command: string, payload: unknown) {
+  const db = getDb();
+  db.prepare(
+    `INSERT INTO coach_artifacts (user_id, command, payload_json, updated_at)
+     VALUES (?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id, command) DO UPDATE SET
+       payload_json = excluded.payload_json,
+       updated_at = datetime('now')`
+  ).run(userId, command, JSON.stringify(payload));
+}
+
+export function getCoachArtifact(userId: string, command: string): CoachArtifactRow | undefined {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM coach_artifacts WHERE user_id = ? AND command = ?')
+    .get(userId, command) as CoachArtifactRow | undefined;
+}
+
+export function getAllCoachArtifacts(userId: string): CoachArtifactRow[] {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM coach_artifacts WHERE user_id = ?')
+    .all(userId) as CoachArtifactRow[];
+}
+
+export function deleteCoachArtifact(userId: string, command: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM coach_artifacts WHERE user_id = ? AND command = ?').run(userId, command);
 }
 
 // ── Saved Personas ──

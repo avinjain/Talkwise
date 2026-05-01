@@ -414,8 +414,8 @@ export default function LandingPage() {
                 tone="brand"
                 icon={ICONS.chat}
                 title="Practice conversations"
-                description="Build a character — boss, date, client — and rehearse the talk that matters."
-                ctaLabel="Try it"
+                description="Rehearse a tough talk — salary, feedback, a hard chat — with an AI partner."
+                ctaLabel="Practise a conversation"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/configure')}
               />
               <PillarCard
@@ -423,7 +423,7 @@ export default function LandingPage() {
                 icon={ICONS.briefcase}
                 title="Prepare for interview"
                 description="A 2-minute kickoff turns your resume into a personalised interview plan."
-                ctaLabel="Get a plan"
+                ctaLabel="Build my plan"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/prepare')}
               />
               <PillarCard
@@ -431,7 +431,7 @@ export default function LandingPage() {
                 icon={RESUME_ICON}
                 title="Build my resume"
                 description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
-                ctaLabel="Sharpen it"
+                ctaLabel="Sharpen my resume"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/resume')}
               />
               <PillarCard
@@ -439,7 +439,7 @@ export default function LandingPage() {
                 icon={ICONS.sparkle}
                 title="Know yourself"
                 description="A short communication-style test plus MBTI. Strengths, blind spots, growth tips."
-                ctaLabel="Take the test"
+                ctaLabel="Take the tests"
                 onClick={() => router.push('/auth?mode=signup&callbackUrl=/profile/test')}
               />
             </div>
@@ -520,9 +520,8 @@ export default function LandingPage() {
       <AppHeader />
       <div className="flex-1 px-6 py-10">
         <div className="mx-auto max-w-5xl">
-          {/* Greeting + primary action */}
+          {/* Greeting */}
           <section className="relative mb-10 overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-7 sm:px-8 sm:py-8">
-            {/* Decorative gradient blob */}
             <div
               aria-hidden
               className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gradient-to-br from-brand-100 via-accent-50 to-amber-50 opacity-70 blur-3xl"
@@ -532,22 +531,14 @@ export default function LandingPage() {
               className="pointer-events-none absolute -bottom-16 -left-12 h-40 w-40 rounded-full bg-gradient-to-br from-amber-50 to-brand-50 opacity-60 blur-2xl"
             />
 
-            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                  Hi {userName} — what do you want to work on?
-                </h1>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  Practice, prep for an interview, sharpen your resume, or learn your style.
-                </p>
-              </div>
-              <button
-                onClick={() => handleCreateCharacter('professional')}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
-              >
-                {ICONS.plus}
-                New conversation
-              </button>
+            <div className="relative">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                Hi {userName} — what do you want to work on?
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-500">
+                Pick any of the four — practice, prep for an interview, sharpen your resume, or
+                learn your style.
+              </p>
             </div>
           </section>
 
@@ -559,7 +550,7 @@ export default function LandingPage() {
                 icon={ICONS.chat}
                 title="Practice conversations"
                 description="Salary talks, tough feedback, hard chats with friends or family."
-                ctaLabel="Build a character"
+                ctaLabel="Practise a conversation"
                 onClick={() => handleCreateCharacter('professional')}
               />
               <PillarCard
@@ -567,7 +558,7 @@ export default function LandingPage() {
                 icon={ICONS.briefcase}
                 title="Prepare for interview"
                 description="A 2-minute kickoff turns your resume into a personalised interview plan."
-                ctaLabel="Get a plan"
+                ctaLabel="Build my plan"
                 onClick={() => router.push('/prepare')}
               />
               <PillarCard
@@ -575,7 +566,7 @@ export default function LandingPage() {
                 icon={RESUME_ICON}
                 title="Build my resume"
                 description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
-                ctaLabel="Sharpen it"
+                ctaLabel="Sharpen my resume"
                 onClick={() => router.push('/resume')}
               />
               <PillarCard
@@ -583,7 +574,7 @@ export default function LandingPage() {
                 icon={ICONS.sparkle}
                 title="Know yourself"
                 description="Communication test + MBTI. Strengths, blind spots, growth tips."
-                ctaLabel="Open profile"
+                ctaLabel="Take the tests"
                 onClick={() => router.push('/profile')}
               />
             </div>

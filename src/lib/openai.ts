@@ -43,7 +43,10 @@ export type AITask =
   | 'analyze_linkedin'
   | 'filter_goals'
   | 'mbti_questions'
-  | 'profile_test';
+  | 'profile_test'
+  | 'coach_prep'
+  | 'coach_concerns'
+  | 'coach_questions';
 
 const PREMIUM = 'gpt-4o';
 const CHEAP = 'gpt-4o-mini';
@@ -53,6 +56,12 @@ const TASK_TIER: Record<AITask, 'premium' | 'standard' | 'cheap'> = {
   chat: 'premium',
   feedback: 'premium',
   core_positioning: 'premium',
+
+  // Coach: prep + concerns are high-stakes (drives interview behaviour);
+  // questions is more structured and runs fine on mini.
+  coach_prep: 'premium',
+  coach_concerns: 'premium',
+  coach_questions: 'cheap',
 
   // Analytical work — mini handles these well, ~17x cheaper
   analyze_profile: 'cheap',
