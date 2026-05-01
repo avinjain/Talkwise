@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Track, getPersonaAttributes } from '@/lib/types';
+import { Track, LifeContext, getPersonaAttributes } from '@/lib/types';
+import { buildPersonalityNarrative, personalityPreviewTitle } from '@/lib/personalityPreview';
 
 const DEFAULT_PROFESSIONAL_TRAITS = {
   difficultyLevel: 5,
@@ -24,89 +25,64 @@ const DEFAULT_PERSONAL_TRAITS = {
 };
 
 function PersonalitySnapshot({
-  attributes,
+  track,
   traits,
   name,
+  designation,
+  lifeContext,
   isLife,
   className = '',
 }: {
-  attributes: ReturnType<typeof getPersonaAttributes>;
+  track: Track;
   traits: Record<string, number>;
   name: string;
+  designation: string;
+  lifeContext: LifeContext;
   isLife: boolean;
   className?: string;
 }) {
-  const values = attributes.map((a) => traits[a.key] ?? 5);
-  const avg = values.reduce((s, v) => s + v, 0) / Math.max(values.length, 1);
-  const pct = (avg / 10) * 100;
-
-  let headline = 'Balanced presence';
-  let sub =
-    'Traits sit near the middle — flexible reactions without leaning hard toward extremes.';
-  if (avg <= 3.5) {
-    headline = 'Soft baseline';
-    sub =
-      'Lower-intensity defaults — gentler edges and more forgiving behaviours overall.';
-  } else if (avg >= 7) {
-    headline = 'Strong signal';
-    sub =
-      'Higher-intensity tendencies — more decisive flavour and sharper contrasts between behaviours.';
-  }
-
   const shellClass = isLife
     ? 'border-orange-200/90 bg-gradient-to-b from-orange-50/50 via-white to-white shadow-orange-500/10'
     : 'border-brand-200/90 bg-gradient-to-b from-brand-50/50 via-white to-white shadow-brand-500/10';
 
-  const barFill = isLife ? 'bg-gradient-to-r from-pink-400 to-orange-400' : 'bg-gradient-to-r from-brand-400 to-accent-500';
+  const roleLine =
+    track === 'personal'
+      ? lifeContext === 'social'
+        ? 'Social practice'
+        : 'Dating practice'
+      : designation.trim()
+        ? designation.trim()
+        : null;
 
-  const label = name.trim() ? name.trim() : 'This character';
+  const title = personalityPreviewTitle(name);
+  const { headline, bullets } = buildPersonalityNarrative(track, traits, lifeContext);
 
   return (
     <div className={`rounded-2xl border p-5 shadow-sm ${shellClass} ${className}`}>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live preview</p>
-      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">How they&apos;re shaping up</h2>
+      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
       <p className="mt-2 text-xs leading-relaxed text-slate-600">
-        A readout of how sliders combine — it updates as you adjust each trait.
+        A qualitative read on how traits combine — not a repeat of each slider&apos;s number.
       </p>
 
       <div className="mt-4 rounded-xl border border-slate-100/90 bg-white/90 px-3 py-3 backdrop-blur-[2px]">
-        <p className="truncate text-xs font-medium text-slate-500">{label}</p>
-        <p className="mt-2 text-sm font-semibold text-slate-900">{headline}</p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-600">{sub}</p>
-        <div className="mt-3">
-          <div className="mb-1 flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            <span>Overall intensity</span>
-            <span className="tabular-nums text-slate-500">{avg.toFixed(1)} / 10</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-            <div
-              className={`h-full rounded-full transition-[width] duration-200 ease-out ${barFill}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="truncate text-xs font-semibold text-slate-900">{name.trim() || 'Unnamed character'}</p>
+          {roleLine && (
+            <>
+              <span className="text-slate-300" aria-hidden>
+                ·
+              </span>
+              <p className="text-xs font-medium text-slate-500">{roleLine}</p>
+            </>
+          )}
         </div>
-      </div>
-
-      <div className="mt-5 space-y-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Trait mix</p>
-        {attributes.map((attr) => {
-          const v = traits[attr.key] ?? 5;
-          const w = (v / 10) * 100;
-          return (
-            <div key={attr.key}>
-              <div className="mb-1 flex justify-between gap-2 text-[11px] text-slate-600">
-                <span className="min-w-0 truncate font-medium">{attr.label}</span>
-                <span className="shrink-0 tabular-nums text-slate-400">{v}</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className={`h-full rounded-full opacity-[0.92] transition-[width] duration-150 ease-out ${barFill}`}
-                  style={{ width: `${w}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
+        <p className="mt-3 text-sm font-semibold leading-snug text-slate-900">{headline}</p>
+        <ul className="mt-3 list-disc space-y-2 pl-4 text-xs leading-relaxed text-slate-600 marker:text-slate-300">
+          {bullets.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -121,6 +97,8 @@ export default function ConfigurePage() {
   const [track, setTrack] = useState<Track>('professional');
 
   const [name, setName] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [lifeContext, setLifeContext] = useState<LifeContext>('dating');
   const [traits, setTraits] = useState<Record<string, number>>({
     ...DEFAULT_PROFESSIONAL_TRAITS,
     ...DEFAULT_PERSONAL_TRAITS,
@@ -148,6 +126,10 @@ export default function ConfigurePage() {
         const parsed = JSON.parse(storedConfig);
         if (parsed.track) setTrack(parsed.track);
         if (parsed.name) setName(parsed.name);
+        if (typeof parsed.designation === 'string') setDesignation(parsed.designation);
+        if (parsed.lifeContext === 'social' || parsed.lifeContext === 'dating') {
+          setLifeContext(parsed.lifeContext);
+        }
         setTraits((prev) => ({ ...prev, ...parsed }));
       } catch {
         // ignore
@@ -168,6 +150,8 @@ export default function ConfigurePage() {
       const body = {
         track,
         name: name.trim(),
+        designation: track === 'professional' ? designation.trim() : '',
+        lifeContext: track === 'personal' ? lifeContext : undefined,
         goal: '',
         scenario: '',
         difficultyLevel: traits.difficultyLevel ?? 5,
@@ -228,7 +212,14 @@ export default function ConfigurePage() {
     ? 'bg-gradient-to-r from-pink-500 to-orange-500 shadow-orange-500/25 hover:from-pink-600 hover:to-orange-600'
     : 'bg-gradient-brand shadow-brand-500/25 hover:bg-gradient-brand-hover';
 
-  const snapshotProps = { attributes, traits, name, isLife };
+  const snapshotProps = {
+    track,
+    traits,
+    name,
+    designation,
+    lifeContext,
+    isLife,
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
@@ -250,8 +241,8 @@ export default function ConfigurePage() {
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
               {track === 'personal'
-                ? 'Give them a name and set how they act in social situations.'
-                : 'Give them a name and set how they behave at work.'}
+                ? 'Name them, choose dating or social practice, then tune how they come across.'
+                : 'Name them, add their role, then tune workplace behaviours.'}
             </p>
           </header>
 
@@ -334,22 +325,51 @@ export default function ConfigurePage() {
             </div>
           )}
 
-          <div className="mb-8">
-            <label htmlFor="persona-name" className="mb-2 block text-xs font-medium text-slate-600">
-              Name
-            </label>
-            <input
-              id="persona-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={
-                track === 'personal'
-                  ? 'e.g., Emma — outgoing, values honesty'
-                  : 'e.g., Sarah Chen, VP of Engineering'
-              }
-              className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
-            />
+          <div className="mb-8 space-y-5">
+            <div>
+              <label htmlFor="persona-name" className="mb-2 block text-xs font-medium text-slate-600">
+                Name
+              </label>
+              <input
+                id="persona-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={track === 'personal' ? 'e.g., Emma' : 'e.g., Sarah Chen'}
+                className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
+              />
+            </div>
+
+            {track === 'professional' ? (
+              <div>
+                <label htmlFor="persona-designation" className="mb-2 block text-xs font-medium text-slate-600">
+                  Designation
+                </label>
+                <input
+                  id="persona-designation"
+                  type="text"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  placeholder="e.g., VP of Engineering"
+                  className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
+                />
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="life-context" className="mb-2 block text-xs font-medium text-slate-600">
+                  Context
+                </label>
+                <select
+                  id="life-context"
+                  value={lifeContext}
+                  onChange={(e) => setLifeContext(e.target.value as LifeContext)}
+                  className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-all focus:outline-none focus:ring-2 ${nameFocusClass}`}
+                >
+                  <option value="dating">Dating</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

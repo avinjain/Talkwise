@@ -1,5 +1,8 @@
 export type Track = 'professional' | 'personal' | 'interview';
 
+/** Saved persona / chat framing for Life track — dating vs broader social practice. */
+export type LifeContext = 'dating' | 'social';
+
 export const ENABLE_INTERVIEW_PREP = process.env.NEXT_PUBLIC_ENABLE_INTERVIEW_PREP === 'true';
 
 export interface InterviewPrepContext {
@@ -14,6 +17,10 @@ export interface InterviewPrepContext {
 export interface PersonaConfig {
   track: Track;
   name: string;
+  /** Job title or role label for Work track (optional). */
+  designation?: string;
+  /** Dating vs social framing for Life track (optional; defaults in prompts). */
+  lifeContext?: LifeContext;
   scenario: string;
   userGoal: string;
   interviewPrep?: InterviewPrepContext;
@@ -38,6 +45,8 @@ export interface SavedPersona {
   userId: string;
   track: Track;
   name: string;
+  designation?: string;
+  lifeContext?: LifeContext;
   goal: string;
   scenario: string;
   // Professional traits

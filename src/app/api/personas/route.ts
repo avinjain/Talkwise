@@ -1,34 +1,8 @@
 import { getAuthUserId } from '@/lib/session';
 import { getUserPersonas, savePersona } from '@/lib/db';
-import { SavedPersona, Track } from '@/lib/types';
-import { SavedPersonaRow } from '@/lib/db';
+import { rowToPersona } from '@/lib/personaRow';
 
 export const runtime = 'nodejs';
-
-function rowToPersona(row: SavedPersonaRow): SavedPersona {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    track: (row.track || 'professional') as Track,
-    name: row.name,
-    goal: row.goal,
-    scenario: row.scenario,
-    difficultyLevel: row.difficulty_level,
-    decisionOrientation: row.decision_orientation,
-    communicationStyle: row.communication_style,
-    authorityPosture: row.authority_posture,
-    temperamentStability: row.temperament_stability,
-    socialPresence: row.social_presence,
-    interestLevel: row.interest_level ?? 5,
-    flirtatiousness: row.flirtatiousness ?? 5,
-    communicationEffort: row.communication_effort ?? 5,
-    emotionalOpenness: row.emotional_openness ?? 5,
-    humorStyle: row.humor_style ?? 5,
-    pickiness: row.pickiness ?? 5,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
 
 // GET /api/personas — list user's saved personas
 export async function GET() {
@@ -47,6 +21,13 @@ export async function GET() {
   }
 }
 
+const lifeContextForDb = (track: string, raw: unknown): string =>
+  track === 'personal'
+    ? raw === 'social' || raw === 'dating'
+      ? raw
+      : 'dating'
+    : '';
+
 // POST /api/personas — create a new persona
 export async function POST(req: Request) {
   try {
@@ -58,12 +39,15 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const id = crypto.randomUUID();
+    const track = body.track || 'professional';
 
     savePersona({
       id,
       user_id: userId,
-      track: body.track || 'professional',
+      track,
       name: body.name || 'Unnamed Persona',
+      designation: typeof body.designation === 'string' ? body.designation : '',
+      life_context: lifeContextForDb(track, body.lifeContext),
       goal: body.goal || '',
       scenario: body.scenario || '',
       difficulty_level: body.difficultyLevel ?? 5,

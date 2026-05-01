@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/AppHeader';
-import { PersonaConfig, Track, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, FORMAT_TO_GOAL_LABEL, getGoalOptions, getPersonaAttributes } from '@/lib/types';
+import { PersonaConfig, Track, LifeContext, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, FORMAT_TO_GOAL_LABEL, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
   const router = useRouter();
   const [personaName, setPersonaName] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [lifeContext, setLifeContext] = useState<LifeContext>('dating');
   const [track, setTrack] = useState<Track>('professional');
   const [traits, setTraits] = useState<Record<string, number>>({});
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
@@ -25,6 +27,10 @@ export default function StartPage() {
     try {
       const parsed = JSON.parse(stored);
       setPersonaName(parsed.name || '');
+      setDesignation(typeof parsed.designation === 'string' ? parsed.designation : '');
+      if (parsed.lifeContext === 'social' || parsed.lifeContext === 'dating') {
+        setLifeContext(parsed.lifeContext);
+      }
       setTrack(parsed.track || 'professional');
       setTraits(parsed);
       if (parsed.track === 'interview') {
@@ -88,6 +94,8 @@ export default function StartPage() {
     const config: PersonaConfig = {
       track,
       name: personaName,
+      ...(track === 'professional' && designation.trim() ? { designation: designation.trim() } : {}),
+      ...(track === 'personal' ? { lifeContext } : {}),
       scenario,
       userGoal: selectedGoals.join(', '),
       ...(prepToUse && { interviewPrep: prepToUse }),

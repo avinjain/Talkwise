@@ -81,6 +81,8 @@ function initTables(db: Database.Database) {
       user_id TEXT NOT NULL,
       track TEXT DEFAULT 'professional',
       name TEXT NOT NULL,
+      designation TEXT DEFAULT '',
+      life_context TEXT DEFAULT 'dating',
       goal TEXT NOT NULL,
       scenario TEXT DEFAULT '',
       difficulty_level INTEGER DEFAULT 5,
@@ -280,6 +282,8 @@ function initTables(db: Database.Database) {
       ['emotional_openness',   'ALTER TABLE saved_personas ADD COLUMN emotional_openness INTEGER DEFAULT 5'],
       ['humor_style',          'ALTER TABLE saved_personas ADD COLUMN humor_style INTEGER DEFAULT 5'],
       ['pickiness',            'ALTER TABLE saved_personas ADD COLUMN pickiness INTEGER DEFAULT 5'],
+      ['designation',          "ALTER TABLE saved_personas ADD COLUMN designation TEXT DEFAULT ''"],
+      ['life_context',         "ALTER TABLE saved_personas ADD COLUMN life_context TEXT DEFAULT 'dating'"],
     ];
 
     for (const [col, sql] of migrations) {
@@ -566,6 +570,8 @@ export interface SavedPersonaRow {
   user_id: string;
   track: string;
   name: string;
+  designation?: string;
+  life_context?: string;
   goal: string;
   scenario: string;
   difficulty_level: number;
@@ -601,13 +607,15 @@ export function getPersonaById(id: string, userId: string): SavedPersonaRow | un
 export function savePersona(persona: Omit<SavedPersonaRow, 'created_at' | 'updated_at'>) {
   const db = getDb();
   db.prepare(
-    `INSERT INTO saved_personas (id, user_id, track, name, goal, scenario, difficulty_level, decision_orientation, communication_style, authority_posture, temperament_stability, social_presence, interest_level, flirtatiousness, communication_effort, emotional_openness, humor_style, pickiness)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO saved_personas (id, user_id, track, name, designation, life_context, goal, scenario, difficulty_level, decision_orientation, communication_style, authority_posture, temperament_stability, social_presence, interest_level, flirtatiousness, communication_effort, emotional_openness, humor_style, pickiness)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     persona.id,
     persona.user_id,
     persona.track || 'professional',
     persona.name,
+    persona.designation ?? '',
+    persona.life_context ?? 'dating',
     persona.goal,
     persona.scenario,
     persona.difficulty_level,
@@ -631,6 +639,8 @@ export function updatePersona(id: string, userId: string, updates: Partial<Omit<
   const values: (string | number)[] = [];
 
   if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
+  if (updates.designation !== undefined) { fields.push('designation = ?'); values.push(updates.designation); }
+  if (updates.life_context !== undefined) { fields.push('life_context = ?'); values.push(updates.life_context); }
   if (updates.goal !== undefined) { fields.push('goal = ?'); values.push(updates.goal); }
   if (updates.scenario !== undefined) { fields.push('scenario = ?'); values.push(updates.scenario); }
   if (updates.track !== undefined) { fields.push('track = ?'); values.push(updates.track); }

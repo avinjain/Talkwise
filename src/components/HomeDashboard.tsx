@@ -201,6 +201,8 @@ export default function HomeDashboard() {
       JSON.stringify({
         track: persona.track || 'professional',
         name: persona.name,
+        designation: persona.designation ?? '',
+        lifeContext: persona.lifeContext,
         difficultyLevel: persona.difficultyLevel,
         decisionOrientation: persona.decisionOrientation,
         communicationStyle: persona.communicationStyle,
@@ -226,6 +228,8 @@ export default function HomeDashboard() {
       JSON.stringify({
         track: persona.track || 'professional',
         name: persona.name,
+        designation: persona.designation ?? '',
+        lifeContext: persona.lifeContext,
         difficultyLevel: persona.difficultyLevel,
         decisionOrientation: persona.decisionOrientation,
         communicationStyle: persona.communicationStyle,
@@ -381,6 +385,14 @@ export default function HomeDashboard() {
                         : track === 'interview'
                           ? 'bg-amber-50 text-amber-700'
                           : 'bg-brand-50 text-brand-700';
+                    const subtitle =
+                      track === 'professional'
+                        ? (p.designation || '').trim()
+                        : p.lifeContext === 'social'
+                          ? 'Social'
+                          : p.lifeContext === 'dating'
+                            ? 'Dating'
+                            : '';
                     return (
                       <li
                         key={p.id}
@@ -396,6 +408,9 @@ export default function HomeDashboard() {
                               {trackLabel}
                             </span>
                           </div>
+                          {subtitle ? (
+                            <p className="mt-0.5 truncate text-xs text-slate-500">{subtitle}</p>
+                          ) : null}
                           <p className="mt-0.5 text-xs text-slate-500 group-hover:text-slate-700">
                             Continue practising →
                           </p>
