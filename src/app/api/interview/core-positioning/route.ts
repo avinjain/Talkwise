@@ -3,7 +3,7 @@ import { getAuthUserId } from '@/lib/session';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { logUsage } from '@/lib/db';
 import { estimateCost } from '@/lib/costs';
-import { getOpenAI } from '@/lib/openai';
+import { getOpenAI, pickModel } from '@/lib/openai';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse-new');
 import mammoth from 'mammoth';
@@ -98,7 +98,7 @@ Generate interview speaking points as a JSON object with this exact structure (n
 
 Create 4-5 pitch variations. Each should have 2-4 concise bullets the candidate can use as speaking points. Tailor to the role and JD when provided. Be specific—reference actual experiences from the resume.`;
 
-    const model = process.env.GPT_MODEL || 'gpt-4o';
+    const model = pickModel('core_positioning');
     const response = await getOpenAI().chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],

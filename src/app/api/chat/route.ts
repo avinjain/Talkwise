@@ -1,7 +1,7 @@
-import { getOpenAI } from '@/lib/openai';
+import { getOpenAI, pickModel } from '@/lib/openai';
 import { buildPersonaSystemPrompt } from '@/lib/prompts';
 import { PersonaConfig, ChatMessage } from '@/lib/types';
-import { truncateMessages, countMessagesTokens } from '@/lib/tokens';
+import { truncateMessages, countMessagesTokens, countTokens } from '@/lib/tokens';
 import { getAuthUserId } from '@/lib/session';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { logUsage } from '@/lib/db';
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       personaConfig: PersonaConfig;
     };
 
-    const model = process.env.GPT_MODEL || 'gpt-4o';
+    const model = pickModel('chat');
     const systemPrompt = buildPersonaSystemPrompt(personaConfig);
 
     // ── Token management: truncate old messages ──
@@ -79,8 +79,8 @@ export async function POST(req: Request) {
           controller.close();
 
           // ── Log usage after stream completes ──
-          // Rough estimate: ~0.75 tokens per word for completion
-          const completionTokens = Math.ceil(completionText.length / 4);
+          // Use tiktoken for an accurate count of the streamed completion.
+          const completionTokens = countTokens(completionText, model);
           const totalTokens = promptTokens + completionTokens;
           const cost = estimateCost(model, promptTokens, completionTokens);
 
