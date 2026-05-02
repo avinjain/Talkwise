@@ -78,15 +78,15 @@ type StarPayload = {
 
 export function KickoffStoryPromptsSection({
   prompts,
-  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title) for structure and a sample. Each story has Write with AI below the box.',
+  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title). Save each story when you’re ready — drafts sync across Prepare and Interview prep.',
 }: {
   prompts: string[];
   intro?: string;
 }) {
   const [texts, setTexts] = useState<string[]>(() => prompts.map(() => ''));
   const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
+  const [savingRow, setSavingRow] = useState<number | null>(null);
+  const [savedFlashRow, setSavedFlashRow] = useState<number | null>(null);
 
   const [guideOpen, setGuideOpen] = useState(false);
   const guideRef = useRef<HTMLDivElement>(null);
@@ -151,26 +151,35 @@ export function KickoffStoryPromptsSection({
     };
   }, [stablePromptKey]);
 
-  const persist = useCallback(async () => {
+  const persistDrafts = useCallback(async (drafts: string[], flashRow: number) => {
     const storyDrafts: StoryDraftPersisted[] = prompts.map((prompt, i) => ({
       prompt,
-      draft: texts[i] ?? '',
+      draft: drafts[i] ?? '',
     }));
-    setSaving(true);
+    setSavingRow(flashRow);
     try {
       await fetch('/api/interview/speaking-points', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storyDrafts }),
       });
-      setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2000);
+      setSavedFlashRow(flashRow);
+      window.setTimeout(() => {
+        setSavedFlashRow((cur) => (cur === flashRow ? null : cur));
+      }, 2000);
     } catch {
       /* ignore */
     } finally {
-      setSaving(false);
+      setSavingRow(null);
     }
-  }, [prompts, texts]);
+  }, [prompts]);
+
+  const persistRow = useCallback(
+    async (rowIndex: number) => {
+      await persistDrafts(texts, rowIndex);
+    },
+    [persistDrafts, texts]
+  );
 
   const closeStarModal = useCallback(() => {
     setStarModalOpen(false);
@@ -224,13 +233,12 @@ export function KickoffStoryPromptsSection({
   const acceptStarPreview = useCallback(() => {
     if (starRowIndex === null || !starPreview) return;
     const replacement = formatStarForTextarea(starPreview);
-    setTexts((prev) => {
-      const next = [...prev];
-      next[starRowIndex] = replacement;
-      return next;
-    });
+    const idx = starRowIndex;
+    const merged = texts.map((t, i) => (i === idx ? replacement : t));
+    setTexts(merged);
     closeStarModal();
-  }, [starRowIndex, starPreview, closeStarModal]);
+    void persistDrafts(merged, idx);
+  }, [starRowIndex, starPreview, texts, closeStarModal, persistDrafts]);
 
   if (!loaded) {
     return (
@@ -316,19 +324,30 @@ export function KickoffStoryPromptsSection({
                 })
               }
               rows={4}
-              placeholder="Rough bullets or paragraphs — then use Write with AI below."
+              placeholder="Rough bullets or paragraphs — then Write with AI or Save."
               className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
-            <div className="mt-2 flex justify-start">
+            <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => void openStarForRow(i)}
-                disabled={starLoading}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_28px_-6px_rgba(56,189,248,0.55),0_6px_18px_-4px_rgba(217,70,239,0.48)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-45 active:brightness-95"
+                disabled={starLoading || savingRow !== null}
+                className="inline-flex items-center gap-1 rounded-lg border border-brand-400/70 bg-white px-2.5 py-1 text-xs font-medium text-brand-800 shadow-sm hover:border-brand-500 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 disabled:pointer-events-none disabled:opacity-45"
               >
-                <SparklesIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-white" />
+                <SparklesIcon className="h-3.5 w-3.5 shrink-0 text-brand-600" />
                 Write with AI
               </button>
+              <button
+                type="button"
+                onClick={() => void persistRow(i)}
+                disabled={savingRow !== null}
+                className="rounded-lg bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-50"
+              >
+                {savingRow === i ? 'Saving…' : 'Save'}
+              </button>
+              {savedFlashRow === i ? (
+                <span className="text-xs font-medium text-emerald-700">Saved</span>
+              ) : null}
             </div>
           </li>
         ))}
@@ -354,7 +373,7 @@ export function KickoffStoryPromptsSection({
                 STAR rewrite
               </h3>
               <p className="mt-1 text-xs text-slate-500">
-                Review the AI draft. Replace notes overwrites this story’s text box (you can edit after).
+                Replace notes updates this story’s box and saves it to your account (you can edit after).
               </p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -399,22 +418,6 @@ export function KickoffStoryPromptsSection({
           </div>
         </div>
       ) : null}
-
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={() => void persist()}
-          disabled={saving}
-          className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-        >
-          {saving ? 'Saving…' : 'Save story drafts'}
-        </button>
-        {savedFlash ? (
-          <span className="text-xs font-medium text-emerald-700">Saved to your account.</span>
-        ) : (
-          <span className="text-xs text-slate-400">Drafts sync across Prepare and Interview prep.</span>
-        )}
-      </div>
     </section>
   );
 }

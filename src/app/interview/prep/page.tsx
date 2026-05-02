@@ -316,8 +316,8 @@ export default function InterviewPrepPage() {
               prompts={storyPrompts}
               intro={
                 kickoffSummary
-                  ? 'Prompts reflect your Prepare kickoff (resume seeds, gaps, concerns, plus failure / stakeholder / trade-off angles). Rough drafts save to your account; use the STAR guide (info icon) for structure.'
-                  : 'Behavioural prompts including failure, stakeholder, and trade-off stories until you complete kickoff on Prepare. Use the STAR guide (info icon) for structure — drafts still save here.'
+                  ? 'Prompts reflect your Prepare kickoff (resume seeds, gaps, concerns, plus failure / stakeholder / trade-off angles). Save each story below its box — use the STAR guide (info icon) for structure.'
+                  : 'Behavioural prompts including failure, stakeholder, and trade-off stories until you complete kickoff on Prepare. Save each story below its box — use the STAR guide (info icon) for structure.'
               }
             />
 
