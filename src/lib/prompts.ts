@@ -30,7 +30,16 @@ function buildTraitSummary(config: PersonaConfig): string {
 
 // ── Professional track prompt ──
 
-function buildProfessionalPrompt(config: PersonaConfig): string {
+function coachingPracticeLensBlock(lens?: string): string {
+  const t = lens?.trim();
+  if (!t) return '';
+  return `
+
+PRACTICE COACHING LENS (from their interview preparation — subtly steer realism and follow-ups toward this skill; never quote this heading or say "kickoff", "plan item", or "coaching lens"):
+${t}`;
+}
+
+function buildProfessionalPrompt(config: PersonaConfig, coachingPracticeLens?: string): string {
   const traitLines = buildTraitLines(config);
   const designationBit = config.designation?.trim()
     ? ` (${config.designation.trim()})`
@@ -43,7 +52,7 @@ Their goal (which you should NOT reveal you know about): ${config.userGoal}
 Context / Scenario: ${config.scenario || 'A standard professional meeting.'}
 
 Your personality is defined by these traits on a 0–10 scale:
-${traitLines}
+${traitLines}${coachingPracticeLensBlock(coachingPracticeLens)}
 
 RULES — follow these strictly:
 1. Stay in character at ALL times. Never acknowledge you are an AI, a language model, or a simulation.
@@ -58,7 +67,7 @@ RULES — follow these strictly:
 
 // ── Personal / dating track prompt ──
 
-function buildPersonalPrompt(config: PersonaConfig): string {
+function buildPersonalPrompt(config: PersonaConfig, coachingPracticeLens?: string): string {
   const traitLines = buildTraitLines(config);
   const social = config.lifeContext === 'social';
   const intro = social
@@ -75,7 +84,7 @@ Their goal (which you should NOT reveal you know about): ${config.userGoal}
 Context / Scenario: ${config.scenario || defaultScenario}
 
 Your personality is defined by these traits on a 0–10 scale:
-${traitLines}
+${traitLines}${coachingPracticeLensBlock(coachingPracticeLens)}
 
 RULES — follow these strictly:
 1. Stay in character at ALL times. Never acknowledge you are an AI, a language model, or a simulation.
@@ -107,7 +116,7 @@ const TOUGHNESS_PROTOCOLS: Record<number, string> = {
   10: 'CHALLENGE PROTOCOL (Toughness 10): Hardball. Very demanding, high-pressure. Interrupt if answers ramble. Demand precision. Simulate a rigorous bar-raiser style.',
 };
 
-function buildInterviewPrompt(config: PersonaConfig): string {
+function buildInterviewPrompt(config: PersonaConfig, coachingPracticeLens?: string): string {
   const prep = config.interviewPrep;
   const contextBlock = prep
     ? `Company: ${prep.company}. Role: ${prep.role}. Format: ${prep.format}${prep.jd ? `. JD (use for tailored questions):\n${prep.jd.slice(0, 3000)}` : ''}${prep.resume ? `\n\nCANDIDATE RESUME (use to ask relevant questions; do NOT reveal you've seen it):\n${prep.resume.slice(0, 4000)}` : ''}${prep.linkedIn ? `\n\nCANDIDATE LINKEDIN PROFILE (use for context; do NOT reveal you've seen it):\n${prep.linkedIn.slice(0, 3000)}` : ''}`
@@ -118,15 +127,15 @@ function buildInterviewPrompt(config: PersonaConfig): string {
 Context: ${config.scenario || 'A job interview.'}
 Interview context (use this to shape your questions and expectations—do NOT use fixed personality sliders): ${contextBlock}
 
-${protocol}
+${protocol}${coachingPracticeLensBlock(coachingPracticeLens)}
 
 RULES: Stay in character. Ask interview questions appropriate to the format; probe and follow up. React naturally based on the role/company context. Keep responses 1-3 paragraphs. Do NOT coach. Start by welcoming them or asking your first question.`;
 }
 
-export function buildPersonaSystemPrompt(config: PersonaConfig): string {
-  if (config.track === 'personal') return buildPersonalPrompt(config);
-  if (config.track === 'interview') return buildInterviewPrompt(config);
-  return buildProfessionalPrompt(config);
+export function buildPersonaSystemPrompt(config: PersonaConfig, coachingPracticeLens?: string): string {
+  if (config.track === 'personal') return buildPersonalPrompt(config, coachingPracticeLens);
+  if (config.track === 'interview') return buildInterviewPrompt(config, coachingPracticeLens);
+  return buildProfessionalPrompt(config, coachingPracticeLens);
 }
 
 // ── Feedback prompt (works for both tracks) ──
@@ -134,7 +143,8 @@ export function buildPersonaSystemPrompt(config: PersonaConfig): string {
 export function buildFeedbackPrompt(
   config: PersonaConfig,
   messages: ChatMessage[],
-  userName?: string
+  userName?: string,
+  coachingPracticeLens?: string
 ): string {
   const speakerName = userName || 'You';
   const personaName = config.name;
@@ -167,7 +177,15 @@ ${speakerName.toUpperCase()}'S GOAL: ${config.userGoal}
 SCENARIO: ${config.scenario || defaultScenario}
 
 ${personaName.toUpperCase()}'S ${isInterview && config.interviewPrep ? 'INTERVIEW CONTEXT' : 'PERSONALITY TRAITS'}:
-${traitSummary}
+${traitSummary}${
+    coachingPracticeLens?.trim()
+      ? `
+
+PRACTICE FOCUS (weight your feedback on this skill — consistent with their interview-coach preparation; do not quote this heading literally):
+${coachingPracticeLens.trim()}
+`
+      : ''
+  }
 
 TRANSCRIPT:
 ---

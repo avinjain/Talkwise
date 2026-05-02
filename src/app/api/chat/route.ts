@@ -4,7 +4,7 @@ import { PersonaConfig, ChatMessage } from '@/lib/types';
 import { truncateMessages, countMessagesTokens, countTokens } from '@/lib/tokens';
 import { getAuthUserId } from '@/lib/session';
 import { checkRateLimit } from '@/lib/ratelimit';
-import { logUsage } from '@/lib/db';
+import { logUsage, getPracticeCoachingFocus } from '@/lib/db';
 import { estimateCost } from '@/lib/costs';
 
 export const runtime = 'nodejs';
@@ -37,7 +37,18 @@ export async function POST(req: Request) {
     };
 
     const model = pickModel('chat');
-    const systemPrompt = buildPersonaSystemPrompt(personaConfig);
+    let coachingPracticeLens: string | undefined;
+    try {
+      const row = getPracticeCoachingFocus(userId);
+      if (row?.payload_json) {
+        const parsed = JSON.parse(row.payload_json) as { skillLens?: string };
+        coachingPracticeLens = typeof parsed.skillLens === 'string' ? parsed.skillLens : undefined;
+      }
+    } catch {
+      coachingPracticeLens = undefined;
+    }
+
+    const systemPrompt = buildPersonaSystemPrompt(personaConfig, coachingPracticeLens);
 
     // ── Token management: truncate old messages ──
     const trimmedMessages = truncateMessages(systemPrompt, messages, model);

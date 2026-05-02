@@ -3,7 +3,7 @@ import { buildFeedbackPrompt } from '@/lib/prompts';
 import { PersonaConfig, ChatMessage, FeedbackReport } from '@/lib/types';
 import { getAuthUserId } from '@/lib/session';
 import { checkRateLimit } from '@/lib/ratelimit';
-import { logUsage } from '@/lib/db';
+import { logUsage, getPracticeCoachingFocus } from '@/lib/db';
 import { estimateCost } from '@/lib/costs';
 
 export const runtime = 'nodejs';
@@ -37,7 +37,18 @@ export async function POST(req: Request) {
     };
 
     const model = pickModel('feedback');
-    const prompt = buildFeedbackPrompt(personaConfig, messages, userName);
+    let coachingPracticeLens: string | undefined;
+    try {
+      const row = getPracticeCoachingFocus(userId);
+      if (row?.payload_json) {
+        const parsed = JSON.parse(row.payload_json) as { skillLens?: string };
+        coachingPracticeLens = typeof parsed.skillLens === 'string' ? parsed.skillLens : undefined;
+      }
+    } catch {
+      coachingPracticeLens = undefined;
+    }
+
+    const prompt = buildFeedbackPrompt(personaConfig, messages, userName, coachingPracticeLens);
 
     const response = await getOpenAI().chat.completions.create({
       model,

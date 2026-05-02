@@ -189,6 +189,14 @@ function initTables(db: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_coach_user ON coach_artifacts(user_id);
 
+    CREATE TABLE IF NOT EXISTS practice_coaching_focus (
+      user_id TEXT PRIMARY KEY,
+      payload_json TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_practice_coaching_user ON practice_coaching_focus(user_id);
+
     CREATE TABLE IF NOT EXISTS profile_result_attempts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -561,6 +569,37 @@ export function getAllCoachArtifacts(userId: string): CoachArtifactRow[] {
 export function deleteCoachArtifact(userId: string, command: string) {
   const db = getDb();
   db.prepare('DELETE FROM coach_artifacts WHERE user_id = ? AND command = ?').run(userId, command);
+}
+
+// ── Practice coaching focus (kickoff Go → persisted lens for chat / feedback) ──
+
+export interface PracticeCoachingFocusRow {
+  user_id: string;
+  payload_json: string;
+  updated_at: string;
+}
+
+export function savePracticeCoachingFocus(userId: string, payload: unknown) {
+  const db = getDb();
+  db.prepare(
+    `INSERT INTO practice_coaching_focus (user_id, payload_json, updated_at)
+     VALUES (?, ?, datetime('now'))
+     ON CONFLICT(user_id) DO UPDATE SET
+       payload_json = excluded.payload_json,
+       updated_at = datetime('now')`
+  ).run(userId, JSON.stringify(payload));
+}
+
+export function getPracticeCoachingFocus(userId: string): PracticeCoachingFocusRow | undefined {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM practice_coaching_focus WHERE user_id = ?')
+    .get(userId) as PracticeCoachingFocusRow | undefined;
+}
+
+export function deletePracticeCoachingFocus(userId: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM practice_coaching_focus WHERE user_id = ?').run(userId);
 }
 
 // ── Saved Personas ──

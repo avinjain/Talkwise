@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 
 export default function BuildResumePage() {
@@ -23,23 +24,28 @@ export default function BuildResumePage() {
   const hasLinkedIn = !!(linkedInUrl.trim() || linkedInPaste.trim());
   const hasJobInput = hasResume || hasLinkedIn;
 
-  // Scroll to anchor on load (e.g. /resume#speaking-points)
-  const scrolled = useRef(false);
+  const pathname = usePathname();
+
+  // Scroll to section when opening /resume#... (client nav often omits hash until we set it).
   useEffect(() => {
-    if (scrolled.current) return;
-    const hash = typeof window !== 'undefined' ? window.location.hash : '';
-    if (!hash) return;
-    const id = hash.slice(1);
-    const tryScroll = () => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        scrolled.current = true;
-      }
+    if (pathname !== '/resume') return;
+
+    const scrollToHash = () => {
+      const id = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+      if (!id) return;
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-    const t = setTimeout(tryScroll, 60);
-    return () => clearTimeout(t);
-  }, []);
+
+    scrollToHash();
+    const t1 = window.setTimeout(scrollToHash, 100);
+    const t2 = window.setTimeout(scrollToHash, 350);
+    window.addEventListener('hashchange', scrollToHash);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('hashchange', scrollToHash);
+    };
+  }, [pathname]);
 
   const extractResumeText = async (): Promise<string> => {
     let text = resumePaste.trim();

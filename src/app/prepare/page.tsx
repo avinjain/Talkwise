@@ -3,14 +3,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import type {
-  KickoffSummary,
-  KickoffTrack,
-  KickoffTimeline,
-  InterviewHistory,
-  StallingStage,
-  KickoffPlanItem,
+import {
+  routeForKickoffCommand,
+  type KickoffSummary,
+  type KickoffTrack,
+  type KickoffTimeline,
+  type InterviewHistory,
+  type StallingStage,
+  type KickoffPlanItem,
 } from '@/lib/kickoff';
+import type { PracticeCoachingFocusPayload } from '@/lib/practiceCoaching';
 import type {
   CoachCommand,
   PrepOutput,
@@ -39,7 +41,8 @@ export default function PrepareForInterviewPage() {
     prep: (PrepOutput & { updatedAt: string }) | null;
     concerns: (ConcernsOutput & { updatedAt: string }) | null;
     questions: (QuestionsOutput & { updatedAt: string }) | null;
-  }>({ prep: null, concerns: null, questions: null });
+    practiceFocus: PracticeCoachingFocusPayload | null;
+  }>({ prep: null, concerns: null, questions: null, practiceFocus: null });
 
   const fetchKickoff = useCallback(async () => {
     try {
@@ -70,6 +73,7 @@ export default function PrepareForInterviewPage() {
           prep: data.prep || null,
           concerns: data.concerns || null,
           questions: data.questions || null,
+          practiceFocus: (data.practiceFocus as PracticeCoachingFocusPayload) || null,
         });
       }
     } catch (err) {
@@ -82,33 +86,59 @@ export default function PrepareForInterviewPage() {
     fetchCoach();
   }, [fetchKickoff, fetchCoach]);
 
-  const runPlanAction = (item: KickoffPlanItem) => {
-    switch (item.command) {
-      case 'speaking_points':
-      case 'pitch':
-      case 'stories':
-      case 'hype':
-        router.push('/resume#speaking-points');
-        break;
-      case 'optimise_resume':
-      case 'decode':
-        router.push('/resume#resume-optimisation');
-        break;
-      case 'analyse_profile':
-      case 'concerns':
-        router.push('/resume#profile-alignment');
-        break;
-      case 'practice':
-        router.push('/configure');
-        break;
-      case 'mock':
-      case 'research':
-        router.push('/interview/prep');
-        break;
-      default:
-        router.push('/resume');
+  const navigateKickoffHref = useCallback(
+    (href: string) => {
+      const hashIdx = href.indexOf('#');
+      if (hashIdx === -1) {
+        router.push(href);
+        return;
+      }
+      const pathname = href.slice(0, hashIdx);
+      const fragment = href.slice(hashIdx + 1);
+      router.push(pathname);
+      const applyHashAndScroll = () => {
+        if (typeof window === 'undefined') return;
+        window.history.replaceState(window.history.state, '', `${pathname}#${fragment}`);
+        document.getElementById(fragment)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      applyHashAndScroll();
+      setTimeout(applyHashAndScroll, 120);
+      setTimeout(applyHashAndScroll, 400);
+    },
+    [router]
+  );
+
+  const persistKickoffPracticeFocus = async (item: KickoffPlanItem) => {
+    try {
+      const res = await fetch('/api/practice-coaching', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kickoffCommand: item.command ?? '',
+          planItemText: item.text,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.focus) {
+          setCoachState((s) => ({
+            ...s,
+            practiceFocus: data.focus as PracticeCoachingFocusPayload,
+          }));
+        }
+      }
+    } catch {
+      /* navigation still proceeds */
     }
   };
+
+  const runPlanAction = useCallback(
+    async (item: KickoffPlanItem) => {
+      await persistKickoffPracticeFocus(item);
+      navigateKickoffHref(routeForKickoffCommand(item.command));
+    },
+    [navigateKickoffHref]
+  );
 
   if (kickoffLoading) {
     return (
@@ -148,6 +178,18 @@ export default function PrepareForInterviewPage() {
               }}
             />
           )}
+
+          {savedKickoff && !showWizard && coachState.practiceFocus ? (
+            <div className="mt-6 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/90 to-accent-50/40 px-4 py-4 shadow-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">
+                Active practice skill (used in conversation AI + feedback)
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-800">{coachState.practiceFocus.skillLens}</p>
+              <p className="mt-2 text-[11px] text-slate-500">
+                Set when you tap Go on your kickoff plan. Run another Go step anytime to update this lens.
+              </p>
+            </div>
+          ) : null}
 
           {/* Coaching tools — only after kickoff is done */}
           {savedKickoff && !showWizard && (
@@ -505,7 +547,7 @@ function KickoffSummaryView({
   summary: KickoffSummary;
   updatedAt: string;
   onRerun: () => void;
-  onAction: (item: KickoffPlanItem) => void;
+  onAction: (item: KickoffPlanItem) => void | Promise<void>;
 }) {
   const modeLabel =
     summary.timeMode === 'triage'
@@ -525,6 +567,7 @@ function KickoffSummaryView({
           </p>
         </div>
         <button
+          type="button"
           onClick={onRerun}
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
         >
@@ -542,6 +585,7 @@ function KickoffSummaryView({
           </p>
           {summary.recommendedNext.command && (
             <button
+              type="button"
               onClick={() => onAction(summary.recommendedNext)}
               className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
             >
@@ -736,7 +780,7 @@ function PlanGroup({
 }: {
   label: string;
   items: KickoffPlanItem[];
-  onAction: (item: KickoffPlanItem) => void;
+  onAction: (item: KickoffPlanItem) => void | Promise<void>;
 }) {
   if (items.length === 0) return null;
   return (
@@ -748,6 +792,7 @@ function PlanGroup({
             <p className="flex-1 text-sm text-slate-700">{item.text}</p>
             {item.command && (
               <button
+                type="button"
                 onClick={() => onAction(item)}
                 className="shrink-0 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
@@ -788,6 +833,7 @@ interface CoachStateBundle {
   prep: (PrepOutput & { updatedAt: string }) | null;
   concerns: (ConcernsOutput & { updatedAt: string }) | null;
   questions: (QuestionsOutput & { updatedAt: string }) | null;
+  practiceFocus: PracticeCoachingFocusPayload | null;
 }
 
 function CoachingTools({
@@ -917,6 +963,7 @@ function CoachTile({
     tone === 'amber' ? 'bg-amber-500' : tone === 'brand' ? 'bg-brand-500' : 'bg-accent-500';
   return (
     <button
+      type="button"
       onClick={onOpen}
       className={`flex h-full flex-col items-start gap-2 rounded-2xl border bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md ${
         active ? 'border-slate-900 ring-2 ring-slate-900/10' : 'border-slate-200'
@@ -1471,6 +1518,7 @@ function PanelShell({
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
         <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         <button
+          type="button"
           onClick={onClose}
           className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           aria-label="Close"

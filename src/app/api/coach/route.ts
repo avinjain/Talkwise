@@ -21,6 +21,7 @@ import {
   deleteCoachArtifact,
   getKickoffState,
   logUsage,
+  getPracticeCoachingFocus,
 } from '@/lib/db';
 import { estimateCost } from '@/lib/costs';
 
@@ -48,17 +49,30 @@ const MAX_TOKENS_BY_COMMAND: Record<CoachCommand, number> = {
   questions: 1400,
 };
 
-function loadKickoffContext(userId: string): CoachContext {
+function loadCoachApiContext(userId: string): CoachContext {
   const ko = getKickoffState(userId);
-  if (!ko) return {};
-  return {
-    targetRoles: ko.target_roles,
-    resumeText: ko.resume_text || undefined,
-    linkedInText: ko.linkedin_text || undefined,
-    interviewHistory: ko.interview_history,
-    stallingStage: ko.stalling_stage || undefined,
-    biggestConcern: ko.biggest_concern || undefined,
-  };
+  const base: CoachContext = ko
+    ? {
+        targetRoles: ko.target_roles,
+        resumeText: ko.resume_text || undefined,
+        linkedInText: ko.linkedin_text || undefined,
+        interviewHistory: ko.interview_history,
+        stallingStage: ko.stalling_stage || undefined,
+        biggestConcern: ko.biggest_concern || undefined,
+      }
+    : {};
+  const pfRow = getPracticeCoachingFocus(userId);
+  if (pfRow?.payload_json) {
+    try {
+      const j = JSON.parse(pfRow.payload_json) as { skillLens?: string };
+      if (typeof j.skillLens === 'string' && j.skillLens.trim()) {
+        base.practiceSkillLens = j.skillLens.trim();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return base;
 }
 
 function withParsed(row: { command: string; payload_json: string; updated_at: string } | undefined) {
@@ -94,7 +108,18 @@ export async function GET(req: Request) {
     const row = rows.find((r) => r.command === cmd);
     map[cmd] = withParsed(row);
   }
-  return NextResponse.json(map);
+
+  let practiceFocus: unknown = null;
+  const pfRow = getPracticeCoachingFocus(userId);
+  if (pfRow?.payload_json) {
+    try {
+      practiceFocus = JSON.parse(pfRow.payload_json);
+    } catch {
+      practiceFocus = null;
+    }
+  }
+
+  return NextResponse.json({ prep: map.prep, concerns: map.concerns, questions: map.questions, practiceFocus });
 }
 
 export async function DELETE(req: Request) {
@@ -132,7 +157,7 @@ export async function POST(req: Request) {
     if (!COMMANDS.has(command))
       return NextResponse.json({ error: 'Invalid command' }, { status: 400 });
 
-    const ctx = loadKickoffContext(userId);
+    const ctx = loadCoachApiContext(userId);
     if (!ctx.resumeText && !ctx.targetRoles) {
       return NextResponse.json(
         {

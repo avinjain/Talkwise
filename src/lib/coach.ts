@@ -33,6 +33,8 @@ export interface CoachContext {
   interviewHistory?: string;
   stallingStage?: string;
   biggestConcern?: string;
+  /** From kickoff "Go" — skill the candidate is actively practising (interview-coach alignment). */
+  practiceSkillLens?: string;
 }
 
 function contextBlock(ctx: CoachContext): string {
@@ -41,6 +43,11 @@ function contextBlock(ctx: CoachContext): string {
   if (ctx.interviewHistory) parts.push(`INTERVIEW HISTORY: ${ctx.interviewHistory}`);
   if (ctx.stallingStage) parts.push(`WHERE STUCK: ${ctx.stallingStage}`);
   if (ctx.biggestConcern) parts.push(`BIGGEST CONCERN: ${ctx.biggestConcern}`);
+  if (ctx.practiceSkillLens?.trim()) {
+    parts.push(
+      `\nACTIVE PRACTICE SKILL (from kickoff plan Go — prioritize relevance to this):\n${ctx.practiceSkillLens.trim().slice(0, 1400)}`
+    );
+  }
   if (ctx.resumeText) parts.push(`\nRESUME (truncated):\n${ctx.resumeText.slice(0, 6000)}`);
   if (ctx.linkedInText) parts.push(`\nLINKEDIN (truncated):\n${ctx.linkedInText.slice(0, 3000)}`);
   return parts.join('\n');

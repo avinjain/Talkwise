@@ -235,6 +235,61 @@ function isPlanItemArray(x: unknown): x is KickoffPlanItem[] {
   return Array.isArray(x) && x.every(isPlanItem);
 }
 
+/**
+ * Normalize kickoff plan `command` strings from the model (casing, spaces, US spelling).
+ */
+export function normalizeKickoffPlanCommand(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  return raw.trim().toLowerCase().replace(/-/g, '_').replace(/\s+/g, '_');
+}
+
+/** Alias map so LLM variants resolve to one canonical tag (routes + coaching lens). */
+const KICKOFF_COMMAND_ALIASES: Record<string, string> = {
+  optimize_resume: 'optimise_resume',
+  optimize: 'optimise_resume',
+  resume_optimisation: 'optimise_resume',
+  resume_optimization: 'optimise_resume',
+  analyze_profile: 'analyse_profile',
+  profile_alignment: 'analyse_profile',
+  speakingpoint: 'speaking_points',
+  storybank: 'stories',
+  mock_interview: 'mock',
+  company_research: 'research',
+};
+
+/** Canonical kickoff command tag after normalization + aliases. */
+export function canonicalKickoffPlanCommand(raw: unknown): string {
+  const n = normalizeKickoffPlanCommand(raw);
+  return KICKOFF_COMMAND_ALIASES[n] ?? n;
+}
+
+/**
+ * Map a plan item command to an in-app route. Unknown tags still go somewhere useful (/resume).
+ */
+export function routeForKickoffCommand(raw: unknown): string {
+  const key = canonicalKickoffPlanCommand(raw);
+  switch (key) {
+    case 'speaking_points':
+    case 'pitch':
+    case 'stories':
+    case 'hype':
+      return '/resume#speaking-points';
+    case 'optimise_resume':
+    case 'decode':
+      return '/resume#resume-optimisation';
+    case 'analyse_profile':
+    case 'concerns':
+      return '/resume#profile-alignment';
+    case 'practice':
+      return '/configure';
+    case 'mock':
+    case 'research':
+      return '/interview/prep';
+    default:
+      return '/resume';
+  }
+}
+
 export function parseKickoffSummary(raw: unknown): KickoffSummary | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
