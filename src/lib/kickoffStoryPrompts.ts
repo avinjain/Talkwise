@@ -23,7 +23,7 @@ export function buildKickoffStoryPrompts(summary: KickoffSummary): string[] {
 
   for (const s of summary.profile.storySeeds.slice(0, 2)) {
     const t = s.trim();
-    if (t) out.push(`Resume seed — draft a story around: "${t}"`);
+    if (t) out.push(t);
   }
 
   for (const p of BEHAVIORAL_ARCHETYPE_PROMPTS) {

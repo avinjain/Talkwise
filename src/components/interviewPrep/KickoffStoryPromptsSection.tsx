@@ -10,6 +10,27 @@ function mergeDraftText(prompts: string[], saved: StoryDraftPersisted[]): string
   });
 }
 
+function formatStarForTextarea(out: {
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  spokenDraft: string;
+}): string {
+  const blocks = [
+    out.situation.trim() ? `Situation:\n${out.situation.trim()}` : '',
+    out.task.trim() ? `Task:\n${out.task.trim()}` : '',
+    out.action.trim() ? `Action:\n${out.action.trim()}` : '',
+    out.result.trim() ? `Result:\n${out.result.trim()}` : '',
+  ].filter(Boolean);
+  const body = blocks.join('\n\n');
+  const spoken = out.spokenDraft.trim();
+  if (spoken) {
+    return body ? `${body}\n\nSpoken version:\n${spoken}` : `Spoken version:\n${spoken}`;
+  }
+  return body;
+}
+
 const STAR_SAMPLE = `Situation: Our checkout API started failing intermittently during a holiday sale.
 Task: I owned restoring reliability without rolling back the new pricing engine.
 Action: I paired metrics from traces with queue depth, added circuit breakers on the flaky downstream, and coordinated a phased rollout with support on standby.
@@ -33,9 +54,17 @@ function InfoIcon(props: { className?: string }) {
   );
 }
 
+type StarPayload = {
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  spokenDraft: string;
+};
+
 export function KickoffStoryPromptsSection({
   prompts,
-  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title) for structure and a sample. Speaking-point generation can tighten wording later.',
+  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title) for structure and a sample. Each story has Rewrite as STAR next to the box.',
 }: {
   prompts: string[];
   intro?: string;
@@ -49,16 +78,11 @@ export function KickoffStoryPromptsSection({
   const guideRef = useRef<HTMLDivElement>(null);
   const guideBtnRef = useRef<HTMLButtonElement>(null);
 
-  const [starInput, setStarInput] = useState('');
+  const [starModalOpen, setStarModalOpen] = useState(false);
+  const [starRowIndex, setStarRowIndex] = useState<number | null>(null);
   const [starLoading, setStarLoading] = useState(false);
   const [starError, setStarError] = useState<string | null>(null);
-  const [starOut, setStarOut] = useState<{
-    situation: string;
-    task: string;
-    action: string;
-    result: string;
-    spokenDraft: string;
-  } | null>(null);
+  const [starPreview, setStarPreview] = useState<StarPayload | null>(null);
 
   const stablePromptKey = useMemo(() => prompts.join('\x1e'), [prompts]);
 
@@ -72,6 +96,20 @@ export function KickoffStoryPromptsSection({
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [guideOpen]);
+
+  useEffect(() => {
+    if (!starModalOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setStarModalOpen(false);
+        setStarPreview(null);
+        setStarError(null);
+        setStarRowIndex(null);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [starModalOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,39 +158,65 @@ export function KickoffStoryPromptsSection({
     }
   }, [prompts, texts]);
 
-  const convertStar = useCallback(async () => {
-    const bullets = starInput.trim();
-    if (!bullets) {
-      setStarError('Add bullets or rough notes first.');
-      return;
-    }
+  const closeStarModal = useCallback(() => {
+    setStarModalOpen(false);
+    setStarPreview(null);
     setStarError(null);
-    setStarLoading(true);
-    setStarOut(null);
-    try {
-      const res = await fetch('/api/interview/story-star', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bullets }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setStarError(typeof data.error === 'string' ? data.error : 'Could not generate STAR.');
+    setStarLoading(false);
+    setStarRowIndex(null);
+  }, []);
+
+  const openStarForRow = useCallback(
+    async (rowIndex: number) => {
+      const bullets = (texts[rowIndex] ?? '').trim();
+      if (!bullets) {
+        setStarError('Add some notes in the box first, then try again.');
+        window.setTimeout(() => setStarError(null), 3500);
         return;
       }
-      setStarOut({
-        situation: data.situation ?? '',
-        task: data.task ?? '',
-        action: data.action ?? '',
-        result: data.result ?? '',
-        spokenDraft: data.spokenDraft ?? '',
-      });
-    } catch {
-      setStarError('Network error — try again.');
-    } finally {
-      setStarLoading(false);
-    }
-  }, [starInput]);
+      setStarRowIndex(rowIndex);
+      setStarModalOpen(true);
+      setStarPreview(null);
+      setStarError(null);
+      setStarLoading(true);
+      try {
+        const res = await fetch('/api/interview/story-star', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bullets }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setStarError(typeof data.error === 'string' ? data.error : 'Could not generate STAR.');
+          setStarLoading(false);
+          return;
+        }
+        setStarPreview({
+          situation: data.situation ?? '',
+          task: data.task ?? '',
+          action: data.action ?? '',
+          result: data.result ?? '',
+          spokenDraft: data.spokenDraft ?? '',
+        });
+      } catch {
+        setStarError('Network error — try again.');
+      } finally {
+        setStarLoading(false);
+      }
+    },
+    [texts]
+  );
+
+  const acceptStarPreview = useCallback(() => {
+    if (starRowIndex === null || !starPreview) return;
+    const replacement = formatStarForTextarea(starPreview);
+    setTexts((prev) => {
+      const next = [...prev];
+      next[starRowIndex] = replacement;
+      return next;
+    });
+    closeStarModal();
+  }, [starRowIndex, starPreview, closeStarModal]);
 
   if (!loaded) {
     return (
@@ -214,15 +278,29 @@ export function KickoffStoryPromptsSection({
           </div>
         </div>
         <p className="mt-1 text-sm text-slate-500">{intro}</p>
+        {starError && !starModalOpen ? (
+          <p className="mt-2 text-xs font-medium text-rose-600" role="status">
+            {starError}
+          </p>
+        ) : null}
       </header>
 
       <ol className="space-y-5">
         {prompts.map((prompt, i) => (
           <li key={`${i}-${prompt.slice(0, 48)}`}>
-            <label className="mb-1.5 block text-xs font-medium text-slate-700">
-              <span className="mr-2 font-semibold text-brand-700">{i + 1}.</span>
-              {prompt}
-            </label>
+            <div className="mb-1.5 flex flex-wrap items-start justify-between gap-2">
+              <label className="block flex-1 text-xs font-medium text-slate-700">
+                <span className="mr-2 font-semibold text-brand-700">{i + 1}.</span>
+                {prompt}
+              </label>
+              <button
+                type="button"
+                onClick={() => void openStarForRow(i)}
+                className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-brand-700 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+              >
+                Rewrite as STAR
+              </button>
+            </div>
             <textarea
               value={texts[i] ?? ''}
               onChange={(e) =>
@@ -233,54 +311,78 @@ export function KickoffStoryPromptsSection({
                 })
               }
               rows={4}
-              placeholder="Rough bullets or paragraphs — you’ll polish later."
+              placeholder="Rough bullets or paragraphs — use Rewrite as STAR when you’re ready."
               className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
           </li>
         ))}
       </ol>
 
-      <div className="mt-8 border-t border-slate-100 pt-6">
-        <h3 className="text-sm font-semibold text-slate-900">Turn rough notes into STAR</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Paste bullets or fragments for one story below. AI lays out Situation → Task → Action → Result plus a short spoken version you can rehearse.
-        </p>
-        <textarea
-          value={starInput}
-          onChange={(e) => setStarInput(e.target.value)}
-          rows={5}
-          placeholder={'e.g.\n- Legacy billing crashed twice in Q4\n- I led restore + guardrails\n- Cut incidents by …'}
-          className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-        />
-        {starError ? <p className="mt-2 text-xs font-medium text-rose-600">{starError}</p> : null}
-        <button
-          type="button"
-          onClick={() => void convertStar()}
-          disabled={starLoading}
-          className="mt-3 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+      {starModalOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeStarModal();
+          }}
         >
-          {starLoading ? 'Converting…' : 'Convert to STAR with AI'}
-        </button>
-
-        {starOut ? (
-          <div className="mt-5 space-y-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-            {['situation', 'task', 'action', 'result'].map((key) => (
-              <div key={key}>
-                <p className="text-xs font-semibold capitalize text-slate-600">{key}</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">
-                  {starOut[key as keyof typeof starOut]}
-                </p>
-              </div>
-            ))}
-            {starOut.spokenDraft ? (
-              <div>
-                <p className="text-xs font-semibold text-slate-600">Spoken draft (~45–90s)</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{starOut.spokenDraft}</p>
-              </div>
-            ) : null}
+          <div className="absolute inset-0 bg-slate-900/50" aria-hidden />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="star-modal-title"
+            className="relative z-10 flex max-h-[min(90vh,40rem)] w-full max-w-lg flex-col rounded-2xl border border-slate-200 bg-white shadow-xl"
+          >
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h3 id="star-modal-title" className="text-base font-semibold text-slate-900">
+                STAR rewrite
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Review the AI draft. Replace notes overwrites this story’s text box (you can edit after).
+              </p>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              {starLoading ? (
+                <p className="text-sm text-slate-600">Generating…</p>
+              ) : starError ? (
+                <p className="text-sm font-medium text-rose-600">{starError}</p>
+              ) : starPreview ? (
+                <div className="space-y-4 text-sm text-slate-800">
+                  {(['situation', 'task', 'action', 'result'] as const).map((key) => (
+                    <div key={key}>
+                      <p className="text-xs font-semibold capitalize text-slate-500">{key}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{starPreview[key]}</p>
+                    </div>
+                  ))}
+                  {starPreview.spokenDraft ? (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">Spoken version</p>
+                      <p className="mt-1 whitespace-pre-wrap">{starPreview.spokenDraft}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 px-5 py-4">
+              <button
+                type="button"
+                onClick={closeStarModal}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!starPreview || starLoading}
+                onClick={acceptStarPreview}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+              >
+                Replace notes
+              </button>
+            </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <button
