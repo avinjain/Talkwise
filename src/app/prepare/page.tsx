@@ -20,6 +20,8 @@ import {
   type CoachStateBundle,
 } from '@/components/interviewPrep/CoachingToolsSection';
 import { InterviewPrepWorkflow } from '@/components/interviewPrep/InterviewPrepWorkflow';
+import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
+import { buildKickoffStoryPrompts } from '@/lib/kickoffStoryPrompts';
 
 // ─────────────────────────────────────────────────────────────
 // Page
@@ -221,12 +223,18 @@ export default function PrepareForInterviewPage() {
           />
 
           {savedKickoff && !showWizard ? (
-            <KickoffSummaryView
-              summary={savedKickoff.summary}
-              updatedAt={savedKickoff.updatedAt}
-              onRerun={() => setShowWizard(true)}
-              onAction={runPlanAction}
-            />
+            <>
+              <KickoffSummaryView
+                summary={savedKickoff.summary}
+                updatedAt={savedKickoff.updatedAt}
+                onRerun={() => setShowWizard(true)}
+                onAction={runPlanAction}
+              />
+              <KickoffStoryPromptsSection
+                prompts={buildKickoffStoryPrompts(savedKickoff.summary)}
+                intro="Rough notes are fine — bullets or half-finished paragraphs work. Speaking-point generation (Resume or Interview prep) can tighten these later."
+              />
+            </>
           ) : (
             <KickoffWizard
               initial={savedKickoff?.inputs}

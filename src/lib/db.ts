@@ -201,6 +201,7 @@ function initTables(db: Database.Database) {
       user_id TEXT PRIMARY KEY,
       pitches_json TEXT NOT NULL DEFAULT '[]',
       workflow_stories_ack INTEGER NOT NULL DEFAULT 0,
+      story_drafts_json TEXT NOT NULL DEFAULT '[]',
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
@@ -353,6 +354,27 @@ function initTables(db: Database.Database) {
     }
   } catch (err) {
     console.error('Profile migration check failed:', err);
+  }
+
+  // ── Migration: story_drafts_json on interview_stories ──
+  try {
+    const isCols = db.pragma('table_info(interview_stories)') as { name: string }[];
+    const isColNames = new Set(isCols.map((c) => c.name));
+    if (!isColNames.has('story_drafts_json')) {
+      try {
+        db.exec(
+          "ALTER TABLE interview_stories ADD COLUMN story_drafts_json TEXT NOT NULL DEFAULT '[]'"
+        );
+        console.log("Migration: added column 'story_drafts_json' to interview_stories");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('duplicate column')) {
+          console.error("Migration failed for column 'story_drafts_json':", err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('interview_stories migration check failed:', err);
   }
 }
 
@@ -619,17 +641,27 @@ export interface SpeakingPitchPersisted {
   bullets?: string[];
 }
 
+export interface StoryDraftPersisted {
+  prompt: string;
+  draft: string;
+}
+
 export interface InterviewStoriesRow {
   user_id: string;
   pitches_json: string;
   workflow_stories_ack: number;
+  story_drafts_json?: string;
   updated_at: string;
 }
 
-/** Merge-update saved speaking points for one user (partial updates OK). */
+/** Merge-update saved speaking points + optional story drafts for one user (partial updates OK). */
 export function upsertInterviewStories(
   userId: string,
-  patch: { pitches?: SpeakingPitchPersisted[]; workflowStoriesAck?: boolean }
+  patch: {
+    pitches?: SpeakingPitchPersisted[];
+    workflowStoriesAck?: boolean;
+    storyDrafts?: StoryDraftPersisted[];
+  }
 ) {
   const db = getDb();
   const row = db
@@ -654,14 +686,22 @@ export function upsertInterviewStories(
   if (patch.workflowStoriesAck === true) workflowStoriesAck = 1;
   if (patch.workflowStoriesAck === false) workflowStoriesAck = 0;
 
+  let storyDraftsJson = '[]';
+  if (patch.storyDrafts !== undefined) {
+    storyDraftsJson = JSON.stringify(patch.storyDrafts);
+  } else if (row && typeof row.story_drafts_json === 'string' && row.story_drafts_json.length > 0) {
+    storyDraftsJson = row.story_drafts_json;
+  }
+
   db.prepare(
-    `INSERT INTO interview_stories (user_id, pitches_json, workflow_stories_ack, updated_at)
-     VALUES (?, ?, ?, datetime('now'))
+    `INSERT INTO interview_stories (user_id, pitches_json, workflow_stories_ack, story_drafts_json, updated_at)
+     VALUES (?, ?, ?, ?, datetime('now'))
      ON CONFLICT(user_id) DO UPDATE SET
        pitches_json = excluded.pitches_json,
        workflow_stories_ack = excluded.workflow_stories_ack,
+       story_drafts_json = excluded.story_drafts_json,
        updated_at = datetime('now')`
-  ).run(userId, JSON.stringify(pitches), workflowStoriesAck);
+  ).run(userId, JSON.stringify(pitches), workflowStoriesAck, storyDraftsJson);
 }
 
 export function getInterviewStories(userId: string): InterviewStoriesRow | undefined {

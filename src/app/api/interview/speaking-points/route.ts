@@ -4,6 +4,7 @@ import {
   getInterviewStories,
   upsertInterviewStories,
   type SpeakingPitchPersisted,
+  type StoryDraftPersisted,
 } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -13,6 +14,10 @@ const MAX_NAME = 280;
 const MAX_HOOK = 800;
 const MAX_BULLET = 900;
 const MAX_BULLETS_PER_PITCH = 14;
+
+const MAX_STORY_DRAFTS = 12;
+const MAX_PROMPT_LEN = 520;
+const MAX_DRAFT_LEN = 12000;
 
 function sanitizePitches(raw: unknown): SpeakingPitchPersisted[] {
   if (!Array.isArray(raw)) return [];
@@ -38,6 +43,29 @@ function sanitizePitches(raw: unknown): SpeakingPitchPersisted[] {
   return out;
 }
 
+function sanitizeStoryDrafts(raw: unknown): StoryDraftPersisted[] {
+  if (!Array.isArray(raw)) return [];
+  const out: StoryDraftPersisted[] = [];
+  for (const item of raw.slice(0, MAX_STORY_DRAFTS)) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const prompt = typeof o.prompt === 'string' ? o.prompt.trim().slice(0, MAX_PROMPT_LEN) : '';
+    const draft = typeof o.draft === 'string' ? o.draft.slice(0, MAX_DRAFT_LEN) : '';
+    if (!prompt) continue;
+    out.push({ prompt, draft });
+  }
+  return out;
+}
+
+function parseStoredDrafts(row: { story_drafts_json?: string } | undefined): StoryDraftPersisted[] {
+  if (!row?.story_drafts_json) return [];
+  try {
+    return sanitizeStoryDrafts(JSON.parse(row.story_drafts_json));
+  } catch {
+    return [];
+  }
+}
+
 export async function GET() {
   const userId = await getAuthUserId();
   if (!userId) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -47,6 +75,7 @@ export async function GET() {
     return NextResponse.json({
       pitches: [],
       workflowStoriesAck: false,
+      storyDrafts: [] as StoryDraftPersisted[],
       updatedAt: null as string | null,
     });
   }
@@ -62,6 +91,7 @@ export async function GET() {
   return NextResponse.json({
     pitches,
     workflowStoriesAck: row.workflow_stories_ack === 1,
+    storyDrafts: parseStoredDrafts(row),
     updatedAt: row.updated_at,
   });
 }
@@ -74,9 +104,14 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as {
       pitches?: unknown;
       workflowStoriesAck?: unknown;
+      storyDrafts?: unknown;
     };
 
-    const patch: { pitches?: SpeakingPitchPersisted[]; workflowStoriesAck?: boolean } = {};
+    const patch: {
+      pitches?: SpeakingPitchPersisted[];
+      workflowStoriesAck?: boolean;
+      storyDrafts?: StoryDraftPersisted[];
+    } = {};
 
     if ('pitches' in body) {
       patch.pitches = sanitizePitches(body.pitches);
@@ -84,10 +119,17 @@ export async function PUT(req: Request) {
     if (typeof body.workflowStoriesAck === 'boolean') {
       patch.workflowStoriesAck = body.workflowStoriesAck;
     }
+    if ('storyDrafts' in body) {
+      patch.storyDrafts = sanitizeStoryDrafts(body.storyDrafts);
+    }
 
-    if (patch.pitches === undefined && patch.workflowStoriesAck === undefined) {
+    if (
+      patch.pitches === undefined &&
+      patch.workflowStoriesAck === undefined &&
+      patch.storyDrafts === undefined
+    ) {
       return NextResponse.json(
-        { error: 'Provide pitches and/or workflowStoriesAck' },
+        { error: 'Provide pitches, workflowStoriesAck, and/or storyDrafts' },
         { status: 400 }
       );
     }
@@ -108,6 +150,7 @@ export async function PUT(req: Request) {
       ok: true,
       pitches,
       workflowStoriesAck: row?.workflow_stories_ack === 1,
+      storyDrafts: parseStoredDrafts(row),
       updatedAt: row?.updated_at ?? null,
     });
   } catch (err) {

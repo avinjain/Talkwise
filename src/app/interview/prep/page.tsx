@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
+import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
+import { parseKickoffSummary, type KickoffSummary } from '@/lib/kickoff';
+import { buildKickoffStoryPrompts, GENERIC_STORY_PROMPTS } from '@/lib/kickoffStoryPrompts';
 
 const FORMATS = [
   { id: 'behavioral', label: 'Behavioral', desc: 'STAR-format, past experience' },
@@ -31,12 +34,33 @@ export default function InterviewPrepPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
   const [continuing, setContinuing] = useState(false);
+  const [kickoffSummary, setKickoffSummary] = useState<KickoffSummary | null>(null);
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
       router.push('/auth?callbackUrl=/interview/prep');
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    let cancelled = false;
+    fetch('/api/kickoff', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.hasResult || !data.summary) {
+          setKickoffSummary(null);
+          return;
+        }
+        setKickoffSummary(parseKickoffSummary(data.summary));
+      })
+      .catch(() => {
+        if (!cancelled) setKickoffSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -52,6 +76,11 @@ export default function InterviewPrepPage() {
       cancelled = true;
     };
   }, [status]);
+
+  const storyPrompts = useMemo(
+    () => (kickoffSummary ? buildKickoffStoryPrompts(kickoffSummary) : [...GENERIC_STORY_PROMPTS]),
+    [kickoffSummary]
+  );
 
   if (status === 'loading' || !session) return null;
 
@@ -178,8 +207,8 @@ export default function InterviewPrepPage() {
             Share context so the mock interview feels real. We use this (not personality sliders) to shape the interviewer.
           </p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,600px] gap-8">
-            {/* Left: Form - Company, Role, JD, Interview format, then Resume/LinkedIn */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(300px,420px)] gap-8">
+            {/* Left: Form + stories + speaking points */}
             <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
@@ -275,68 +304,69 @@ export default function InterviewPrepPage() {
                 />
               </details>
             </div>
+
+            <KickoffStoryPromptsSection
+              prompts={storyPrompts}
+              intro={
+                kickoffSummary
+                  ? 'These prompts come from your Prepare kickoff (story seeds, gaps, concerns). Rough drafts save to your account and sync with Prepare.'
+                  : 'Standard behavioural prompts until you complete kickoff on Prepare — drafts still save here for later polish.'
+              }
+            />
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <h2 className="text-base font-semibold text-slate-900">Speaking points</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Uses your resume + role/JD below. Generates concise hooks and bullets — AI-refined output replaces older saved pitches when you run it again.
+              </p>
+              {!hasResume ? (
+                <p className="mt-4 text-sm text-slate-400">Add your resume above to generate speaking points.</p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePitches}
+                    disabled={loadingPitches}
+                    className="mt-4 w-full rounded-xl bg-gradient-brand px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50 sm:w-auto"
+                  >
+                    {loadingPitches ? 'Generating…' : 'Generate speaking points'}
+                  </button>
+                  {pitches.length > 0 && (
+                    <ul className="mt-5 space-y-3 max-h-[50vh] overflow-y-auto">
+                      {pitches.map((p, i) => (
+                        <li key={i} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                          <h4 className="text-sm font-semibold text-slate-800">{p.name}</h4>
+                          {p.hook && (
+                            <p className="mt-1 text-sm italic text-slate-600">&ldquo;{p.hook}&rdquo;</p>
+                          )}
+                          {p.bullets && p.bullets.length > 0 && (
+                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+                              {p.bullets.map((b, j) => (
+                                <li key={j} className="leading-relaxed">
+                                  {b}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </section>
+
             <button
               onClick={handleContinue}
               disabled={!company.trim() || !role.trim() || continuing}
-              className="w-full mt-6 py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-brand hover:bg-gradient-brand-hover disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {continuing ? 'Preparing...' : 'Continue to practice'}
             </button>
             </div>
 
-            {/* Right: Stacked sections - Core positioning | Analyze profile & improvement tips */}
+            {/* Right: Analyze profile */}
             <div className="lg:sticky lg:top-24 lg:self-start space-y-6">
-              {/* Section 1: Core positioning */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-md bg-brand-100 flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                    </svg>
-                  </div>
-                  <h3 className="text-sm font-semibold text-slate-900">Core positioning</h3>
-                </div>
-                <p className="text-[11px] text-slate-500 mb-3">
-                  Add resume above, then generate pitches.
-                </p>
-
-                {!hasResume ? (
-                  <p className="text-[11px] text-slate-400 italic">Add your resume above.</p>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleGeneratePitches}
-                      disabled={loadingPitches}
-                      className="w-full mb-3 px-3 py-2 rounded-lg text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 disabled:opacity-50"
-                    >
-                      {loadingPitches ? 'Generating...' : 'Generate speaking points'}
-                    </button>
-
-                    {pitches.length > 0 && (
-                      <div className="space-y-2 max-h-[35vh] overflow-y-auto">
-                        {pitches.map((p, i) => (
-                          <div key={i} className="border border-slate-100 rounded-md p-2 bg-slate-50/50">
-                            <h4 className="text-[11px] font-semibold text-slate-800 mb-1">{p.name}</h4>
-                            {p.hook && (
-                              <p className="text-[11px] text-slate-600 mb-1 italic">&ldquo;{p.hook}&rdquo;</p>
-                            )}
-                            {p.bullets && p.bullets.length > 0 && (
-                              <ul className="text-[11px] text-slate-600 space-y-0.5 list-disc list-inside">
-                                {p.bullets.map((b, j) => (
-                                  <li key={j}>{b}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Section 2: Analyze profile & improvement tips */}
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center">
