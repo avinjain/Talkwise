@@ -29,7 +29,7 @@ export function getOpenAI(): OpenAI {
 //   GPT_MODEL_CHAT, GPT_MODEL_FEEDBACK, GPT_MODEL_CORE_POSITIONING,
 //   GPT_MODEL_ANALYZE_PROFILE, GPT_MODEL_ANALYZE_RESUME,
 //   GPT_MODEL_ANALYZE_LINKEDIN, GPT_MODEL_FILTER_GOALS,
-//   GPT_MODEL_MBTI_QUESTIONS, GPT_MODEL_PROFILE_TEST
+//   GPT_MODEL_MBTI_QUESTIONS, GPT_MODEL_PROFILE_TEST, GPT_MODEL_STORY_STAR
 //
 // Global override (back-compat with old code paths):
 //   GPT_MODEL — applies if a task-specific override is not set.
@@ -46,7 +46,8 @@ export type AITask =
   | 'profile_test'
   | 'coach_prep'
   | 'coach_concerns'
-  | 'coach_questions';
+  | 'coach_questions'
+  | 'story_star';
 
 const PREMIUM = 'gpt-4o';
 const CHEAP = 'gpt-4o-mini';
@@ -62,6 +63,7 @@ const TASK_TIER: Record<AITask, 'premium' | 'standard' | 'cheap'> = {
   coach_prep: 'premium',
   coach_concerns: 'premium',
   coach_questions: 'cheap',
+  story_star: 'cheap',
 
   // Analytical work — mini handles these well, ~17x cheaper
   analyze_profile: 'cheap',

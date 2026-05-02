@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
 import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
 import { parseKickoffSummary, type KickoffSummary } from '@/lib/kickoff';
-import { buildKickoffStoryPrompts, GENERIC_STORY_PROMPTS } from '@/lib/kickoffStoryPrompts';
+import {
+  BEHAVIORAL_ARCHETYPE_PROMPTS,
+  buildKickoffStoryPrompts,
+  GENERIC_STORY_PROMPTS,
+} from '@/lib/kickoffStoryPrompts';
 
 const FORMATS = [
   { id: 'behavioral', label: 'Behavioral', desc: 'STAR-format, past experience' },
@@ -78,7 +82,10 @@ export default function InterviewPrepPage() {
   }, [status]);
 
   const storyPrompts = useMemo(
-    () => (kickoffSummary ? buildKickoffStoryPrompts(kickoffSummary) : [...GENERIC_STORY_PROMPTS]),
+    () =>
+      kickoffSummary
+        ? buildKickoffStoryPrompts(kickoffSummary)
+        : [...BEHAVIORAL_ARCHETYPE_PROMPTS, ...GENERIC_STORY_PROMPTS],
     [kickoffSummary]
   );
 
@@ -309,8 +316,8 @@ export default function InterviewPrepPage() {
               prompts={storyPrompts}
               intro={
                 kickoffSummary
-                  ? 'These prompts come from your Prepare kickoff (story seeds, gaps, concerns). Rough drafts save to your account and sync with Prepare.'
-                  : 'Standard behavioural prompts until you complete kickoff on Prepare — drafts still save here for later polish.'
+                  ? 'Prompts reflect your Prepare kickoff (resume seeds, gaps, concerns, plus failure / stakeholder / trade-off angles). Rough drafts save to your account; use the STAR guide (info icon) for structure.'
+                  : 'Behavioural prompts including failure, stakeholder, and trade-off stories until you complete kickoff on Prepare. Use the STAR guide (info icon) for structure — drafts still save here.'
               }
             />
 

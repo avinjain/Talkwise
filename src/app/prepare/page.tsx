@@ -232,7 +232,7 @@ export default function PrepareForInterviewPage() {
               />
               <KickoffStoryPromptsSection
                 prompts={buildKickoffStoryPrompts(savedKickoff.summary)}
-                intro="Rough notes are fine — bullets or half-finished paragraphs work. Speaking-point generation (Resume or Interview prep) can tighten these later."
+                intro="Rough notes are fine — bullets or half-finished paragraphs work. Use the STAR guide (info icon) for structure; speaking-point generation can tighten wording later."
               />
             </>
           ) : (
