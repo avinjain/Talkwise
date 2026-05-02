@@ -15,6 +15,28 @@ export interface PracticeCoachingFocusPayload {
   biggestConcernHint?: string;
 }
 
+/**
+ * Shape stored in sessionStorage as `startPersonaData` for `/start` when launching interview practice
+ * from the kickoff practice hub (matches `/interview/prep` defaults).
+ */
+export function buildStartPersonaDataFromFocus(
+  focus: PracticeCoachingFocusPayload
+): Record<string, unknown> {
+  const hint = focus.targetRolesHint?.trim();
+  const name = hint ? `Interviewer — ${hint.slice(0, 80)}` : 'Interview interviewer';
+  return {
+    track: 'interview',
+    name,
+    designation: '',
+    difficultyLevel: 7,
+    decisionOrientation: 6,
+    communicationStyle: 7,
+    authorityPosture: 6,
+    temperamentStability: 6,
+    socialPresence: 5,
+  };
+}
+
 export function buildPracticeCoachingFocusPayload(
   kickoffCommandRaw: unknown,
   planItemText: string,

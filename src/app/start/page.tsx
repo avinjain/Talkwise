@@ -32,6 +32,11 @@ export default function StartPage() {
       }
       setTrack(parsed.track || 'professional');
       setTraits(parsed);
+      const scenarioPreset = sessionStorage.getItem('practiceScenarioPreset');
+      if (scenarioPreset?.trim()) {
+        setScenario(scenarioPreset.trim());
+        sessionStorage.removeItem('practiceScenarioPreset');
+      }
       if (parsed.track === 'interview') {
         const raw = sessionStorage.getItem('interviewPrepContext');
         if (raw) {

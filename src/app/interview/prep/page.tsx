@@ -38,6 +38,21 @@ export default function InterviewPrepPage() {
     }
   }, [session, status, router]);
 
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    let cancelled = false;
+    fetch('/api/interview/speaking-points', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.pitches?.length) return;
+        setPitches((prev) => (prev.length > 0 ? prev : data.pitches));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
+
   if (status === 'loading' || !session) return null;
 
   const handleGeneratePitches = async () => {
@@ -63,7 +78,14 @@ export default function InterviewPrepPage() {
 
       const res = await fetch('/api/interview/core-positioning', { method: 'POST', body: formData });
       const data = await res.json();
-      if (res.ok && Array.isArray(data.pitches)) setPitches(data.pitches);
+      if (res.ok && Array.isArray(data.pitches)) {
+        setPitches(data.pitches);
+        void fetch('/api/interview/speaking-points', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pitches: data.pitches }),
+        });
+      }
     } catch { /* ignore */ } finally {
       setLoadingPitches(false);
     }

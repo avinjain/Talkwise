@@ -1,10 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
+import Link from 'next/link';
+import {
+  INTERVIEW_PREP_WORKFLOW,
+  markInterviewStoriesStepDone,
+} from '@/lib/interviewPrepWorkflow';
 
 export default function BuildResumePage() {
+  const router = useRouter();
+  const { status } = useSession();
+  const [workflowFromPrepare, setWorkflowFromPrepare] = useState(false);
+  const [afterKickoff, setAfterKickoff] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumePaste, setResumePaste] = useState('');
   const [linkedInUrl, setLinkedInUrl] = useState('');
@@ -19,6 +29,7 @@ export default function BuildResumePage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [optimisingResume, setOptimisingResume] = useState(false);
   const [loadingPitches, setLoadingPitches] = useState(false);
+  const [speakingPointsRestored, setSpeakingPointsRestored] = useState(false);
 
   const hasResume = !!(resumeFile || resumePaste.trim());
   const hasLinkedIn = !!(linkedInUrl.trim() || linkedInPaste.trim());
@@ -26,9 +37,16 @@ export default function BuildResumePage() {
 
   const pathname = usePathname();
 
-  // Scroll to section when opening /resume#... (client nav often omits hash until we set it).
   useEffect(() => {
     if (pathname !== '/resume') return;
+
+    const syncFromLocation = () => {
+      const params = new URLSearchParams(window.location.search);
+      setWorkflowFromPrepare(params.get(INTERVIEW_PREP_WORKFLOW.queryFlag) === '1');
+      setAfterKickoff(params.get(INTERVIEW_PREP_WORKFLOW.afterKickoffQuery) === '1');
+    };
+
+    syncFromLocation();
 
     const scrollToHash = () => {
       const id = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
@@ -40,12 +58,31 @@ export default function BuildResumePage() {
     const t1 = window.setTimeout(scrollToHash, 100);
     const t2 = window.setTimeout(scrollToHash, 350);
     window.addEventListener('hashchange', scrollToHash);
+    window.addEventListener('popstate', syncFromLocation);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.removeEventListener('hashchange', scrollToHash);
+      window.removeEventListener('popstate', syncFromLocation);
     };
   }, [pathname]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    let cancelled = false;
+    fetch('/api/interview/speaking-points', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data || !Array.isArray(data.pitches) || data.pitches.length === 0)
+          return;
+        setPitches(data.pitches);
+        setSpeakingPointsRestored(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   const extractResumeText = async (): Promise<string> => {
     let text = resumePaste.trim();
@@ -120,7 +157,17 @@ export default function BuildResumePage() {
       else formData.set('resume', resumeText);
       const res = await fetch('/api/interview/core-positioning', { method: 'POST', body: formData });
       const data = await res.json();
-      if (res.ok && Array.isArray(data.pitches)) setPitches(data.pitches);
+      if (res.ok && Array.isArray(data.pitches)) {
+        setPitches(data.pitches);
+        setSpeakingPointsRestored(false);
+        if (status === 'authenticated') {
+          void fetch('/api/interview/speaking-points', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pitches: data.pitches }),
+          });
+        }
+      }
     } catch {
       /* ignore */
     } finally {
@@ -139,6 +186,25 @@ export default function BuildResumePage() {
               stories you&rsquo;ll actually tell in interviews.
             </p>
           </header>
+
+          {workflowFromPrepare ? (
+            <div className="mb-6 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/90 to-accent-50/40 px-4 py-3 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                Interview prep · Stories step
+              </p>
+              <p className="mt-1 text-sm text-slate-800">
+                Generate speaking points below, then continue to preparation (prep brief, concerns, and questions).
+              </p>
+              {afterKickoff ? (
+                <p className="mt-3 text-xs text-slate-700">
+                  <Link href="/prepare" className="font-semibold text-brand-900 underline-offset-2 hover:underline">
+                    Review your kickoff plan
+                  </Link>{' '}
+                  anytime — your personalised steps stay on Prepare.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* Inputs */}
           <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-6">
@@ -289,26 +355,68 @@ export default function BuildResumePage() {
               actionLabel={loadingPitches ? 'Generating…' : 'Generate speaking points'}
               onAction={handleGeneratePitches}
               pending={loadingPitches}
+              extra={
+                speakingPointsRestored ? (
+                  <p className="mb-2 text-[11px] font-medium text-emerald-700">
+                    Loaded saved speaking points from your account — regenerate anytime to replace them.
+                  </p>
+                ) : undefined
+              }
               customOutput={
-                pitches.length > 0 ? (
-                  <ul className="space-y-3">
-                    {pitches.map((p, i) => (
-                      <li key={i} className="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
-                        <h4 className="text-sm font-semibold text-slate-800">{p.name}</h4>
-                        {p.hook && (
-                          <p className="mt-1 text-sm italic text-slate-600">&ldquo;{p.hook}&rdquo;</p>
-                        )}
-                        {p.bullets && p.bullets.length > 0 && (
-                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                            {p.bullets.map((b, j) => (
-                              <li key={j} className="leading-relaxed">{b}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null
+                <>
+                  {pitches.length > 0 ? (
+                    <ul className="space-y-3">
+                      {pitches.map((p, i) => (
+                        <li key={i} className="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
+                          <h4 className="text-sm font-semibold text-slate-800">{p.name}</h4>
+                          {p.hook && (
+                            <p className="mt-1 text-sm italic text-slate-600">&ldquo;{p.hook}&rdquo;</p>
+                          )}
+                          {p.bullets && p.bullets.length > 0 && (
+                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">
+                              {p.bullets.map((b, j) => (
+                                <li key={j} className="leading-relaxed">
+                                  {b}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {workflowFromPrepare ? (
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          markInterviewStoriesStepDone();
+                          if (status === 'authenticated') {
+                            try {
+                              await fetch('/api/interview/speaking-points', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  ...(pitches.length > 0 ? { pitches } : {}),
+                                  workflowStoriesAck: true,
+                                }),
+                              });
+                            } catch {
+                              /* ignore */
+                            }
+                          }
+                          router.push('/prepare#interview-preparation');
+                        }}
+                        className="w-full rounded-lg bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 sm:w-auto"
+                      >
+                        Continue to interview preparation →
+                      </button>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        Marks this step complete and jumps to coaching tools on Prepare. Use after you&apos;ve drafted or reviewed speaking points.
+                      </p>
+                    </div>
+                  ) : null}
+                </>
               }
             />
           </div>

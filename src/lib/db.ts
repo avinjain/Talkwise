@@ -197,6 +197,15 @@ function initTables(db: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_practice_coaching_user ON practice_coaching_focus(user_id);
 
+    CREATE TABLE IF NOT EXISTS interview_stories (
+      user_id TEXT PRIMARY KEY,
+      pitches_json TEXT NOT NULL DEFAULT '[]',
+      workflow_stories_ack INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_interview_stories_user ON interview_stories(user_id);
+
     CREATE TABLE IF NOT EXISTS profile_result_attempts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -600,6 +609,71 @@ export function getPracticeCoachingFocus(userId: string): PracticeCoachingFocusR
 export function deletePracticeCoachingFocus(userId: string) {
   const db = getDb();
   db.prepare('DELETE FROM practice_coaching_focus WHERE user_id = ?').run(userId);
+}
+
+// ── Interview speaking points / stories (resume workflow persistence) ──
+
+export interface SpeakingPitchPersisted {
+  name: string;
+  hook?: string;
+  bullets?: string[];
+}
+
+export interface InterviewStoriesRow {
+  user_id: string;
+  pitches_json: string;
+  workflow_stories_ack: number;
+  updated_at: string;
+}
+
+/** Merge-update saved speaking points for one user (partial updates OK). */
+export function upsertInterviewStories(
+  userId: string,
+  patch: { pitches?: SpeakingPitchPersisted[]; workflowStoriesAck?: boolean }
+) {
+  const db = getDb();
+  const row = db
+    .prepare('SELECT * FROM interview_stories WHERE user_id = ?')
+    .get(userId) as InterviewStoriesRow | undefined;
+
+  let pitches: SpeakingPitchPersisted[] = [];
+  if (patch.pitches !== undefined) {
+    pitches = patch.pitches;
+  } else if (row?.pitches_json) {
+    try {
+      const parsed = JSON.parse(row.pitches_json) as unknown;
+      pitches = Array.isArray(parsed)
+        ? parsed.filter((p) => p && typeof (p as SpeakingPitchPersisted).name === 'string')
+        : [];
+    } catch {
+      pitches = [];
+    }
+  }
+
+  let workflowStoriesAck = row?.workflow_stories_ack ?? 0;
+  if (patch.workflowStoriesAck === true) workflowStoriesAck = 1;
+  if (patch.workflowStoriesAck === false) workflowStoriesAck = 0;
+
+  db.prepare(
+    `INSERT INTO interview_stories (user_id, pitches_json, workflow_stories_ack, updated_at)
+     VALUES (?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id) DO UPDATE SET
+       pitches_json = excluded.pitches_json,
+       workflow_stories_ack = excluded.workflow_stories_ack,
+       updated_at = datetime('now')`
+  ).run(userId, JSON.stringify(pitches), workflowStoriesAck);
+}
+
+export function getInterviewStories(userId: string): InterviewStoriesRow | undefined {
+  const db = getDb();
+  return db.prepare('SELECT * FROM interview_stories WHERE user_id = ?').get(userId) as
+    | InterviewStoriesRow
+    | undefined;
+}
+
+export function deleteInterviewStories(userId: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM interview_stories WHERE user_id = ?').run(userId);
 }
 
 // ── Saved Personas ──

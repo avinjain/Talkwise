@@ -263,30 +263,41 @@ export function canonicalKickoffPlanCommand(raw: unknown): string {
   return KICKOFF_COMMAND_ALIASES[n] ?? n;
 }
 
+/** Primary destination after tapping Go — combined prep + practice hub. */
+export function routeForKickoffCommand(_raw?: unknown): string {
+  return '/prepare/practice';
+}
+
+export interface KickoffSecondaryResource {
+  label: string;
+  href: string;
+}
+
 /**
- * Map a plan item command to an in-app route. Unknown tags still go somewhere useful (/resume).
+ * Optional deep-link for the workflow that previously mapped directly from this command
+ * (resume sections, configure, interview prep form).
  */
-export function routeForKickoffCommand(raw: unknown): string {
+export function kickoffSecondaryResourceHref(raw: unknown): KickoffSecondaryResource {
   const key = canonicalKickoffPlanCommand(raw);
   switch (key) {
     case 'speaking_points':
     case 'pitch':
     case 'stories':
     case 'hype':
-      return '/resume#speaking-points';
+      return { label: 'Resume — speaking points', href: '/resume#speaking-points' };
     case 'optimise_resume':
     case 'decode':
-      return '/resume#resume-optimisation';
+      return { label: 'Resume — optimisation', href: '/resume#resume-optimisation' };
     case 'analyse_profile':
     case 'concerns':
-      return '/resume#profile-alignment';
+      return { label: 'Resume — profile alignment', href: '/resume#profile-alignment' };
     case 'practice':
-      return '/configure';
+      return { label: 'Saved practice personas', href: '/configure' };
     case 'mock':
     case 'research':
-      return '/interview/prep';
+      return { label: 'Interview prep context', href: '/interview/prep' };
     default:
-      return '/resume';
+      return { label: 'Resume workspace', href: '/resume' };
   }
 }
 
