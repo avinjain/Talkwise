@@ -54,6 +54,20 @@ function InfoIcon(props: { className?: string }) {
   );
 }
 
+function SparklesIcon(props: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={props.className}
+      aria-hidden
+    >
+      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+    </svg>
+  );
+}
+
 type StarPayload = {
   situation: string;
   task: string;
@@ -64,7 +78,7 @@ type StarPayload = {
 
 export function KickoffStoryPromptsSection({
   prompts,
-  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title) for structure and a sample. Each story has Rewrite as STAR next to the box.',
+  intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title) for structure and a sample. Each story has Write with AI below the box.',
 }: {
   prompts: string[];
   intro?: string;
@@ -288,19 +302,10 @@ export function KickoffStoryPromptsSection({
       <ol className="space-y-5">
         {prompts.map((prompt, i) => (
           <li key={`${i}-${prompt.slice(0, 48)}`}>
-            <div className="mb-1.5 flex flex-wrap items-start justify-between gap-2">
-              <label className="block flex-1 text-xs font-medium text-slate-700">
-                <span className="mr-2 font-semibold text-brand-700">{i + 1}.</span>
-                {prompt}
-              </label>
-              <button
-                type="button"
-                onClick={() => void openStarForRow(i)}
-                className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-brand-700 shadow-sm hover:border-brand-300 hover:bg-brand-50"
-              >
-                Rewrite as STAR
-              </button>
-            </div>
+            <label className="mb-1.5 block text-xs font-medium text-slate-700">
+              <span className="mr-2 font-semibold text-brand-700">{i + 1}.</span>
+              {prompt}
+            </label>
             <textarea
               value={texts[i] ?? ''}
               onChange={(e) =>
@@ -311,9 +316,20 @@ export function KickoffStoryPromptsSection({
                 })
               }
               rows={4}
-              placeholder="Rough bullets or paragraphs — use Rewrite as STAR when you’re ready."
+              placeholder="Rough bullets or paragraphs — then use Write with AI below."
               className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             />
+            <div className="mt-2 flex justify-start">
+              <button
+                type="button"
+                onClick={() => void openStarForRow(i)}
+                disabled={starLoading}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_28px_-6px_rgba(56,189,248,0.55),0_6px_18px_-4px_rgba(217,70,239,0.48)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-45 active:brightness-95"
+              >
+                <SparklesIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-white" />
+                Write with AI
+              </button>
+            </div>
           </li>
         ))}
       </ol>
