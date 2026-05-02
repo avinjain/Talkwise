@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type { LastTestResult } from '@/contexts/SideNavContext';
+import { useConfigureSidebarSlot } from '@/contexts/ConfigureSidebarSlotContext';
+import { ConfigureCharactersRail } from '@/components/ConfigureCharactersRail';
 
 type NavVariant = 'default' | 'profile' | 'chat';
 
@@ -102,6 +104,7 @@ function SideNavPanel({
 }: PanelProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { slot: configureSlot } = useConfigureSidebarSlot();
 
   const go = (href: string) => {
     router.push(href);
@@ -170,6 +173,24 @@ function SideNavPanel({
           }
         />
       </div>
+
+      {isPractice && configureSlot ? (
+        <SectionGroup label="Start conversation">
+          <ConfigureCharactersRail
+            personas={configureSlot.personas}
+            loading={configureSlot.loading}
+            currentEditId={configureSlot.currentEditId}
+            onEditPersona={(p) => {
+              configureSlot.onEditPersona(p);
+              onItemClick?.();
+            }}
+            onStartConversation={(p) => {
+              configureSlot.onStartConversation(p);
+              onItemClick?.();
+            }}
+          />
+        </SectionGroup>
+      ) : null}
 
       {variant === 'chat' && pathname === '/chat' && (
         <>

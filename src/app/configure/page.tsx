@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Track, LifeContext, getPersonaAttributes, SavedPersona } from '@/lib/types';
 import { buildPersonalityNarrative, personalityPreviewTitle } from '@/lib/personalityPreview';
+import { useConfigureSidebarSlot } from '@/contexts/ConfigureSidebarSlotContext';
 
 const DEFAULT_PROFESSIONAL_TRAITS = {
   difficultyLevel: 5,
@@ -117,106 +118,10 @@ function ConversationsQuickGuide({ className = '' }: { className?: string }) {
   );
 }
 
-const RAIL_EDIT_ICON = (
-  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"
-    />
-  </svg>
-);
-
-function SavedCharactersRail({
-  personas,
-  loading,
-  currentEditId,
-  onEditPersona,
-  onStartConversation,
-  className = '',
-}: {
-  personas: SavedPersona[];
-  loading: boolean;
-  currentEditId: string | null;
-  onEditPersona: (p: SavedPersona) => void;
-  onStartConversation: (p: SavedPersona) => void;
-  className?: string;
-}) {
-  const workLife = personas.filter((p) => p.track === 'professional' || p.track === 'personal');
-
-  return (
-    <div
-      className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-[calc(3.5rem+1.5rem)] lg:self-start ${className}`}
-    >
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Your characters</p>
-      {loading ? (
-        <p className="text-xs text-slate-400">Loading…</p>
-      ) : workLife.length === 0 ? (
-        <p className="text-xs leading-relaxed text-slate-500">
-          No saved Work or Life characters yet. Save one after you finish building.
-        </p>
-      ) : (
-        <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-2 lg:overflow-visible lg:pb-0">
-          {workLife.map((p) => {
-            const life = p.track === 'personal';
-            const selected = currentEditId === p.id;
-            const startTone = life
-              ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-orange-500/20'
-              : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/20';
-
-            return (
-              <li key={p.id} className="shrink-0 lg:shrink">
-                <div
-                  className={`flex min-w-[13.5rem] flex-col gap-2 rounded-xl border px-2 py-2 transition-colors lg:min-w-0 ${
-                    selected
-                      ? 'border-slate-200 bg-slate-50 ring-1 ring-slate-200/90'
-                      : 'border-transparent bg-slate-50/40 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm ${
-                        life
-                          ? 'bg-gradient-to-br from-pink-500 to-orange-400'
-                          : 'bg-gradient-to-br from-brand-500 to-accent-500'
-                      }`}
-                      aria-hidden
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{p.name}</span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onEditPersona(p)}
-                      className="touch-manipulation rounded-lg p-2 text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
-                      aria-label={`Edit ${p.name}`}
-                      title="Edit persona"
-                    >
-                      {RAIL_EDIT_ICON}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onStartConversation(p)}
-                      className={`touch-manipulation whitespace-nowrap rounded-lg px-3 py-2 text-center text-[11px] font-semibold text-white shadow-sm transition-colors ${startTone}`}
-                      aria-label={`Start conversation with ${p.name}`}
-                      title="Start conversation"
-                    >
-                      Start conversation
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export default function ConfigurePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { setSlot: setConfigureSidebarSlot } = useConfigureSidebarSlot();
   const [editPersonaId, setEditPersonaId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -419,6 +324,24 @@ export default function ConfigurePage() {
     );
   }, []);
 
+  useEffect(() => {
+    setConfigureSidebarSlot({
+      personas: savedPersonas,
+      loading: personasLoading,
+      currentEditId: editPersonaId,
+      onEditPersona: applyPersonaFromList,
+      onStartConversation: handleStartConversation,
+    });
+    return () => setConfigureSidebarSlot(null);
+  }, [
+    savedPersonas,
+    personasLoading,
+    editPersonaId,
+    applyPersonaFromList,
+    handleStartConversation,
+    setConfigureSidebarSlot,
+  ]);
+
   const attributes = getPersonaAttributes(track);
   const isLife = track === 'personal';
 
@@ -448,15 +371,7 @@ export default function ConfigurePage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(280px,380px)] lg:items-start lg:gap-8">
-          <SavedCharactersRail
-            personas={savedPersonas}
-            loading={personasLoading}
-            currentEditId={editPersonaId}
-            onEditPersona={applyPersonaFromList}
-            onStartConversation={handleStartConversation}
-          />
-
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start lg:gap-8">
           <div className="min-w-0">
             <header className="mb-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
