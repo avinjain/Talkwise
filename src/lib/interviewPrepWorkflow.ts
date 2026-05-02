@@ -8,12 +8,9 @@ export const INTERVIEW_PREP_WORKFLOW = {
   afterKickoffQuery: 'afterKickoff',
 } as const;
 
-/** `/resume` URL for the Stories step (speaking points). */
-export function resumeStoriesWorkflowHref(options?: { afterKickoff?: boolean }): string {
-  const params = new URLSearchParams();
-  params.set(INTERVIEW_PREP_WORKFLOW.queryFlag, '1');
-  if (options?.afterKickoff) params.set(INTERVIEW_PREP_WORKFLOW.afterKickoffQuery, '1');
-  return `/resume?${params.toString()}#speaking-points`;
+/** Prepare — deep-link to Stories to prepare (drafts + STAR), not resume builder. */
+export function resumeStoriesWorkflowHref(_options?: { afterKickoff?: boolean }): string {
+  return '/prepare#stories-to-prepare';
 }
 
 export function markInterviewStoriesStepDone(): void {

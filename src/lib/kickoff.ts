@@ -284,7 +284,7 @@ export function kickoffSecondaryResourceHref(raw: unknown): KickoffSecondaryReso
     case 'pitch':
     case 'stories':
     case 'hype':
-      return { label: 'Resume — speaking points', href: '/resume#speaking-points' };
+      return { label: 'Stories to prepare', href: '/prepare#stories-to-prepare' };
     case 'optimise_resume':
     case 'decode':
       return { label: 'Resume — optimisation', href: '/resume#resume-optimisation' };

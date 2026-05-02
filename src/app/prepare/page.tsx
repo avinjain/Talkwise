@@ -125,9 +125,9 @@ export default function PrepareForInterviewPage() {
   useEffect(() => {
     if (kickoffLoading) return;
     const id = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-    if (id !== 'interview-preparation') return;
+    if (id !== 'interview-preparation' && id !== 'stories-to-prepare') return;
     const scroll = () =>
-      document.getElementById('interview-preparation')?.scrollIntoView({
+      document.getElementById(id)?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
       });
