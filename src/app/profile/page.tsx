@@ -23,6 +23,16 @@ export default function ProfilePage() {
   const [hasResult, setHasResult] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [mbtiResult, setMbtiResult] = useState<{ type: string; createdAt: string } | null>(null);
+  const [testsMeasureOpen, setTestsMeasureOpen] = useState(false);
+
+  useEffect(() => {
+    if (!testsMeasureOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setTestsMeasureOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [testsMeasureOpen]);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -91,6 +101,7 @@ export default function ProfilePage() {
             <SectionHeader
               title="Personality tests"
               description="Two short tests. Together they tell you how you communicate and how you decide."
+              onOpenWhatMeasures={() => setTestsMeasureOpen(true)}
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -197,34 +208,9 @@ export default function ProfilePage() {
               </TestCard>
             </div>
 
-            <details className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-              <summary className="cursor-pointer select-none text-xs font-medium text-slate-500 hover:text-slate-700">
-                What do these tests measure?
-              </summary>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Communication style
-                  </p>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {DIMENSIONS.map((d) => (
-                      <div
-                        key={d.key}
-                        className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2"
-                        style={{ borderLeftWidth: 3, borderLeftColor: d.color }}
-                      >
-                        <p className="text-[11px] font-semibold text-slate-800">{d.label}</p>
-                        <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{d.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">MBTI</p>
-                  <MBTIDimensionVisual />
-                </div>
-              </div>
-            </details>
+            {testsMeasureOpen ? (
+              <WhatTestsMeasureModal onClose={() => setTestsMeasureOpen(false)} />
+            ) : null}
           </section>
 
           {/* Cross-link to other top-level pages */}
@@ -254,12 +240,101 @@ export default function ProfilePage() {
 // Helpers
 // ─────────────────────────────────────────────────────────────
 
-function SectionHeader({ title, description }: { title: string; description: string }) {
+const INFO_ICON = (
+  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+);
+
+function SectionHeader({
+  title,
+  description,
+  onOpenWhatMeasures,
+}: {
+  title: string;
+  description: string;
+  onOpenWhatMeasures?: () => void;
+}) {
   return (
     <div className="mb-5">
-      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        {onOpenWhatMeasures ? (
+          <button
+            type="button"
+            onClick={onOpenWhatMeasures}
+            className="inline-flex shrink-0 rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+            aria-label="What these tests measure"
+            title="What these tests measure"
+          >
+            {INFO_ICON}
+          </button>
+        ) : null}
+      </div>
       <p className="mt-1 text-sm text-slate-500">{description}</p>
     </div>
+  );
+}
+
+function WhatTestsMeasureModal({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-[1px]"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="what-tests-measure-title"
+        className="fixed left-1/2 top-[max(1rem,8vh)] z-[101] flex max-h-[min(82vh,calc(100dvh-2rem))] w-[min(100%,26rem)] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-[min(100%,42rem)]"
+      >
+        <div className="relative flex shrink-0 items-start border-b border-slate-100 px-4 py-3 sm:px-5">
+          <h3 id="what-tests-measure-title" className="text-base font-semibold leading-snug text-slate-900 pr-10">
+            What these tests measure
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Close"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:pb-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Communication style</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {DIMENSIONS.map((d) => (
+                  <div
+                    key={d.key}
+                    className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2"
+                    style={{ borderLeftWidth: 3, borderLeftColor: d.color }}
+                  >
+                    <p className="text-[11px] font-semibold text-slate-800">{d.label}</p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{d.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">MBTI</p>
+              <MBTIDimensionVisual />
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
