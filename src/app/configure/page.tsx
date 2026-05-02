@@ -117,17 +117,29 @@ function ConversationsQuickGuide({ className = '' }: { className?: string }) {
   );
 }
 
+const RAIL_EDIT_ICON = (
+  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"
+    />
+  </svg>
+);
+
 function SavedCharactersRail({
   personas,
   loading,
   currentEditId,
-  onSelectPersona,
+  onEditPersona,
+  onStartConversation,
   className = '',
 }: {
   personas: SavedPersona[];
   loading: boolean;
   currentEditId: string | null;
-  onSelectPersona: (p: SavedPersona) => void;
+  onEditPersona: (p: SavedPersona) => void;
+  onStartConversation: (p: SavedPersona) => void;
   className?: string;
 }) {
   const workLife = personas.filter((p) => p.track === 'professional' || p.track === 'personal');
@@ -144,28 +156,55 @@ function SavedCharactersRail({
           No saved Work or Life characters yet. Save one after you finish building.
         </p>
       ) : (
-        <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+        <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-2 lg:overflow-visible lg:pb-0">
           {workLife.map((p) => {
             const life = p.track === 'personal';
+            const selected = currentEditId === p.id;
+            const startTone = life
+              ? 'bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 shadow-orange-500/20'
+              : 'bg-brand-600 hover:bg-brand-700 shadow-brand-500/20';
+
             return (
               <li key={p.id} className="shrink-0 lg:shrink">
-                <button
-                  type="button"
-                  onClick={() => onSelectPersona(p)}
-                  className={`flex w-full min-w-[10rem] items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-slate-50 lg:min-w-0 ${
-                    currentEditId === p.id ? 'bg-slate-100 ring-1 ring-slate-200/80' : ''
+                <div
+                  className={`flex min-w-[13.5rem] flex-col gap-2 rounded-xl border px-2 py-2 transition-colors lg:min-w-0 ${
+                    selected
+                      ? 'border-slate-200 bg-slate-50 ring-1 ring-slate-200/90'
+                      : 'border-transparent bg-slate-50/40 hover:bg-slate-50'
                   }`}
                 >
-                  <span
-                    className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm ${
-                      life
-                        ? 'bg-gradient-to-br from-pink-500 to-orange-400'
-                        : 'bg-gradient-to-br from-brand-500 to-accent-500'
-                    }`}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 truncate font-medium text-slate-800">{p.name}</span>
-                </button>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm ${
+                        life
+                          ? 'bg-gradient-to-br from-pink-500 to-orange-400'
+                          : 'bg-gradient-to-br from-brand-500 to-accent-500'
+                      }`}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{p.name}</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onEditPersona(p)}
+                      className="touch-manipulation rounded-lg p-2 text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                      aria-label={`Edit ${p.name}`}
+                      title="Edit persona"
+                    >
+                      {RAIL_EDIT_ICON}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onStartConversation(p)}
+                      className={`touch-manipulation whitespace-nowrap rounded-lg px-3 py-2 text-center text-[11px] font-semibold text-white shadow-sm transition-colors ${startTone}`}
+                      aria-label={`Start conversation with ${p.name}`}
+                      title="Start conversation"
+                    >
+                      Start conversation
+                    </button>
+                  </div>
+                </div>
               </li>
             );
           })}
@@ -206,6 +245,35 @@ export default function ConfigurePage() {
       setPersonasLoading(false);
     }
   }, []);
+
+  const handleStartConversation = useCallback(
+    (p: SavedPersona) => {
+      sessionStorage.setItem('userName', session?.user?.name || 'there');
+      sessionStorage.setItem(
+        'startPersonaData',
+        JSON.stringify({
+          track: p.track || 'professional',
+          name: p.name,
+          designation: p.designation ?? '',
+          lifeContext: p.lifeContext,
+          difficultyLevel: p.difficultyLevel,
+          decisionOrientation: p.decisionOrientation,
+          communicationStyle: p.communicationStyle,
+          authorityPosture: p.authorityPosture,
+          temperamentStability: p.temperamentStability,
+          socialPresence: p.socialPresence,
+          interestLevel: p.interestLevel,
+          flirtatiousness: p.flirtatiousness,
+          communicationEffort: p.communicationEffort,
+          emotionalOpenness: p.emotionalOpenness,
+          humorStyle: p.humorStyle,
+          pickiness: p.pickiness,
+        })
+      );
+      router.push('/start');
+    },
+    [router, session?.user?.name]
+  );
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
@@ -380,12 +448,13 @@ export default function ConfigurePage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_minmax(280px,380px)] lg:items-start lg:gap-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,17.5rem)_minmax(0,1fr)_minmax(280px,380px)] lg:items-start lg:gap-8">
           <SavedCharactersRail
             personas={savedPersonas}
             loading={personasLoading}
             currentEditId={editPersonaId}
-            onSelectPersona={applyPersonaFromList}
+            onEditPersona={applyPersonaFromList}
+            onStartConversation={handleStartConversation}
           />
 
           <div className="min-w-0">
