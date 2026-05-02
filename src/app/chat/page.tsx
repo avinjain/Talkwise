@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import Logo from '@/components/Logo';
-import ProfileDropdown from '@/components/ProfileDropdown';
 import EditPersonalityModal from '@/components/EditPersonalityModal';
 import { PersonaConfig, ChatMessage } from '@/lib/types';
 import { useSideNav } from '@/contexts/SideNavContext';
@@ -29,7 +26,6 @@ interface SpeechRecognitionInstance extends EventTarget {
 
 export default function ChatPage() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [personaConfig, setPersonaConfig] = useState<PersonaConfig | null>(
     null
   );
@@ -240,22 +236,13 @@ export default function ChatPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50">
-      {/* ── Header ── */}
+      {/* Conversation context — global logo + profile live in TopBar (AppShell) */}
       <header className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <Logo size={44} />
-            <div className="min-w-0">
-              <h1 className="font-semibold text-slate-900 truncate text-sm">
-                <span className="text-gradient">{personaConfig.name}</span>
-              </h1>
-              <p className="text-xs text-slate-400 truncate">
-                {personaConfig.userGoal}
-              </p>
-            </div>
-          </div>
-
-          <ProfileDropdown />
+        <div className="max-w-3xl mx-auto min-w-0">
+          <h1 className="truncate text-sm font-semibold text-slate-900">
+            <span className="text-gradient">{personaConfig.name}</span>
+          </h1>
+          <p className="truncate text-xs text-slate-400">{personaConfig.userGoal}</p>
         </div>
       </header>
 
