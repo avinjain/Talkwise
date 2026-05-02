@@ -113,6 +113,7 @@ function SideNavPanel({
 
   const isHome = pathname === '/home' || pathname === '/';
   const isPractice = pathname.startsWith('/configure');
+  const isConversation = pathname === '/chat';
   const isPrepare = pathname.startsWith('/prepare');
   const isResume = pathname.startsWith('/resume');
   const isProfile = pathname.startsWith('/profile');
@@ -120,6 +121,16 @@ function SideNavPanel({
   const ChatBubbleIcon = (
     <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.6A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  );
+
+  const ConversationIcon = (
+    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337L5 21l1.395-3.72C5.512 15.042 5 13.574 5 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
     </svg>
   );
 
@@ -141,6 +152,12 @@ function SideNavPanel({
           active={isPractice}
           onClick={() => go('/configure')}
           icon={ChatBubbleIcon}
+        />
+        <NavLink
+          label="Conversation"
+          active={isConversation}
+          onClick={() => go('/chat')}
+          icon={ConversationIcon}
         />
         <NavLink
           label="Prepare for interview"
