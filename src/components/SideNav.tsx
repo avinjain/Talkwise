@@ -171,45 +171,6 @@ function SideNavPanel({
         />
       </div>
 
-      {isPractice && (
-        <div className="mx-1 rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-white p-3 shadow-sm">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick guide</p>
-          <ol className="mb-3 space-y-2 text-[11px] leading-snug text-slate-600">
-            <li className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
-                1
-              </span>
-              <span>
-                Pick <strong className="font-semibold text-slate-800">Work</strong> or{' '}
-                <strong className="font-semibold text-slate-800">Life</strong>.
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
-                2
-              </span>
-              <span>Name who you&rsquo;re practising with.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
-                3
-              </span>
-              <span>Dial behaviour sliders, then tap Finish building.</span>
-            </li>
-          </ol>
-          <button
-            type="button"
-            onClick={() => go('/home')}
-            className="flex w-full min-h-[44px] touch-manipulation items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-sm transition-colors active:bg-slate-50 hover:border-slate-300 hover:bg-slate-50 sm:min-h-0"
-          >
-            <span>Your characters</span>
-            <svg className="h-3.5 w-3.5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {variant === 'chat' && pathname === '/chat' && (
         <>
           <SectionGroup label="Chat">

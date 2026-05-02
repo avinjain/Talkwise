@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Track, LifeContext, getPersonaAttributes } from '@/lib/types';
+import { Track, LifeContext, getPersonaAttributes, SavedPersona } from '@/lib/types';
 import { buildPersonalityNarrative, personalityPreviewTitle } from '@/lib/personalityPreview';
 
 const DEFAULT_PROFESSIONAL_TRAITS = {
@@ -84,6 +84,97 @@ function PersonalitySnapshot({
   );
 }
 
+function ConversationsQuickGuide({ className = '' }: { className?: string }) {
+  return (
+    <div
+      className={`rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm ${className}`}
+    >
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick guide</p>
+      <ol className="space-y-2 text-[11px] leading-snug text-slate-600">
+        <li className="flex gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
+            1
+          </span>
+          <span>
+            Pick <strong className="font-semibold text-slate-800">Work</strong> or{' '}
+            <strong className="font-semibold text-slate-800">Life</strong>.
+          </span>
+        </li>
+        <li className="flex gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
+            2
+          </span>
+          <span>Name who you&rsquo;re practising with.</span>
+        </li>
+        <li className="flex gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-800">
+            3
+          </span>
+          <span>Dial behaviour sliders, then tap Finish building.</span>
+        </li>
+      </ol>
+    </div>
+  );
+}
+
+function SavedCharactersRail({
+  personas,
+  loading,
+  currentEditId,
+  onSelectPersona,
+  className = '',
+}: {
+  personas: SavedPersona[];
+  loading: boolean;
+  currentEditId: string | null;
+  onSelectPersona: (p: SavedPersona) => void;
+  className?: string;
+}) {
+  const workLife = personas.filter((p) => p.track === 'professional' || p.track === 'personal');
+
+  return (
+    <div
+      className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm lg:sticky lg:top-[calc(3.5rem+1.5rem)] lg:self-start ${className}`}
+    >
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Your characters</p>
+      {loading ? (
+        <p className="text-xs text-slate-400">Loading…</p>
+      ) : workLife.length === 0 ? (
+        <p className="text-xs leading-relaxed text-slate-500">
+          No saved Work or Life characters yet. Save one after you finish building.
+        </p>
+      ) : (
+        <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+          {workLife.map((p) => {
+            const life = p.track === 'personal';
+            return (
+              <li key={p.id} className="shrink-0 lg:shrink">
+                <button
+                  type="button"
+                  onClick={() => onSelectPersona(p)}
+                  className={`flex w-full min-w-[10rem] items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-slate-50 lg:min-w-0 ${
+                    currentEditId === p.id ? 'bg-slate-100 ring-1 ring-slate-200/80' : ''
+                  }`}
+                >
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full shadow-sm ${
+                      life
+                        ? 'bg-gradient-to-br from-pink-500 to-orange-400'
+                        : 'bg-gradient-to-br from-brand-500 to-accent-500'
+                    }`}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 truncate font-medium text-slate-800">{p.name}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function ConfigurePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -99,6 +190,28 @@ export default function ConfigurePage() {
     ...DEFAULT_PROFESSIONAL_TRAITS,
     ...DEFAULT_PERSONAL_TRAITS,
   });
+  const [savedPersonas, setSavedPersonas] = useState<SavedPersona[]>([]);
+  const [personasLoading, setPersonasLoading] = useState(true);
+
+  const fetchSavedPersonas = useCallback(async () => {
+    try {
+      const res = await fetch('/api/personas');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedPersonas(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch personas:', err);
+    } finally {
+      setPersonasLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      fetchSavedPersonas();
+    }
+  }, [status, session, fetchSavedPersonas]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -191,6 +304,53 @@ export default function ConfigurePage() {
     }
   };
 
+  const applyPersonaFromList = useCallback((p: SavedPersona) => {
+    const tr: Track = p.track === 'personal' ? 'personal' : 'professional';
+    setEditPersonaId(p.id);
+    setTrack(tr);
+    setName(p.name);
+    setDesignation(tr === 'professional' ? (p.designation ?? '').trim() : '');
+    setLifeContext(p.lifeContext === 'social' ? 'social' : 'dating');
+    setTraits((prev) => ({
+      ...prev,
+      difficultyLevel: p.difficultyLevel,
+      decisionOrientation: p.decisionOrientation,
+      communicationStyle: p.communicationStyle,
+      authorityPosture: p.authorityPosture,
+      temperamentStability: p.temperamentStability,
+      socialPresence: p.socialPresence,
+      interestLevel: p.interestLevel,
+      flirtatiousness: p.flirtatiousness,
+      communicationEffort: p.communicationEffort,
+      emotionalOpenness: p.emotionalOpenness,
+      humorStyle: p.humorStyle,
+      pickiness: p.pickiness,
+    }));
+
+    sessionStorage.setItem('editPersonaId', p.id);
+    sessionStorage.setItem(
+      'editPersonaData',
+      JSON.stringify({
+        track: tr,
+        name: p.name,
+        designation: p.designation ?? '',
+        lifeContext: p.lifeContext,
+        difficultyLevel: p.difficultyLevel,
+        decisionOrientation: p.decisionOrientation,
+        communicationStyle: p.communicationStyle,
+        authorityPosture: p.authorityPosture,
+        temperamentStability: p.temperamentStability,
+        socialPresence: p.socialPresence,
+        interestLevel: p.interestLevel,
+        flirtatiousness: p.flirtatiousness,
+        communicationEffort: p.communicationEffort,
+        emotionalOpenness: p.emotionalOpenness,
+        humorStyle: p.humorStyle,
+        pickiness: p.pickiness,
+      })
+    );
+  }, []);
+
   const attributes = getPersonaAttributes(track);
   const isLife = track === 'personal';
 
@@ -220,8 +380,15 @@ export default function ConfigurePage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-          <div className="min-w-0 flex-1 lg:max-w-xl">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_minmax(280px,380px)] lg:items-start lg:gap-8">
+          <SavedCharactersRail
+            personas={savedPersonas}
+            loading={personasLoading}
+            currentEditId={editPersonaId}
+            onSelectPersona={applyPersonaFromList}
+          />
+
+          <div className="min-w-0">
             <header className="mb-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Practice conversations
@@ -434,7 +601,10 @@ export default function ConfigurePage() {
             </div>
           </div>
 
-          <PersonalitySnapshot {...snapshotProps} className="lg:hidden" />
+          <div className="mt-8 space-y-5 lg:hidden">
+            <ConversationsQuickGuide />
+            <PersonalitySnapshot {...snapshotProps} />
+          </div>
 
           {saveError && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{saveError}</div>
@@ -450,7 +620,8 @@ export default function ConfigurePage() {
           </button>
           </div>
 
-          <aside className="mx-auto hidden w-full max-w-md shrink-0 lg:sticky lg:top-[calc(3.5rem+1.5rem)] lg:block lg:max-w-[380px] lg:self-start">
+          <aside className="mx-auto hidden w-full max-w-[380px] shrink-0 flex-col gap-5 lg:flex lg:sticky lg:top-[calc(3.5rem+1.5rem)] lg:max-w-none lg:self-start">
+            <ConversationsQuickGuide />
             <PersonalitySnapshot {...snapshotProps} />
           </aside>
         </div>
