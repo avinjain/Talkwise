@@ -165,12 +165,20 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 ) : (
-                  <div>
-                    <div className="flex items-center gap-4">
-                      <MBTITypeBadge type={mbtiResult.type} size="md" showBreakdown />
-                      <div className="text-xs text-slate-500">Your MBTI type</div>
+                  <div className="space-y-4">
+                    <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                      <p className="text-sm leading-relaxed text-slate-500 sm:max-w-[min(100%,22rem)] sm:pt-0.5">
+                        Preference patterns across four dichotomies, summed up as one type. Open the report for strengths, blind spots, and
+                        how your type shows up at work.
+                      </p>
+                      <div className="flex shrink-0 justify-center sm:justify-end">
+                        <div className="flex flex-col items-center gap-1">
+                          <MBTITypeBadge type={mbtiResult.type} size="sm" showBreakdown={false} />
+                          <span className="text-[10px] font-medium text-slate-500">Your MBTI type</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-4 flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => router.push('/profile/mbti/results')}
                         className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
