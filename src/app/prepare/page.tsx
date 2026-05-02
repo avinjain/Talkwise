@@ -222,6 +222,7 @@ export default function PrepareForInterviewPage() {
             speakingPersisted={speakingPersisted}
           />
 
+          <div id="kickoff-plan" className="scroll-mt-24">
           {savedKickoff && !showWizard ? (
             <>
               <KickoffSummaryView
@@ -247,9 +248,13 @@ export default function PrepareForInterviewPage() {
               }}
             />
           )}
+          </div>
 
           {savedKickoff && !showWizard && coachState.practiceFocus ? (
-            <div className="mt-6 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/90 to-accent-50/40 px-4 py-4 shadow-sm">
+            <div
+              id="practice-focus"
+              className="mt-6 scroll-mt-24 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/90 to-accent-50/40 px-4 py-4 shadow-sm"
+            >
               <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">
                 Active practice skill (used in conversation AI + feedback)
               </p>

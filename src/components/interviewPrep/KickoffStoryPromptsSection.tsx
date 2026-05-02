@@ -79,9 +79,12 @@ type StarPayload = {
 export function KickoffStoryPromptsSection({
   prompts,
   intro = 'Write rough notes — bullets are fine. Use the STAR guide (info icon next to the title). Save each story when you’re ready — drafts sync across Prepare and Interview prep.',
+  sectionId = 'stories-to-prepare',
 }: {
   prompts: string[];
   intro?: string;
+  /** Anchor for in-page navigation (e.g. workflow CTAs). */
+  sectionId?: string;
 }) {
   const [texts, setTexts] = useState<string[]>(() => prompts.map(() => ''));
   const [loaded, setLoaded] = useState(false);
@@ -242,14 +245,20 @@ export function KickoffStoryPromptsSection({
 
   if (!loaded) {
     return (
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section
+        id={sectionId}
+        className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
         <p className="text-sm text-slate-500">Loading story drafts…</p>
       </section>
     );
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section
+      id={sectionId}
+      className="mt-8 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+    >
       <header className="mb-4">
         <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
           <h2 className="text-base font-semibold text-slate-900">Stories to prepare</h2>

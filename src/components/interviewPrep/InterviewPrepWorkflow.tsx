@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { isInterviewStoriesStepDone, resumeStoriesWorkflowHref } from '@/lib/interviewPrepWorkflow';
+import { useRouter } from 'next/navigation';
+import { isInterviewStoriesStepDone } from '@/lib/interviewPrepWorkflow';
 import type { CoachStateBundle } from '@/components/interviewPrep/CoachingToolsSection';
 
 type PhaseId = 'kickoff' | 'stories' | 'preparation' | 'practice';
@@ -27,6 +27,7 @@ export function InterviewPrepWorkflow({
   coachState: CoachStateBundle;
   speakingPersisted?: { pitchCount: number; workflowAck: boolean; loaded: boolean };
 }) {
+  const router = useRouter();
   const [sessionStoriesAck, setSessionStoriesAck] = useState(false);
 
   useEffect(() => {
@@ -70,14 +71,38 @@ export function InterviewPrepWorkflow({
     return 'practice';
   }, [completion]);
 
-  const scrollToPreparation = () => {
-    document.getElementById('interview-preparation')?.scrollIntoView({
+  const scrollToId = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
   };
 
-  const resumeStoriesHref = resumeStoriesWorkflowHref();
+  const navigateToPhase = (phaseId: PhaseId, locked: boolean) => {
+    if (locked) return;
+    switch (phaseId) {
+      case 'kickoff':
+        scrollToId('kickoff-plan');
+        break;
+      case 'stories':
+        scrollToId('stories-to-prepare');
+        break;
+      case 'preparation':
+        scrollToId('interview-preparation');
+        break;
+      case 'practice': {
+        const el = document.getElementById('practice-focus');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          router.push('/prepare/practice');
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
 
   return (
     <section
@@ -88,7 +113,7 @@ export function InterviewPrepWorkflow({
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Your workflow</h2>
           <p className="text-xs text-slate-500">
-            Kickoff → stories → preparation → practice. Follow in order when you can — each step feeds the next.
+            Kickoff → stories → preparation → practice. Tap a step to jump to that section on this page.
           </p>
         </div>
         <p className="text-[11px] font-medium uppercase tracking-wide text-brand-700">
@@ -96,53 +121,62 @@ export function InterviewPrepWorkflow({
         </p>
       </div>
 
-      <ol className="grid gap-3 sm:grid-cols-4">
+      <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-4">
         {PHASES.map((phase, index) => {
           const locked = !kickoffDone && phase.id !== 'kickoff';
           const done = locked ? false : completion[phase.id];
           const isCurrent = phase.id === currentPhase;
 
+          const surface =
+            locked
+              ? 'border-slate-100 bg-slate-50/80 opacity-70'
+              : done
+              ? 'border-emerald-200 bg-emerald-50/40 hover:border-emerald-300'
+              : isCurrent
+              ? 'border-brand-300 bg-brand-50/50 ring-1 ring-brand-200/60 hover:border-brand-400'
+              : 'border-slate-200 bg-slate-50/40 hover:border-slate-300 hover:bg-white';
+
           return (
-            <li
-              key={phase.id}
-              className={`relative rounded-xl border px-3 py-3 text-left ${
-                locked
-                  ? 'border-slate-100 bg-slate-50/80 opacity-70'
-                  : done
-                  ? 'border-emerald-200 bg-emerald-50/40'
-                  : isCurrent
-                  ? 'border-brand-300 bg-brand-50/50 ring-1 ring-brand-200/60'
-                  : 'border-slate-200 bg-slate-50/40'
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    done
-                      ? 'bg-emerald-600 text-white'
-                      : isCurrent
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-slate-200 text-slate-700'
-                  }`}
-                  aria-hidden
-                >
-                  {done ? '✓' : index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-slate-900">{phase.title}</p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{phase.description}</p>
-                  <PhaseAction
-                    phase={phase.id}
-                    locked={locked}
-                    done={done}
-                    isCurrent={isCurrent}
-                    resumeStoriesHref={resumeStoriesHref}
-                    practiceReady={practiceReady}
-                    scrollToPreparation={scrollToPreparation}
-                    kickoffDone={kickoffDone}
-                  />
+            <li key={phase.id}>
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => navigateToPhase(phase.id, locked)}
+                aria-label={
+                  locked
+                    ? `${phase.title} — finish kickoff first`
+                    : `Go to ${phase.title}: ${phase.description}`
+                }
+                className={`relative w-full rounded-xl border px-3 py-3 text-left transition ${surface} ${
+                  locked ? 'cursor-not-allowed' : 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40'
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      done
+                        ? 'bg-emerald-600 text-white'
+                        : isCurrent
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}
+                    aria-hidden
+                  >
+                    {done ? '✓' : index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-slate-900">{phase.title}</p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{phase.description}</p>
+                    <PhaseHint
+                      phase={phase.id}
+                      locked={locked}
+                      done={done}
+                      kickoffDone={kickoffDone}
+                      practiceReady={practiceReady}
+                    />
+                  </div>
                 </div>
-              </div>
+              </button>
             </li>
           );
         })}
@@ -151,69 +185,45 @@ export function InterviewPrepWorkflow({
   );
 }
 
-function PhaseAction({
+function PhaseHint({
   phase,
   locked,
   done,
-  isCurrent,
-  resumeStoriesHref,
-  practiceReady,
-  scrollToPreparation,
   kickoffDone,
+  practiceReady,
 }: {
   phase: PhaseId;
   locked: boolean;
   done: boolean;
-  isCurrent: boolean;
-  resumeStoriesHref: string;
-  practiceReady: boolean;
-  scrollToPreparation: () => void;
   kickoffDone: boolean;
+  practiceReady: boolean;
 }) {
   if (locked) {
-    return (
-      <p className="mt-2 text-[10px] text-slate-400">Finish kickoff first</p>
-    );
+    return <p className="mt-2 text-[10px] text-slate-400">Finish kickoff first.</p>;
   }
 
   if (phase === 'kickoff') {
     return (
-      <p className="mt-2 text-[10px] text-slate-500">
-        {done ? 'Saved — adjust anytime with Re-run kickoff.' : 'Complete the wizard below.'}
+      <p className="mt-2 text-[10px] font-medium text-brand-800">
+        {done ? 'Go to your kickoff plan →' : 'Go to kickoff wizard →'}
       </p>
     );
   }
 
   if (phase === 'stories') {
     return (
-      <div className="mt-2 space-y-1.5">
-        <Link
-          href={resumeStoriesHref}
-          className={`inline-block text-[11px] font-semibold underline-offset-2 hover:underline ${
-            kickoffDone && isCurrent && !done ? 'text-brand-800' : 'text-brand-700'
-          }`}
-        >
-          Open speaking points →
-        </Link>
-        {done && <p className="text-[10px] text-emerald-700">Marked complete</p>}
+      <div className="mt-2 space-y-0.5">
+        <p className="text-[10px] font-medium text-brand-800">Go to Stories to prepare →</p>
+        {done ? <p className="text-[10px] text-emerald-700">Marked complete</p> : null}
       </div>
     );
   }
 
   if (phase === 'preparation') {
     return (
-      <div className="mt-2 space-y-1.5">
-        <button
-          type="button"
-          onClick={scrollToPreparation}
-          disabled={!kickoffDone}
-          className={`block text-left text-[11px] font-semibold underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline ${
-            kickoffDone && isCurrent && !done ? 'text-brand-800' : 'text-brand-700'
-          }`}
-        >
-          Jump to coaching tools →
-        </button>
-        {done && <p className="text-[10px] text-emerald-700">At least one tool saved</p>}
+      <div className="mt-2 space-y-0.5">
+        <p className="text-[10px] font-medium text-brand-800">Go to coaching tools →</p>
+        {done ? <p className="text-[10px] text-emerald-700">At least one tool saved</p> : null}
       </div>
     );
   }
@@ -221,26 +231,15 @@ function PhaseAction({
   /* practice */
   if (!practiceReady) {
     return (
-      <p className="mt-2 text-[10px] text-slate-500">
-        {kickoffDone ? (
-          <>
-            Tap <span className="font-semibold">Go</span> on a kickoff plan item to set your practice lens.
-          </>
-        ) : (
-          'Available after kickoff.'
-        )}
+      <p className="mt-2 text-[10px] font-medium text-brand-800">
+        {kickoffDone ? 'Opens practice hub →' : 'Available after kickoff.'}
       </p>
     );
   }
 
   return (
-    <Link
-      href="/prepare/practice"
-      className={`mt-2 inline-block text-[11px] font-semibold underline-offset-2 hover:underline ${
-        kickoffDone && isCurrent ? 'text-brand-800' : 'text-brand-700'
-      }`}
-    >
-      Open practice hub →
-    </Link>
+    <p className="mt-2 text-[10px] font-medium text-brand-800">
+      Go to practice lens / hub →
+    </p>
   );
 }
