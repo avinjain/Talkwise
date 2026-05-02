@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AppHeader from '@/components/AppHeader';
 import { PersonaConfig, Track, LifeContext, INTERVIEW_GOAL_OPTIONS, INTERVIEW_TOUGHNESS_LEVELS, FORMAT_TO_GOAL_LABEL, getGoalOptions, getPersonaAttributes } from '@/lib/types';
 
 export default function StartPage() {
@@ -138,9 +137,8 @@ export default function StartPage() {
   const toughnessInfo = INTERVIEW_TOUGHNESS_LEVELS[toughnessLevel] ?? INTERVIEW_TOUGHNESS_LEVELS[7];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <AppHeader backHref={track === 'interview' ? '/interview/prep' : '/home'} backLabel="Back" />
-      <div className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
+    <div className="flex min-h-0 flex-1 flex-col bg-slate-50/60">
+      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
       <div className="max-w-xl mx-auto">
 
         <div className="mb-6">

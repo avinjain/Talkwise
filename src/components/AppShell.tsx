@@ -21,8 +21,9 @@ import { useSideNav } from '@/contexts/SideNavContext';
  *
  * On mobile, SideNav becomes a drawer toggled from TopBar (< lg breakpoint).
  *
- * On focused, full-screen flows (auth, conversation start, the personality
- * tests themselves) we hide everything so the page can take over.
+ * On focused, full-screen flows (auth, personality tests, etc.) we hide
+ * chrome so the page can take over. `/start` uses the normal shell so users
+ * keep SideNav while picking goals before chat.
  */
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -65,7 +66,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const isFullScreen =
     pathname.startsWith('/auth') ||
-    pathname.startsWith('/start') ||
     pathname.startsWith('/profile/test') ||
     pathname === '/profile/mbti';
 
