@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import AnalysisDisplay from '@/components/AnalysisDisplay';
-import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
 import { parseKickoffSummary, type KickoffSummary } from '@/lib/kickoff';
 import {
   BEHAVIORAL_ARCHETYPE_PROMPTS,
@@ -312,14 +311,38 @@ export default function InterviewPrepPage() {
               </details>
             </div>
 
-            <KickoffStoryPromptsSection
-              prompts={storyPrompts}
-              intro={
-                kickoffSummary
-                  ? 'Prompts reflect your Prepare kickoff (resume seeds, gaps, concerns, plus failure / stakeholder / trade-off angles). Save each story below its box — use the STAR guide (info icon) for structure.'
-                  : 'Behavioural prompts including failure, stakeholder, and trade-off stories until you complete kickoff on Prepare. Save each story below its box — use the STAR guide (info icon) for structure.'
-              }
-            />
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">Your stories</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Stories live in your Story bank — build them as STAR, score and improve them, and track gaps for your target role.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push('/prepare/storybank')}
+                  className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                >
+                  Open Story bank →
+                </button>
+              </div>
+              {storyPrompts.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    {kickoffSummary ? 'Suggested stories (from your kickoff)' : 'Suggested stories to build'}
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {storyPrompts.map((p, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-base font-semibold text-slate-900">Speaking points</h2>

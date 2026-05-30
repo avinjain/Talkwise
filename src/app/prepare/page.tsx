@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import Link from 'next/link';
 import {
   routeForKickoffCommand,
   type KickoffSummary,
@@ -244,19 +243,12 @@ export default function PrepareForInterviewPage() {
 
           <div id="kickoff-plan" className="scroll-mt-24">
           {savedKickoff && !showWizard ? (
-            <>
-              <KickoffSummaryView
-                summary={savedKickoff.summary}
-                updatedAt={savedKickoff.updatedAt}
-                onRerun={() => setShowWizard(true)}
-                onAction={runPlanAction}
-              />
-              <StoriesHandoffCard
-                prompts={buildKickoffStoryPrompts(savedKickoff.summary)}
-                storyCount={storyCount}
-                onOpen={() => router.push('/prepare/storybank')}
-              />
-            </>
+            <KickoffSummaryView
+              summary={savedKickoff.summary}
+              updatedAt={savedKickoff.updatedAt}
+              onRerun={() => setShowWizard(true)}
+              onAction={runPlanAction}
+            />
           ) : (
             <KickoffWizard
               initial={savedKickoff?.inputs}
@@ -271,65 +263,31 @@ export default function PrepareForInterviewPage() {
           )}
           </div>
 
-          {savedKickoff && !showWizard && coachState.practiceFocus ? (
-            <div
-              id="practice-focus"
-              className="mt-6 scroll-mt-24 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/90 to-accent-50/40 px-4 py-4 shadow-sm"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">
-                Active practice skill (used in conversation AI + feedback)
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-800">{coachState.practiceFocus.skillLens}</p>
-              <p className="mt-2 text-[11px] text-slate-500">
-                Set when you tap Go on your kickoff plan. Run another Go step anytime to update this lens.
-              </p>
-              <Link
-                href="/prepare/practice"
-                className="mt-3 inline-flex text-xs font-semibold text-brand-800 underline-offset-2 hover:underline"
-              >
-                Open prep & practice hub →
-              </Link>
-            </div>
-          ) : null}
-
-          {/* Coaching tools — only after kickoff is done */}
           {savedKickoff && !showWizard && (
-            <div id="interview-preparation" className="scroll-mt-24">
-              <CoachingToolsSection
-                state={coachState}
-                onChange={(next) => setCoachState((s) => ({ ...s, ...next }))}
-                refresh={fetchCoach}
+            <>
+              {/* Stories — single home is the Story bank */}
+              <StoriesHandoffCard
+                prompts={buildKickoffStoryPrompts(savedKickoff.summary)}
+                storyCount={storyCount}
+                onOpen={() => router.push('/prepare/storybank')}
               />
-            </div>
-          )}
 
-          {/* Quiet cross-links */}
-          <div className="mt-10 space-y-3">
-            <button
-              onClick={() => router.push('/prepare/storybank')}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50"
-            >
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Open my storybank →</p>
-                <p className="text-xs text-slate-500">
-                  Build STAR stories, score and improve them, find role gaps, and extract your narrative identity.
-                </p>
+              {/* Preparation — prep brief, concerns, questions */}
+              <div id="interview-preparation" className="mt-6 scroll-mt-24">
+                <CoachingToolsSection
+                  state={coachState}
+                  onChange={(next) => setCoachState((s) => ({ ...s, ...next }))}
+                  refresh={fetchCoach}
+                />
               </div>
-              <span className="text-slate-400">→</span>
-            </button>
-            <button
-              onClick={() => router.push('/resume')}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50"
-            >
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Build my resume →</p>
-                <p className="text-xs text-slate-500">
-                  Sharpen your resume, align it with LinkedIn, and pull out interview stories.
-                </p>
-              </div>
-              <span className="text-slate-400">→</span>
-            </button>
-          </div>
+
+              {/* Practice */}
+              <PracticeNextSection
+                practiceFocus={coachState.practiceFocus}
+                onOpen={() => router.push('/prepare/practice')}
+              />
+            </>
+          )}
         </div>
       </main>
 
@@ -703,6 +661,52 @@ function StoriesHandoffCard({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Practice next-step section
+// ─────────────────────────────────────────────────────────────
+
+function PracticeNextSection({
+  practiceFocus,
+  onOpen,
+}: {
+  practiceFocus: PracticeCoachingFocusPayload | null;
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      id="practice-focus"
+      className="mt-6 scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">Practice</h2>
+          <p className="text-xs text-slate-500">
+            Run a realistic mock conversation tuned to your plan, then get feedback.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          Open practice hub →
+        </button>
+      </div>
+      {practiceFocus?.skillLens ? (
+        <div className="px-6 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">
+            Active practice skill (used in conversation AI + feedback)
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-800">{practiceFocus.skillLens}</p>
+          <p className="mt-2 text-[11px] text-slate-500">
+            Set when you tap Go on a kickoff plan step. Run another Go step anytime to update it.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
