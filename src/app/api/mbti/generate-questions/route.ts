@@ -1,6 +1,7 @@
 import { getAuthUserId } from '@/lib/session';
 import { getMBTIQuestions, clearMBTIQuestions, insertMBTIQuestions } from '@/lib/db';
 import { getOpenAI, pickModel } from '@/lib/openai';
+import { checkBudget } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 
@@ -19,6 +20,11 @@ export async function POST() {
     const userId = await getAuthUserId();
     if (!userId) {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const budget = checkBudget();
+    if (!budget.allowed) {
+      return Response.json({ error: budget.reason }, { status: 429 });
     }
 
     const model = pickModel('mbti_questions');

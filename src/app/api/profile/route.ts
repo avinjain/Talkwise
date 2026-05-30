@@ -2,6 +2,7 @@ import { getAuthUserId } from '@/lib/session';
 import { getProfileResult, saveProfileResult } from '@/lib/db';
 import { calculateScores, DIMENSIONS } from '@/lib/personality-test';
 import { getOpenAI, pickModel } from '@/lib/openai';
+import { checkBudget } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 
@@ -133,9 +134,10 @@ export async function POST(req: Request) {
 
     const scores = calculateScores(answers);
 
-    // Generate AI feedback
+    // Generate AI feedback (skipped if the global AI budget is exhausted)
     let aiFeedback = '';
     try {
+      if (!checkBudget().allowed) throw new Error('AI budget reached');
       const model = pickModel('profile_test');
       const prompt = buildFeedbackPrompt(scores as unknown as Record<string, number>, userContext || {
         role: '', experience: '', goal: '', focus: 'professional',

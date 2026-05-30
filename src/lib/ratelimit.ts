@@ -1,4 +1,4 @@
-import { getRecentRequestCount } from './db';
+import { getRecentRequestCount, getUsageThisMonth } from './db';
 
 // Rate limit configuration
 const RATE_LIMITS = {
@@ -17,10 +17,43 @@ export interface RateLimitResult {
 }
 
 /**
+ * Global AI spend kill-switch. Opt-in via ADMIN_ENFORCE_BUDGET=true so a
+ * misconfigured budget can never accidentally take AI offline. When enabled
+ * and this month's estimated spend has reached ADMIN_MONTHLY_BUDGET_USD,
+ * all AI requests are blocked until the next calendar month.
+ */
+export function checkBudget(): RateLimitResult {
+  if ((process.env.ADMIN_ENFORCE_BUDGET || '').toLowerCase() !== 'true') {
+    return { allowed: true };
+  }
+  const budget = Number(process.env.ADMIN_MONTHLY_BUDGET_USD || '50');
+  if (!(budget > 0)) return { allowed: true };
+
+  try {
+    const spend = getUsageThisMonth().cost;
+    if (spend >= budget) {
+      return {
+        allowed: false,
+        reason: 'Monthly AI budget reached. Please try again next month or contact the admin.',
+        retryAfterSeconds: 3600,
+      };
+    }
+  } catch {
+    // Never let a bookkeeping error block AI — fail open.
+    return { allowed: true };
+  }
+  return { allowed: true };
+}
+
+/**
  * Check if a user is within rate limits.
  * Uses the usage_logs table as the source of truth.
  */
 export function checkRateLimit(userId: string): RateLimitResult {
+  // Global budget kill-switch first — applies to every user.
+  const budget = checkBudget();
+  if (!budget.allowed) return budget;
+
   // Check per-minute limit
   const lastMinute = getRecentRequestCount(userId, 60);
   if (lastMinute >= RATE_LIMITS.requestsPerMinute) {

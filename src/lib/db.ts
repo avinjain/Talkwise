@@ -514,6 +514,174 @@ export function getRecentRequestCount(userId: string, windowSeconds: number): nu
   return row.cnt;
 }
 
+// ── Admin analytics (usage tracking dashboard) ──
+
+export interface UsageTotals {
+  requests: number;
+  promptTokens: number;
+  completionTokens: number;
+  tokens: number;
+  cost: number;
+}
+
+export interface AdminOverview extends UsageTotals {
+  totalUsers: number;
+  activeUsers7d: number;
+  totalConversations: number;
+}
+
+export interface UsageByUserRow {
+  userId: string;
+  email: string;
+  name: string;
+  requests: number;
+  tokens: number;
+  cost: number;
+  conversations: number;
+  lastActive: string | null;
+}
+
+export interface UsageBreakdownRow {
+  key: string;
+  requests: number;
+  tokens: number;
+  cost: number;
+}
+
+export interface UsageDayRow {
+  day: string;
+  requests: number;
+  tokens: number;
+  cost: number;
+}
+
+const ZERO_TOTALS: UsageTotals = {
+  requests: 0,
+  promptTokens: 0,
+  completionTokens: 0,
+  tokens: 0,
+  cost: 0,
+};
+
+/** Aggregate usage across an optional rolling window (in seconds). Omit for all-time. */
+export function getUsageTotals(windowSeconds?: number): UsageTotals {
+  const db = getDb();
+  const where = windowSeconds
+    ? `WHERE created_at >= datetime('now', '-' || ${Number(windowSeconds)} || ' seconds')`
+    : '';
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS requests,
+              COALESCE(SUM(prompt_tokens), 0) AS promptTokens,
+              COALESCE(SUM(completion_tokens), 0) AS completionTokens,
+              COALESCE(SUM(total_tokens), 0) AS tokens,
+              COALESCE(SUM(estimated_cost), 0) AS cost
+       FROM usage_logs ${where}`
+    )
+    .get() as UsageTotals | undefined;
+  return row ?? { ...ZERO_TOTALS };
+}
+
+/** Spend + tokens for the current calendar month (used for budget tracking). */
+export function getUsageThisMonth(): UsageTotals {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS requests,
+              COALESCE(SUM(prompt_tokens), 0) AS promptTokens,
+              COALESCE(SUM(completion_tokens), 0) AS completionTokens,
+              COALESCE(SUM(total_tokens), 0) AS tokens,
+              COALESCE(SUM(estimated_cost), 0) AS cost
+       FROM usage_logs
+       WHERE created_at >= datetime('now', 'start of month')`
+    )
+    .get() as UsageTotals | undefined;
+  return row ?? { ...ZERO_TOTALS };
+}
+
+export function getAdminOverview(): AdminOverview {
+  const db = getDb();
+  const all = getUsageTotals();
+  const totalUsers = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+  const totalConversations = (db.prepare('SELECT COUNT(*) AS c FROM sessions').get() as { c: number }).c;
+  const activeUsers7d = (
+    db
+      .prepare(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM usage_logs
+         WHERE created_at >= datetime('now', '-7 days')`
+      )
+      .get() as { c: number }
+  ).c;
+  return { ...all, totalUsers, activeUsers7d, totalConversations };
+}
+
+export function getUsageByUser(): UsageByUserRow[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT u.id AS userId,
+              u.email AS email,
+              u.name AS name,
+              COUNT(l.id) AS requests,
+              COALESCE(SUM(l.total_tokens), 0) AS tokens,
+              COALESCE(SUM(l.estimated_cost), 0) AS cost,
+              (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id) AS conversations,
+              MAX(l.created_at) AS lastActive
+       FROM users u
+       LEFT JOIN usage_logs l ON l.user_id = u.id
+       GROUP BY u.id
+       ORDER BY cost DESC, requests DESC`
+    )
+    .all() as UsageByUserRow[];
+}
+
+export function getUsageByModel(): UsageBreakdownRow[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT model AS key,
+              COUNT(*) AS requests,
+              COALESCE(SUM(total_tokens), 0) AS tokens,
+              COALESCE(SUM(estimated_cost), 0) AS cost
+       FROM usage_logs
+       GROUP BY model
+       ORDER BY cost DESC`
+    )
+    .all() as UsageBreakdownRow[];
+}
+
+export function getUsageByEndpoint(): UsageBreakdownRow[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT endpoint AS key,
+              COUNT(*) AS requests,
+              COALESCE(SUM(total_tokens), 0) AS tokens,
+              COALESCE(SUM(estimated_cost), 0) AS cost
+       FROM usage_logs
+       GROUP BY endpoint
+       ORDER BY cost DESC`
+    )
+    .all() as UsageBreakdownRow[];
+}
+
+export function getUsageByDay(days: number): UsageDayRow[] {
+  const db = getDb();
+  const n = Math.max(1, Math.min(180, Math.floor(days)));
+  return db
+    .prepare(
+      `SELECT date(created_at) AS day,
+              COUNT(*) AS requests,
+              COALESCE(SUM(total_tokens), 0) AS tokens,
+              COALESCE(SUM(estimated_cost), 0) AS cost
+       FROM usage_logs
+       WHERE created_at >= datetime('now', '-' || ${`${n}`} || ' days')
+       GROUP BY day
+       ORDER BY day ASC`
+    )
+    .all() as UsageDayRow[];
+}
+
 // ── Kickoff state ──
 
 export interface KickoffStateRow {
