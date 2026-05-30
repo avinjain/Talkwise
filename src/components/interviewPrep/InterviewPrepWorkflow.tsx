@@ -22,10 +22,13 @@ export function InterviewPrepWorkflow({
   kickoffDone,
   coachState,
   speakingPersisted = { pitchCount: 0, workflowAck: false, loaded: false },
+  storyCount = 0,
 }: {
   kickoffDone: boolean;
   coachState: CoachStateBundle;
   speakingPersisted?: { pitchCount: number; workflowAck: boolean; loaded: boolean };
+  /** Stories saved in the Story bank — the canonical home for stories. */
+  storyCount?: number;
 }) {
   const router = useRouter();
   const [sessionStoriesAck, setSessionStoriesAck] = useState(false);
@@ -45,7 +48,7 @@ export function InterviewPrepWorkflow({
     speakingPersisted.loaded &&
     (speakingPersisted.workflowAck || speakingPersisted.pitchCount > 0);
 
-  const storiesComplete = sessionStoriesAck || persistedStoriesComplete;
+  const storiesComplete = sessionStoriesAck || persistedStoriesComplete || storyCount > 0;
 
   const preparationDone = !!(
     coachState.prep ||
@@ -213,8 +216,8 @@ function PhaseHint({
   if (phase === 'stories') {
     return (
       <div className="mt-2 space-y-0.5">
-        <p className="text-[10px] font-medium text-brand-800">Go to Stories to prepare →</p>
-        {done ? <p className="text-[10px] text-emerald-700">Marked complete</p> : null}
+        <p className="text-[10px] font-medium text-brand-800">Open your Story bank →</p>
+        {done ? <p className="text-[10px] text-emerald-700">Stories saved</p> : null}
       </div>
     );
   }

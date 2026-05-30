@@ -20,7 +20,6 @@ import {
   type CoachStateBundle,
 } from '@/components/interviewPrep/CoachingToolsSection';
 import { InterviewPrepWorkflow } from '@/components/interviewPrep/InterviewPrepWorkflow';
-import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
 import { buildKickoffStoryPrompts } from '@/lib/kickoffStoryPrompts';
 import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 
@@ -64,6 +63,20 @@ export default function PrepareForInterviewPage() {
       setShowWizard(true);
     } finally {
       setKickoffLoading(false);
+    }
+  }, []);
+
+  const [storyCount, setStoryCount] = useState(0);
+
+  const fetchStoryCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/interview/storybank', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setStoryCount(Array.isArray(data.stories) ? data.stories.length : 0);
+      }
+    } catch {
+      /* noop */
     }
   }, []);
 
@@ -113,15 +126,19 @@ export default function PrepareForInterviewPage() {
     fetchKickoff();
     fetchCoach();
     fetchSpeakingPersisted();
-  }, [fetchKickoff, fetchCoach, fetchSpeakingPersisted]);
+    fetchStoryCount();
+  }, [fetchKickoff, fetchCoach, fetchSpeakingPersisted, fetchStoryCount]);
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === 'visible') fetchSpeakingPersisted();
+      if (document.visibilityState === 'visible') {
+        fetchSpeakingPersisted();
+        fetchStoryCount();
+      }
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
-  }, [fetchSpeakingPersisted]);
+  }, [fetchSpeakingPersisted, fetchStoryCount]);
 
   useEffect(() => {
     if (kickoffLoading) return;
@@ -222,6 +239,7 @@ export default function PrepareForInterviewPage() {
             kickoffDone={!!savedKickoff}
             coachState={coachState}
             speakingPersisted={speakingPersisted}
+            storyCount={storyCount}
           />
 
           <div id="kickoff-plan" className="scroll-mt-24">
@@ -233,9 +251,10 @@ export default function PrepareForInterviewPage() {
                 onRerun={() => setShowWizard(true)}
                 onAction={runPlanAction}
               />
-              <KickoffStoryPromptsSection
+              <StoriesHandoffCard
                 prompts={buildKickoffStoryPrompts(savedKickoff.summary)}
-                intro="Rough notes are fine — bullets or half-finished paragraphs work. Use the STAR guide (info icon); Save each story below its box. Speaking-point generation can tighten wording later."
+                storyCount={storyCount}
+                onOpen={() => router.push('/prepare/storybank')}
               />
             </>
           ) : (
@@ -626,6 +645,64 @@ function KickoffWizard({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Stories handoff — single home for stories is the Story bank
+// ─────────────────────────────────────────────────────────────
+
+function StoriesHandoffCard({
+  prompts,
+  storyCount,
+  onOpen,
+}: {
+  prompts: string[];
+  storyCount: number;
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      id="stories-to-prepare"
+      className="mt-6 scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">Your stories</h2>
+          <p className="text-xs text-slate-500">
+            {storyCount > 0
+              ? `${storyCount} ${storyCount === 1 ? 'story' : 'stories'} in your Story bank — build, score, and improve them there.`
+              : 'Build STAR stories, score and improve them, and track role gaps — all in your Story bank.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          {storyCount > 0 ? 'Open Story bank →' : 'Build my stories →'}
+        </button>
+      </div>
+
+      {prompts.length > 0 && (
+        <div className="px-6 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Suggested stories to build (from your kickoff)
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {prompts.map((p, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-xs text-slate-400">
+            Paste rough notes for any of these in the Story bank — it shapes them into STAR and scores them.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
