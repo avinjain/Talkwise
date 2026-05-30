@@ -9,6 +9,7 @@ import {
   INTERVIEW_PREP_WORKFLOW,
   markInterviewStoriesStepDone,
 } from '@/lib/interviewPrepWorkflow';
+import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 
 export default function BuildResumePage() {
   const router = useRouter();
@@ -179,6 +180,7 @@ export default function BuildResumePage() {
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">
+          <InterviewPrepNav active="resume" />
           <header className="mb-10">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Build my resume</h1>
             <p className="mt-1.5 text-sm text-slate-500">

@@ -22,6 +22,7 @@ import {
 import { InterviewPrepWorkflow } from '@/components/interviewPrep/InterviewPrepWorkflow';
 import { KickoffStoryPromptsSection } from '@/components/interviewPrep/KickoffStoryPromptsSection';
 import { buildKickoffStoryPrompts } from '@/lib/kickoffStoryPrompts';
+import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 
 // ─────────────────────────────────────────────────────────────
 // Page
@@ -206,6 +207,7 @@ export default function PrepareForInterviewPage() {
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">
+          <InterviewPrepNav active="prepare" />
           <header className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Prepare for interview

@@ -73,6 +73,26 @@ function PillarCard({
   );
 }
 
+function PillarGroup({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">{label}</h2>
+        <p className="mt-0.5 text-xs text-slate-400">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 const ICONS = {
   chat: (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -98,6 +118,15 @@ const ICONS = {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+      />
+    </svg>
+  ),
+  book: (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
       />
     </svg>
   ),
@@ -288,51 +317,65 @@ export default function HomeDashboard() {
                 Hi {userName} — what do you want to work on?
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                Pick any of the four — practice, prep for an interview, sharpen your resume, or learn your style.
+                Three ways to grow: land your next role, practise hard conversations, or get to know your style.
               </p>
             </div>
           </section>
 
           <section className="mb-12">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <PillarCard
-                tone="brand"
-                icon={ICONS.chat}
-                title="Practice conversations"
-                description="Salary talks, tough feedback, hard chats with friends or family."
-                ctaLabel="Practise a conversation"
-                onClick={() => handleCreateCharacter('professional')}
-              />
-              <PillarCard
-                tone="amber"
-                icon={ICONS.briefcase}
-                title="Prepare for interview"
-                description="A 2-minute kickoff turns your resume into a personalised interview plan."
-                ctaLabel="Build my plan"
-                onClick={() => router.push('/prepare')}
-              />
-              <PillarCard
-                tone="emerald"
-                icon={RESUME_ICON}
-                title="Build my resume"
-                description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
-                ctaLabel="Sharpen my resume"
-                onClick={() => router.push('/resume')}
-              />
-              <PillarCard
-                tone="accent"
-                icon={ICONS.sparkle}
-                title="Know yourself"
-                description="Communication test + MBTI. Strengths, blind spots, growth tips."
-                ctaLabel="Take the tests"
-                onClick={() => router.push('/profile')}
-              />
-            </div>
+            <PillarGroup
+              label="Interview prep"
+              description="Plan, build your stories, and sharpen your resume — all in one flow."
+            >
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <PillarCard
+                  tone="amber"
+                  icon={ICONS.briefcase}
+                  title="Prepare for interview"
+                  description="A 2-minute kickoff turns your resume into a personalised interview plan."
+                  ctaLabel="Build my plan"
+                  onClick={() => router.push('/prepare')}
+                />
+                <PillarCard
+                  tone="brand"
+                  icon={ICONS.book}
+                  title="Story bank"
+                  description="Turn experiences into STAR stories, score them, and find your role gaps."
+                  ctaLabel="Open my storybank"
+                  onClick={() => router.push('/prepare/storybank')}
+                />
+                <PillarCard
+                  tone="emerald"
+                  icon={RESUME_ICON}
+                  title="Build my resume"
+                  description="Sharpen your resume, align it with LinkedIn, and pull out interview stories."
+                  ctaLabel="Sharpen my resume"
+                  onClick={() => router.push('/resume')}
+                />
+              </div>
+            </PillarGroup>
           </section>
 
-          {(loading || personas.length > 0) && (
-            <section>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <section className="mb-12 space-y-6">
+            <PillarGroup
+              label="Practice"
+              description="Rehearse high-stakes conversations out loud with a realistic partner."
+            >
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <PillarCard
+                  tone="brand"
+                  icon={ICONS.chat}
+                  title="Practice conversations"
+                  description="Salary talks, tough feedback, hard chats with friends or family."
+                  ctaLabel="Practise a conversation"
+                  onClick={() => handleCreateCharacter('professional')}
+                />
+              </div>
+            </PillarGroup>
+
+            {(loading || personas.length > 0) && (
+              <div>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">Your characters</h2>
                   <p className="text-xs text-slate-500">Pick one to keep practising, or create a new one.</p>
@@ -445,8 +488,24 @@ export default function HomeDashboard() {
                   })}
                 </ul>
               )}
-            </section>
-          )}
+              </div>
+            )}
+          </section>
+
+          <section className="mb-12">
+            <PillarGroup label="Profile" description="Understand your communication style and personality.">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <PillarCard
+                  tone="accent"
+                  icon={ICONS.sparkle}
+                  title="Know yourself"
+                  description="Communication test + MBTI. Strengths, blind spots, growth tips."
+                  ctaLabel="Take the tests"
+                  onClick={() => router.push('/profile')}
+                />
+              </div>
+            </PillarGroup>
+          </section>
         </div>
       </div>
       <footer className="border-t border-slate-100 bg-white px-4 py-4 text-center text-xs text-slate-400 sm:px-6">

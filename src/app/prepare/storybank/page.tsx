@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 import { STORY_DIMENSIONS, type StoryScores } from '@/lib/storybank';
 
 // ─────────────────────────────────────────────────────────────
@@ -116,15 +117,9 @@ export default function StorybankPage() {
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">
+          <InterviewPrepNav active="storybank" />
           <header className="mb-6">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <Link href="/prepare" className="hover:text-slate-600">
-                Prepare
-              </Link>
-              <span>/</span>
-              <span className="text-slate-600">Storybank</span>
-            </div>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Storybank</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Storybank</h1>
             <p className="mt-1.5 text-sm text-slate-500">
               Turn real experiences into memorable STAR stories, score and improve them, find the gaps for your
               target role, and discover the themes that tie your career together.
