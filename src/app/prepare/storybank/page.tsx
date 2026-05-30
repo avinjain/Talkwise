@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 import { STORY_DIMENSIONS, type StoryScores } from '@/lib/storybank';
+import { STANDARD_STORY_TYPES, type StoryPromptSuggestion } from '@/lib/kickoffStoryPrompts';
 
 // ─────────────────────────────────────────────────────────────
 // Types (mirror the API DTOs)
@@ -83,6 +84,7 @@ const FIX_SECTION_FIELD: Record<string, keyof StoryDTO> = {
 export default function StorybankPage() {
   const [tab, setTab] = useState<Tab>('stories');
   const [stories, setStories] = useState<StoryDTO[]>([]);
+  const [seedSuggestions, setSeedSuggestions] = useState<StoryPromptSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStories = useCallback(async () => {
@@ -99,9 +101,29 @@ export default function StorybankPage() {
     }
   }, []);
 
+  const fetchSeeds = useCallback(async () => {
+    try {
+      const res = await fetch('/api/kickoff', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const seeds: string[] = data?.summary?.profile?.storySeeds ?? [];
+      const mapped = seeds
+        .map((s) => (s || '').trim())
+        .filter(Boolean)
+        .map<StoryPromptSuggestion>((s) => ({
+          label: s.length > 60 ? `${s.slice(0, 57)}…` : s,
+          prompt: s,
+        }));
+      setSeedSuggestions(mapped);
+    } catch {
+      /* kickoff is optional — standard prompts still show */
+    }
+  }, []);
+
   useEffect(() => {
     fetchStories();
-  }, [fetchStories]);
+    fetchSeeds();
+  }, [fetchStories, fetchSeeds]);
 
   const strong = stories.filter((s) => s.strength >= 4).length;
 
@@ -140,7 +162,7 @@ export default function StorybankPage() {
 
           <div className="mt-6">
             {tab === 'stories' && (
-              <StoriesTab stories={stories} refresh={fetchStories} />
+              <StoriesTab stories={stories} refresh={fetchStories} seedSuggestions={seedSuggestions} />
             )}
             {tab === 'gaps' && <GapsTab />}
             {tab === 'narrative' && <NarrativeTab storyCount={stories.length} />}
@@ -249,11 +271,33 @@ function ErrorText({ children }: { children: React.ReactNode }) {
 // Stories tab
 // ─────────────────────────────────────────────────────────────
 
-function StoriesTab({ stories, refresh }: { stories: StoryDTO[]; refresh: () => Promise<void> }) {
+function StoriesTab({
+  stories,
+  refresh,
+  seedSuggestions,
+}: {
+  stories: StoryDTO[];
+  refresh: () => Promise<void>;
+  seedSuggestions: StoryPromptSuggestion[];
+}) {
   const [rawNotes, setRawNotes] = useState('');
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const useSuggestion = (prompt: string) => {
+    setRawNotes(prompt);
+    setError(null);
+    setDiagnosis(null);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
 
   const build = async () => {
     if (!rawNotes.trim()) return;
@@ -289,6 +333,7 @@ function StoriesTab({ stories, refresh }: { stories: StoryDTO[]; refresh: () => 
           score it.
         </p>
         <textarea
+          ref={textareaRef}
           value={rawNotes}
           onChange={(e) => setRawNotes(e.target.value)}
           rows={4}
@@ -314,6 +359,36 @@ function StoriesTab({ stories, refresh }: { stories: StoryDTO[]; refresh: () => 
         )}
       </div>
 
+      {/* Suggested stories to prepare */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-slate-900">Stories worth preparing</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          {seedSuggestions.length > 0
+            ? 'Pulled from your kickoff resume seeds, plus the behavioural stories interviewers reach for. Tap one to start — then replace the prompt with your real example.'
+            : 'The behavioural stories interviewers reach for across roles. Tap one to start — then replace the prompt with your real example.'}
+        </p>
+
+        {seedSuggestions.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">From your kickoff</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {seedSuggestions.map((s, i) => (
+                <SuggestionChip key={`seed-${i}`} label={s.label} hint={s.prompt} onClick={() => useSuggestion(s.prompt)} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Standard story types</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {STANDARD_STORY_TYPES.map((s, i) => (
+              <SuggestionChip key={`std-${i}`} label={s.label} hint={s.prompt} onClick={() => useSuggestion(s.prompt)} />
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* List */}
       {stories.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center">
@@ -328,6 +403,19 @@ function StoriesTab({ stories, refresh }: { stories: StoryDTO[]; refresh: () => 
         </div>
       )}
     </div>
+  );
+}
+
+function SuggestionChip({ label, hint, onClick }: { label: string; hint: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={hint}
+      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+    >
+      + {label}
+    </button>
   );
 }
 
