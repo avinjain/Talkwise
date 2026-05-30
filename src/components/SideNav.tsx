@@ -114,7 +114,8 @@ function SideNavPanel({
   const isHome = pathname === '/home' || pathname === '/';
   const isPractice = pathname.startsWith('/configure');
   const isConversation = pathname === '/chat';
-  const isPrepare = pathname.startsWith('/prepare');
+  const isStorybank = pathname.startsWith('/prepare/storybank');
+  const isPrepare = pathname.startsWith('/prepare') && !isStorybank;
   const isResume = pathname.startsWith('/resume');
   const isProfile = pathname.startsWith('/profile');
 
@@ -166,6 +167,16 @@ function SideNavPanel({
           icon={
             <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m-12.5 8.006a2.18 2.18 0 00.75-1.661V8.706c0-1.081.768-2.015 1.837-2.175a48.114 48.114 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894" />
+            </svg>
+          }
+        />
+        <NavLink
+          label="Story bank"
+          active={isStorybank}
+          onClick={() => go('/prepare/storybank')}
+          icon={
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
             </svg>
           }
         />

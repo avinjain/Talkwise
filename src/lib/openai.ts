@@ -47,7 +47,11 @@ export type AITask =
   | 'coach_prep'
   | 'coach_concerns'
   | 'coach_questions'
-  | 'story_star';
+  | 'story_star'
+  | 'story_build'
+  | 'story_score'
+  | 'story_gaps'
+  | 'narrative_identity';
 
 const PREMIUM = 'gpt-4o';
 const CHEAP = 'gpt-4o-mini';
@@ -64,6 +68,13 @@ const TASK_TIER: Record<AITask, 'premium' | 'standard' | 'cheap'> = {
   coach_concerns: 'premium',
   coach_questions: 'cheap',
   story_star: 'cheap',
+
+  // Storybank: building/structuring + scoring run fine on mini; narrative
+  // identity is a higher-order synthesis across the whole storybank → premium.
+  story_build: 'cheap',
+  story_score: 'cheap',
+  story_gaps: 'cheap',
+  narrative_identity: 'premium',
 
   // Analytical work — mini handles these well, ~17x cheaper
   analyze_profile: 'cheap',

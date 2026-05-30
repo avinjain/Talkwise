@@ -282,8 +282,20 @@ export default function PrepareForInterviewPage() {
             </div>
           )}
 
-          {/* Quiet cross-link */}
-          <div className="mt-10">
+          {/* Quiet cross-links */}
+          <div className="mt-10 space-y-3">
+            <button
+              onClick={() => router.push('/prepare/storybank')}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Open my storybank →</p>
+                <p className="text-xs text-slate-500">
+                  Build STAR stories, score and improve them, find role gaps, and extract your narrative identity.
+                </p>
+              </div>
+              <span className="text-slate-400">→</span>
+            </button>
             <button
               onClick={() => router.push('/resume')}
               className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50"

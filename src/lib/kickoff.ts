@@ -280,9 +280,10 @@ export interface KickoffSecondaryResource {
 export function kickoffSecondaryResourceHref(raw: unknown): KickoffSecondaryResource {
   const key = canonicalKickoffPlanCommand(raw);
   switch (key) {
+    case 'stories':
+      return { label: 'Storybank', href: '/prepare/storybank' };
     case 'speaking_points':
     case 'pitch':
-    case 'stories':
     case 'hype':
       return { label: 'Stories to prepare', href: '/prepare#stories-to-prepare' };
     case 'optimise_resume':

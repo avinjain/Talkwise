@@ -207,6 +207,41 @@ function initTables(db: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_interview_stories_user ON interview_stories(user_id);
 
+    CREATE TABLE IF NOT EXISTS storybank_stories (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      primary_skill TEXT NOT NULL DEFAULT '',
+      secondary_skills TEXT NOT NULL DEFAULT '[]',
+      situation TEXT NOT NULL DEFAULT '',
+      task TEXT NOT NULL DEFAULT '',
+      action TEXT NOT NULL DEFAULT '',
+      result TEXT NOT NULL DEFAULT '',
+      earned_secret TEXT NOT NULL DEFAULT '',
+      deploy_use_case TEXT NOT NULL DEFAULT '',
+      spoken_draft TEXT NOT NULL DEFAULT '',
+      strength INTEGER NOT NULL DEFAULT 0,
+      scores_json TEXT NOT NULL DEFAULT '{}',
+      version_history TEXT NOT NULL DEFAULT '[]',
+      notes TEXT NOT NULL DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_storybank_user ON storybank_stories(user_id);
+
+    CREATE TABLE IF NOT EXISTS interview_notes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      body TEXT NOT NULL DEFAULT '',
+      tag TEXT NOT NULL DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_interview_notes_user ON interview_notes(user_id);
+
     CREATE TABLE IF NOT EXISTS profile_result_attempts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -714,6 +749,188 @@ export function getInterviewStories(userId: string): InterviewStoriesRow | undef
 export function deleteInterviewStories(userId: string) {
   const db = getDb();
   db.prepare('DELETE FROM interview_stories WHERE user_id = ?').run(userId);
+}
+
+// ── Storybank (full STAR story records — interview-coach-skill `stories`) ──
+
+export interface StorybankStoryRow {
+  id: string;
+  user_id: string;
+  title: string;
+  primary_skill: string;
+  secondary_skills: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  earned_secret: string;
+  deploy_use_case: string;
+  spoken_draft: string;
+  strength: number;
+  scores_json: string;
+  version_history: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StorybankStoryInput {
+  title: string;
+  primarySkill?: string;
+  secondarySkills?: string[];
+  situation?: string;
+  task?: string;
+  action?: string;
+  result?: string;
+  earnedSecret?: string;
+  deployUseCase?: string;
+  spokenDraft?: string;
+  strength?: number;
+  scores?: unknown;
+  versionHistory?: Array<{ date: string; note: string }>;
+  notes?: string;
+}
+
+export function listStorybankStories(userId: string): StorybankStoryRow[] {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM storybank_stories WHERE user_id = ? ORDER BY updated_at DESC')
+    .all(userId) as StorybankStoryRow[];
+}
+
+export function getStorybankStory(id: string, userId: string): StorybankStoryRow | undefined {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM storybank_stories WHERE id = ? AND user_id = ?')
+    .get(id, userId) as StorybankStoryRow | undefined;
+}
+
+export function insertStorybankStory(userId: string, input: StorybankStoryInput): string {
+  const db = getDb();
+  const id = crypto.randomUUID();
+  db.prepare(
+    `INSERT INTO storybank_stories
+       (id, user_id, title, primary_skill, secondary_skills, situation, task, action, result,
+        earned_secret, deploy_use_case, spoken_draft, strength, scores_json, version_history, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    userId,
+    input.title,
+    input.primarySkill || '',
+    JSON.stringify(input.secondarySkills || []),
+    input.situation || '',
+    input.task || '',
+    input.action || '',
+    input.result || '',
+    input.earnedSecret || '',
+    input.deployUseCase || '',
+    input.spokenDraft || '',
+    input.strength ?? 0,
+    JSON.stringify(input.scores ?? {}),
+    JSON.stringify(input.versionHistory || []),
+    input.notes || ''
+  );
+  return id;
+}
+
+export function updateStorybankStory(
+  id: string,
+  userId: string,
+  updates: Partial<StorybankStoryInput>
+) {
+  const db = getDb();
+  const fields: string[] = [];
+  const values: (string | number)[] = [];
+
+  const push = (col: string, val: string | number) => {
+    fields.push(`${col} = ?`);
+    values.push(val);
+  };
+
+  if (updates.title !== undefined) push('title', updates.title);
+  if (updates.primarySkill !== undefined) push('primary_skill', updates.primarySkill);
+  if (updates.secondarySkills !== undefined) push('secondary_skills', JSON.stringify(updates.secondarySkills));
+  if (updates.situation !== undefined) push('situation', updates.situation);
+  if (updates.task !== undefined) push('task', updates.task);
+  if (updates.action !== undefined) push('action', updates.action);
+  if (updates.result !== undefined) push('result', updates.result);
+  if (updates.earnedSecret !== undefined) push('earned_secret', updates.earnedSecret);
+  if (updates.deployUseCase !== undefined) push('deploy_use_case', updates.deployUseCase);
+  if (updates.spokenDraft !== undefined) push('spoken_draft', updates.spokenDraft);
+  if (updates.strength !== undefined) push('strength', updates.strength);
+  if (updates.scores !== undefined) push('scores_json', JSON.stringify(updates.scores));
+  if (updates.versionHistory !== undefined) push('version_history', JSON.stringify(updates.versionHistory));
+  if (updates.notes !== undefined) push('notes', updates.notes);
+
+  if (fields.length === 0) return;
+
+  fields.push("updated_at = datetime('now')");
+  values.push(id, userId);
+
+  db.prepare(
+    `UPDATE storybank_stories SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`
+  ).run(...values);
+}
+
+export function deleteStorybankStory(id: string, userId: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM storybank_stories WHERE id = ? AND user_id = ?').run(id, userId);
+}
+
+// ── Interview notes (free-form notes the candidate makes during prep) ──
+
+export interface InterviewNoteRow {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string;
+  tag: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function listInterviewNotes(userId: string): InterviewNoteRow[] {
+  const db = getDb();
+  return db
+    .prepare('SELECT * FROM interview_notes WHERE user_id = ? ORDER BY updated_at DESC')
+    .all(userId) as InterviewNoteRow[];
+}
+
+export function insertInterviewNote(
+  userId: string,
+  note: { title: string; body: string; tag?: string }
+): string {
+  const db = getDb();
+  const id = crypto.randomUUID();
+  db.prepare(
+    'INSERT INTO interview_notes (id, user_id, title, body, tag) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, userId, note.title, note.body, note.tag || '');
+  return id;
+}
+
+export function updateInterviewNote(
+  id: string,
+  userId: string,
+  updates: { title?: string; body?: string; tag?: string }
+) {
+  const db = getDb();
+  const fields: string[] = [];
+  const values: string[] = [];
+  if (updates.title !== undefined) { fields.push('title = ?'); values.push(updates.title); }
+  if (updates.body !== undefined) { fields.push('body = ?'); values.push(updates.body); }
+  if (updates.tag !== undefined) { fields.push('tag = ?'); values.push(updates.tag); }
+  if (fields.length === 0) return;
+  fields.push("updated_at = datetime('now')");
+  values.push(id, userId);
+  db.prepare(
+    `UPDATE interview_notes SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`
+  ).run(...values);
+}
+
+export function deleteInterviewNote(id: string, userId: string) {
+  const db = getDb();
+  db.prepare('DELETE FROM interview_notes WHERE id = ? AND user_id = ?').run(id, userId);
 }
 
 // ── Saved Personas ──
