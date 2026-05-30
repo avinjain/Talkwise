@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Logo from '@/components/Logo';
 import {
   routeForKickoffCommand,
@@ -12,7 +13,10 @@ import {
   type StallingStage,
   type KickoffPlanItem,
 } from '@/lib/kickoff';
-import type { PracticeCoachingFocusPayload } from '@/lib/practiceCoaching';
+import {
+  buildStartPersonaDataFromFocus,
+  type PracticeCoachingFocusPayload,
+} from '@/lib/practiceCoaching';
 import { userHasPersistedOrAckedStories, resumeStoriesWorkflowHref } from '@/lib/interviewPrepWorkflow';
 import {
   CoachingToolsSection,
@@ -28,6 +32,7 @@ import InterviewPrepNav from '@/components/interviewPrep/InterviewPrepNav';
 
 export default function PrepareForInterviewPage() {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [kickoffLoading, setKickoffLoading] = useState(true);
   const [savedKickoff, setSavedKickoff] = useState<{
@@ -179,7 +184,9 @@ export default function PrepareForInterviewPage() {
     [router]
   );
 
-  const persistKickoffPracticeFocus = async (item: KickoffPlanItem) => {
+  const persistKickoffPracticeFocus = async (
+    item: KickoffPlanItem
+  ): Promise<PracticeCoachingFocusPayload | null> => {
     try {
       const res = await fetch('/api/practice-coaching', {
         method: 'POST',
@@ -192,23 +199,41 @@ export default function PrepareForInterviewPage() {
       if (res.ok) {
         const data = await res.json();
         if (data.focus) {
-          setCoachState((s) => ({
-            ...s,
-            practiceFocus: data.focus as PracticeCoachingFocusPayload,
-          }));
+          const focus = data.focus as PracticeCoachingFocusPayload;
+          setCoachState((s) => ({ ...s, practiceFocus: focus }));
+          return focus;
         }
       }
     } catch {
       /* navigation still proceeds */
     }
+    return null;
   };
+
+  // Tapping Go on a plan step drops the user straight into a practice
+  // conversation tuned to that step — no intermediate hub page.
+  const startPracticeForFocus = useCallback(
+    (focus: PracticeCoachingFocusPayload) => {
+      if (typeof window === 'undefined') return;
+      if (session?.user?.name) sessionStorage.setItem('userName', session.user.name);
+      sessionStorage.setItem('startPersonaData', JSON.stringify(buildStartPersonaDataFromFocus(focus)));
+      sessionStorage.setItem('practiceScenarioPreset', focus.planItemText);
+      router.push('/start');
+    },
+    [router, session]
+  );
 
   const runPlanAction = useCallback(
     async (item: KickoffPlanItem) => {
-      await persistKickoffPracticeFocus(item);
+      const focus = await persistKickoffPracticeFocus(item);
+      if (focus) {
+        startPracticeForFocus(focus);
+        return;
+      }
+      // Fallback: focus could not be computed — open the practice hub.
       navigateKickoffHref(routeForKickoffCommand(item.command));
     },
-    [navigateKickoffHref]
+    [navigateKickoffHref, startPracticeForFocus]
   );
 
   if (kickoffLoading) {
@@ -284,7 +309,11 @@ export default function PrepareForInterviewPage() {
               {/* Practice */}
               <PracticeNextSection
                 practiceFocus={coachState.practiceFocus}
-                onOpen={() => router.push('/prepare/practice')}
+                onOpen={() =>
+                  coachState.practiceFocus
+                    ? startPracticeForFocus(coachState.practiceFocus)
+                    : router.push('/prepare/practice')
+                }
               />
             </>
           )}
@@ -693,7 +722,7 @@ function PracticeNextSection({
           onClick={onOpen}
           className="shrink-0 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
         >
-          Open practice hub →
+          {practiceFocus?.skillLens ? 'Practise this skill →' : 'Open practice hub →'}
         </button>
       </div>
       {practiceFocus?.skillLens ? (
