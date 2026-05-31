@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
+import WelcomeModal from '@/components/WelcomeModal';
 import { SavedPersona, Track, ENABLE_INTERVIEW_PREP } from '@/lib/types';
 
 const RESUME_ICON = (
@@ -300,6 +301,7 @@ export default function HomeDashboard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
+      <WelcomeModal userName={userName} />
       <div className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-5xl">
           <section className="relative mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-6 sm:rounded-3xl sm:px-8 sm:py-8">

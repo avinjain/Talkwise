@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { createUser, getUserByEmail } from './db';
+import { isAdminEmail } from './adminEmails';
 
 // Allowed emails (only these can sign up or log in)
 const ALLOWED_EMAILS = [
@@ -73,12 +74,15 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
+        token.email = user.email;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { id?: string }).id = token.userId as string;
+        const email = (token.email as string | undefined) ?? session.user.email;
+        (session.user as { id?: string; isAdmin?: boolean }).id = token.userId as string;
+        (session.user as { id?: string; isAdmin?: boolean }).isAdmin = isAdminEmail(email);
       }
       return session;
     },

@@ -1,23 +1,9 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from './auth';
 import { getUserById } from './db';
+import { adminEmails, isAdminEmail } from './adminEmails';
 
-/**
- * Admin allowlist. Configure via the ADMIN_EMAILS env var (comma-separated).
- * Falls back to the project owner so the dashboard works out of the box.
- */
-export function adminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS || 'avin@demo.com';
-  return raw
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isAdminEmail(email?: string | null): boolean {
-  if (!email) return false;
-  return adminEmails().includes(email.toLowerCase());
-}
+export { adminEmails, isAdminEmail };
 
 /** Resolve the current session's email, falling back to a DB lookup by id. */
 export async function getSessionEmail(): Promise<string | null> {
