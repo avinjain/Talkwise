@@ -420,42 +420,87 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
   );
 }
 
+const USER_PAGE_SIZE = 10;
+
 function UserTable({ rows, emptyMessage = 'No users yet.' }: { rows: UserRow[]; emptyMessage?: string }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(rows.length / USER_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  useEffect(() => {
+    setPage(1);
+  }, [rows]);
+
   if (rows.length === 0) return <p className="text-sm text-slate-400">{emptyMessage}</p>;
+
+  const pageRows = rows.slice((currentPage - 1) * USER_PAGE_SIZE, currentPage * USER_PAGE_SIZE);
+  const from = (currentPage - 1) * USER_PAGE_SIZE + 1;
+  const to = Math.min(currentPage * USER_PAGE_SIZE, rows.length);
+
   return (
-    <div className="-mx-5 overflow-x-auto">
-      <table className="w-full min-w-[820px] text-sm">
-        <thead>
-          <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400">
-            <th className="px-5 py-2 font-semibold">User</th>
-            <th className="px-3 py-2 text-right font-semibold">Logins</th>
-            <th className="px-3 py-2 text-right font-semibold">Conversations</th>
-            <th className="px-3 py-2 text-right font-semibold">Requests</th>
-            <th className="px-3 py-2 text-right font-semibold">Tokens</th>
-            <th className="px-3 py-2 text-right font-semibold">Spend</th>
-            <th className="px-5 py-2 text-right font-semibold">Last active</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((u) => {
-            const lastActive = mostRecent(u.lastActive, u.lastLogin);
-            return (
-              <tr key={u.userId} className="border-b border-slate-50 last:border-0">
-                <td className="px-5 py-2.5">
-                  <p className="font-medium text-slate-800">{u.name || '—'}</p>
-                  <p className="text-xs text-slate-400">{u.email}</p>
-                </td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.logins)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.conversations)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.requests)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtTokens(u.tokens)}</td>
-                <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtUsd(u.cost)}</td>
-                <td className="px-5 py-2.5 text-right text-xs text-slate-400">{fmtDate(lastActive)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div>
+      <div className="-mx-5 overflow-x-auto">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400">
+              <th className="px-5 py-2 font-semibold">User</th>
+              <th className="px-3 py-2 text-right font-semibold">Logins</th>
+              <th className="px-3 py-2 text-right font-semibold">Conversations</th>
+              <th className="px-3 py-2 text-right font-semibold">Requests</th>
+              <th className="px-3 py-2 text-right font-semibold">Tokens</th>
+              <th className="px-3 py-2 text-right font-semibold">Spend</th>
+              <th className="px-5 py-2 text-right font-semibold">Last active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((u) => {
+              const lastActive = mostRecent(u.lastActive, u.lastLogin);
+              return (
+                <tr key={u.userId} className="border-b border-slate-50 last:border-0">
+                  <td className="px-5 py-2.5">
+                    <p className="font-medium text-slate-800">{u.name || '—'}</p>
+                    <p className="text-xs text-slate-400">{u.email}</p>
+                  </td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.logins)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.conversations)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.requests)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtTokens(u.tokens)}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtUsd(u.cost)}</td>
+                  <td className="px-5 py-2.5 text-right text-xs text-slate-400">{fmtDate(lastActive)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {rows.length > USER_PAGE_SIZE && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 pt-3">
+          <p className="text-xs text-slate-400">
+            Showing {from}–{to} of {fmtNum(rows.length)} users
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="px-2 text-xs tabular-nums text-slate-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
