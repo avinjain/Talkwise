@@ -7,16 +7,56 @@ import {
   parseAdminWindow,
 } from '@/lib/adminWindow';
 import {
+  FEATURE_LABELS,
+  FEATURE_ORDER,
+  featureForEndpoint,
+  labelForEndpoint,
+  type FeatureId,
+} from '@/lib/adminFeatures';
+import {
   getAdminOverview,
   getUsageThisMonth,
+  getUsageTotals,
   getUsageByUser,
   getUsageByModel,
   getUsageByEndpoint,
   getUsageByDay,
+  type UsageBreakdownRow,
 } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+interface FeatureGroup {
+  id: FeatureId;
+  label: string;
+  requests: number;
+  tokens: number;
+  cost: number;
+  endpoints: Array<UsageBreakdownRow & { label: string }>;
+}
+
+function groupByFeature(rows: UsageBreakdownRow[]): FeatureGroup[] {
+  const groups = new Map<FeatureId, FeatureGroup>();
+  for (const id of FEATURE_ORDER) {
+    groups.set(id, { id, label: FEATURE_LABELS[id], requests: 0, tokens: 0, cost: 0, endpoints: [] });
+  }
+  for (const row of rows) {
+    const id = featureForEndpoint(row.key);
+    const g = groups.get(id)!;
+    g.requests += row.requests;
+    g.tokens += row.tokens;
+    g.cost += row.cost;
+    g.endpoints.push({ ...row, label: labelForEndpoint(row.key) });
+  }
+  return FEATURE_ORDER.map((id) => groups.get(id)!)
+    .filter((g) => g.endpoints.length > 0)
+    .map((g) => ({
+      ...g,
+      endpoints: g.endpoints.sort((a, b) => b.cost - a.cost || b.requests - a.requests),
+    }))
+    .sort((a, b) => b.cost - a.cost || b.requests - a.requests);
+}
 
 export async function GET(req: NextRequest) {
   const gate = await checkAdmin();
@@ -33,11 +73,20 @@ export async function GET(req: NextRequest) {
 
   const monthlyBudgetUsd = Number(process.env.ADMIN_MONTHLY_BUDGET_USD || '50');
   const thisMonth = getUsageThisMonth();
+  const overview = getAdminOverview(windowSeconds);
+  const periodTotals = getUsageTotals(windowSeconds);
+  const byEndpoint = getUsageByEndpoint(windowSeconds);
 
   return NextResponse.json({
     window,
     windowLabel: adminWindowLabel(window),
-    overview: getAdminOverview(windowSeconds),
+    overview,
+    funnel: {
+      registered: overview.totalUsers,
+      loggedIn: overview.uniqueLogins,
+      active: overview.activeUsers,
+      practiced: overview.usersWithConversations,
+    },
     budget: {
       monthlyBudgetUsd,
       monthSpendUsd: thisMonth.cost,
@@ -46,10 +95,13 @@ export async function GET(req: NextRequest) {
       percentUsed:
         monthlyBudgetUsd > 0 ? Math.min(999, (thisMonth.cost / monthlyBudgetUsd) * 100) : 0,
       enforced: (process.env.ADMIN_ENFORCE_BUDGET || '').toLowerCase() === 'true',
+      periodSpendUsd: periodTotals.cost,
+      periodTokens: periodTotals.tokens,
+      periodRequests: periodTotals.requests,
     },
     byUser: getUsageByUser(windowSeconds),
     byModel: getUsageByModel(windowSeconds),
-    byEndpoint: getUsageByEndpoint(windowSeconds),
+    byFeature: groupByFeature(byEndpoint),
     daily: getUsageByDay(chartDays),
     generatedAt: new Date().toISOString(),
   });

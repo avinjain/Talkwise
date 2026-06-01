@@ -563,6 +563,7 @@ export interface AdminOverview extends UsageTotals {
   totalUsers: number;
   activeUsers: number;
   totalConversations: number;
+  usersWithConversations: number;
   logins: number;
   uniqueLogins: number;
 }
@@ -576,6 +577,7 @@ export interface UsageByUserRow {
   cost: number;
   conversations: number;
   lastActive: string | null;
+  lastLogin: string | null;
 }
 
 export interface UsageBreakdownRow {
@@ -672,6 +674,16 @@ function countActiveUsers(windowSeconds?: number): number {
   ).c;
 }
 
+function countUsersWithSessions(windowSeconds?: number): number {
+  const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  return (
+    db.prepare(`SELECT COUNT(DISTINCT user_id) AS c FROM sessions ${where}`).get() as { c: number }
+  ).c;
+}
+
 export function getAdminOverview(windowSeconds?: number): AdminOverview {
   const db = getDb();
   const usage = getUsageTotals(windowSeconds);
@@ -682,6 +694,7 @@ export function getAdminOverview(windowSeconds?: number): AdminOverview {
     totalUsers,
     activeUsers: countActiveUsers(windowSeconds),
     totalConversations: countSessions(windowSeconds),
+    usersWithConversations: countUsersWithSessions(windowSeconds),
     logins: loginStats.logins,
     uniqueLogins: loginStats.uniqueUsers,
   };
@@ -709,7 +722,8 @@ export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
               COALESCE(SUM(l.total_tokens), 0) AS tokens,
               COALESCE(SUM(l.estimated_cost), 0) AS cost,
               (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id ${sessionFilter}) AS conversations,
-              MAX(l.created_at) AS lastActive
+              MAX(l.created_at) AS lastActive,
+              (SELECT MAX(ll.created_at) FROM login_logs ll WHERE ll.user_id = u.id) AS lastLogin
        FROM users u
        ${usageJoin}
        GROUP BY u.id
