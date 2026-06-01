@@ -37,7 +37,13 @@ function getDb(): Database.Database {
     // rows that no longer exist after a DB rebuild on deploy. Data integrity
     // is enforced at the application layer instead.
     _db.pragma('foreign_keys = OFF');
-    initTables(_db);
+    try {
+      initTables(_db);
+    } catch (err) {
+      _db.close();
+      _db = null;
+      throw err;
+    }
   }
   return _db;
 }
@@ -172,7 +178,6 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
     CREATE INDEX IF NOT EXISTS idx_mbti_results_user ON mbti_results(user_id);
-    CREATE INDEX IF NOT EXISTS idx_mbti_questions_user ON mbti_questions(user_id);
 
     CREATE TABLE IF NOT EXISTS kickoff_states (
       user_id TEXT PRIMARY KEY,
@@ -334,6 +339,11 @@ function initTables(db: Database.Database) {
           console.error("Migration failed for column 'user_id' on mbti_questions:", err);
         }
       }
+    }
+    // Index must be created after user_id column exists (legacy DBs lack it in CREATE TABLE).
+    const mbtiQColsAfter = db.pragma('table_info(mbti_questions)') as { name: string }[];
+    if (mbtiQColsAfter.some((c) => c.name === 'user_id')) {
+      db.exec('CREATE INDEX IF NOT EXISTS idx_mbti_questions_user ON mbti_questions(user_id)');
     }
   } catch (err) {
     console.error('MBTI questions migration check failed:', err);
@@ -656,8 +666,16 @@ export function getUsageThisMonth(): UsageTotals {
 export function logLogin(userId: string, email: string) {
   const db = getDb();
   const normalized = email.toLowerCase().trim();
-  db.prepare('INSERT INTO login_logs (user_id, email) VALUES (?, ?)').run(userId, normalized);
-  db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(userId);
+  try {
+    db.prepare('INSERT INTO login_logs (user_id, email) VALUES (?, ?)').run(userId, normalized);
+  } catch (err) {
+    console.error('[db] login_logs insert failed:', err);
+  }
+  try {
+    db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(userId);
+  } catch (err) {
+    console.error('[db] last_login_at update failed:', err);
+  }
 }
 
 export function getLoginStats(window: AdminWindow = 'all'): { logins: number; uniqueUsers: number } {
