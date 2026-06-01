@@ -55,3 +55,17 @@ export function adminWindowChartDays(window: AdminWindow): number {
       return 90;
   }
 }
+
+/** SQL predicate for filtering a datetime column to the selected admin window. */
+export function adminWindowWhere(column: string, window: AdminWindow): string {
+  switch (window) {
+    case 'today':
+      return `date(${column}) = date('now')`;
+    case '7d':
+      return `${column} >= datetime('now', '-7 days')`;
+    case '30d':
+      return `${column} >= datetime('now', '-30 days')`;
+    case 'all':
+      return '1=1';
+  }
+}

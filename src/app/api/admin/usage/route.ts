@@ -3,7 +3,6 @@ import { checkAdmin } from '@/lib/admin';
 import {
   adminWindowChartDays,
   adminWindowLabel,
-  adminWindowSeconds,
   parseAdminWindow,
 } from '@/lib/adminWindow';
 import {
@@ -68,14 +67,13 @@ export async function GET(req: NextRequest) {
   }
 
   const window = parseAdminWindow(req.nextUrl.searchParams.get('window'));
-  const windowSeconds = adminWindowSeconds(window);
   const chartDays = adminWindowChartDays(window);
 
   const monthlyBudgetUsd = Number(process.env.ADMIN_MONTHLY_BUDGET_USD || '50');
   const thisMonth = getUsageThisMonth();
-  const overview = getAdminOverview(windowSeconds);
-  const periodTotals = getUsageTotals(windowSeconds);
-  const byEndpoint = getUsageByEndpoint(windowSeconds);
+  const overview = getAdminOverview(window);
+  const periodTotals = getUsageTotals(window);
+  const byEndpoint = getUsageByEndpoint(window);
 
   return NextResponse.json({
     window,
@@ -93,8 +91,8 @@ export async function GET(req: NextRequest) {
       periodTokens: periodTotals.tokens,
       periodRequests: periodTotals.requests,
     },
-    byUser: getUsageByUser(windowSeconds),
-    byModel: getUsageByModel(windowSeconds),
+    byUser: getUsageByUser(window),
+    byModel: getUsageByModel(window),
     byFeature: groupByFeature(byEndpoint),
     daily: getUsageByDay(chartDays),
     generatedAt: new Date().toISOString(),

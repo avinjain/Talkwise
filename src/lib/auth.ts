@@ -42,6 +42,12 @@ export const authOptions: NextAuthOptions = {
 
           createUser(id, email, name, passwordHash);
 
+          try {
+            logLogin(id, email);
+          } catch (err) {
+            console.error('[auth] signup login log failed:', err);
+          }
+
           return { id, email, name };
         } else {
           // ── Login ──
@@ -53,8 +59,8 @@ export const authOptions: NextAuthOptions = {
 
           try {
             logLogin(user.id, user.email);
-          } catch {
-            /* login still succeeds if logging fails */
+          } catch (err) {
+            console.error('[auth] login log failed:', err);
           }
 
           return { id: user.id, email: user.email, name: user.name };

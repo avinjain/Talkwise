@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import { adminWindowWhere, type AdminWindow } from './adminWindow';
 
 // Prefer Railway volume mount path when available (persistent storage)
 const DB_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DB_DIR || process.cwd();
@@ -353,6 +354,17 @@ function initTables(db: Database.Database) {
         }
       }
     }
+    if (!userColNames.has('last_login_at')) {
+      try {
+        db.exec('ALTER TABLE users ADD COLUMN last_login_at TEXT');
+        console.log("Migration: added column 'last_login_at' to users");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('duplicate column')) {
+          console.error("Migration failed for column 'last_login_at':", err);
+        }
+      }
+    }
   } catch (err) {
     console.error('Users migration check failed:', err);
   }
@@ -603,12 +615,14 @@ const ZERO_TOTALS: UsageTotals = {
   cost: 0,
 };
 
-/** Aggregate usage across an optional rolling window (in seconds). Omit for all-time. */
-export function getUsageTotals(windowSeconds?: number): UsageTotals {
+function adminWhereClause(window: AdminWindow, column = 'created_at'): string {
+  return window === 'all' ? '' : `WHERE ${adminWindowWhere(column, window)}`;
+}
+
+/** Aggregate usage for an admin time window. */
+export function getUsageTotals(window: AdminWindow = 'all'): UsageTotals {
   const db = getDb();
-  const where = windowSeconds
-    ? `WHERE created_at >= datetime('now', '-' || ${Number(windowSeconds)} || ' seconds')`
-    : '';
+  const where = adminWhereClause(window);
   const row = db
     .prepare(
       `SELECT COUNT(*) AS requests,
@@ -641,14 +655,14 @@ export function getUsageThisMonth(): UsageTotals {
 
 export function logLogin(userId: string, email: string) {
   const db = getDb();
-  db.prepare('INSERT INTO login_logs (user_id, email) VALUES (?, ?)').run(userId, email.toLowerCase().trim());
+  const normalized = email.toLowerCase().trim();
+  db.prepare('INSERT INTO login_logs (user_id, email) VALUES (?, ?)').run(userId, normalized);
+  db.prepare("UPDATE users SET last_login_at = datetime('now') WHERE id = ?").run(userId);
 }
 
-export function getLoginStats(windowSeconds?: number): { logins: number; uniqueUsers: number } {
+export function getLoginStats(window: AdminWindow = 'all'): { logins: number; uniqueUsers: number } {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   const row = db
     .prepare(
       `SELECT COUNT(*) AS logins, COUNT(DISTINCT user_id) AS uniqueUsers FROM login_logs ${where}`
@@ -657,94 +671,81 @@ export function getLoginStats(windowSeconds?: number): { logins: number; uniqueU
   return row ?? { logins: 0, uniqueUsers: 0 };
 }
 
-function countSessions(windowSeconds?: number): number {
+function countSessions(window: AdminWindow = 'all'): number {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   return (db.prepare(`SELECT COUNT(*) AS c FROM sessions ${where}`).get() as { c: number }).c;
 }
 
-function countActiveUsers(windowSeconds?: number): number {
+function countActiveUsers(window: AdminWindow = 'all'): number {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   return (
     db.prepare(`SELECT COUNT(DISTINCT user_id) AS c FROM usage_logs ${where}`).get() as { c: number }
   ).c;
 }
 
-function countUsersWithSessions(windowSeconds?: number): number {
+function countUsersWithSessions(window: AdminWindow = 'all'): number {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   return (
     db.prepare(`SELECT COUNT(DISTINCT user_id) AS c FROM sessions ${where}`).get() as { c: number }
   ).c;
 }
 
-export function getAdminOverview(windowSeconds?: number): AdminOverview {
+export function getAdminOverview(window: AdminWindow = 'all'): AdminOverview {
   const db = getDb();
-  const usage = getUsageTotals(windowSeconds);
+  const usage = getUsageTotals(window);
   const totalUsers = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
-  const loginStats = getLoginStats(windowSeconds);
+  const loginStats = getLoginStats(window);
   return {
     ...usage,
     totalUsers,
-    activeUsers: countActiveUsers(windowSeconds),
-    totalConversations: countSessions(windowSeconds),
-    usersWithConversations: countUsersWithSessions(windowSeconds),
+    activeUsers: countActiveUsers(window),
+    totalConversations: countSessions(window),
+    usersWithConversations: countUsersWithSessions(window),
     logins: loginStats.logins,
     uniqueLogins: loginStats.uniqueUsers,
   };
 }
 
-export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
+export function getUsageByUser(window: AdminWindow = 'all'): UsageByUserRow[] {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const usageJoin =
-    n != null
-      ? `LEFT JOIN usage_logs l ON l.user_id = u.id AND l.created_at >= datetime('now', '-' || ${n} || ' seconds')`
-      : 'LEFT JOIN usage_logs l ON l.user_id = u.id';
-  const sessionFilter =
-    n != null
-      ? `AND s.created_at >= datetime('now', '-' || ${n} || ' seconds')`
-      : '';
-  const loginFilter =
-    n != null
-      ? `AND ll.created_at >= datetime('now', '-' || ${n} || ' seconds')`
-      : '';
-  // In a window, include anyone who logged in OR used AI; all-time shows everyone.
-  const having = n != null ? 'HAVING requests > 0 OR logins > 0' : '';
+  const usageFilter = window === 'all' ? '1=1' : adminWindowWhere('l.created_at', window);
+  const loginFilter = window === 'all' ? '1=1' : adminWindowWhere('ll.created_at', window);
+  const sessionFilter = window === 'all' ? '1=1' : adminWindowWhere('s.created_at', window);
+  const userWindowFilter =
+    window === 'all'
+      ? '1=1'
+      : `(EXISTS (SELECT 1 FROM login_logs ll WHERE ll.user_id = u.id AND ${loginFilter})
+          OR EXISTS (SELECT 1 FROM usage_logs l WHERE l.user_id = u.id AND ${usageFilter})
+          OR (u.last_login_at IS NOT NULL AND ${adminWindowWhere('u.last_login_at', window)}))`;
 
   return db
     .prepare(
       `SELECT u.id AS userId,
               u.email AS email,
               u.name AS name,
-              COUNT(l.id) AS requests,
-              COALESCE(SUM(l.total_tokens), 0) AS tokens,
-              COALESCE(SUM(l.estimated_cost), 0) AS cost,
-              (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id ${sessionFilter}) AS conversations,
-              (SELECT COUNT(*) FROM login_logs ll WHERE ll.user_id = u.id ${loginFilter}) AS logins,
-              MAX(l.created_at) AS lastActive,
-              (SELECT MAX(ll.created_at) FROM login_logs ll WHERE ll.user_id = u.id) AS lastLogin
+              (SELECT COUNT(*) FROM usage_logs l WHERE l.user_id = u.id AND (${usageFilter})) AS requests,
+              (SELECT COALESCE(SUM(l.total_tokens), 0) FROM usage_logs l WHERE l.user_id = u.id AND (${usageFilter})) AS tokens,
+              (SELECT COALESCE(SUM(l.estimated_cost), 0) FROM usage_logs l WHERE l.user_id = u.id AND (${usageFilter})) AS cost,
+              (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id AND (${sessionFilter})) AS conversations,
+              (SELECT COUNT(*) FROM login_logs ll WHERE ll.user_id = u.id AND (${loginFilter})) AS logins,
+              (SELECT MAX(l.created_at) FROM usage_logs l WHERE l.user_id = u.id AND (${usageFilter})) AS lastActive,
+              COALESCE(
+                (SELECT MAX(ll2.created_at) FROM login_logs ll2 WHERE ll2.user_id = u.id),
+                u.last_login_at
+              ) AS lastLogin
        FROM users u
-       ${usageJoin}
-       GROUP BY u.id
-       ${having}
-       ORDER BY cost DESC, requests DESC, logins DESC`
+       WHERE ${userWindowFilter}
+       ORDER BY COALESCE(lastLogin, lastActive, u.created_at) DESC, cost DESC, logins DESC`
     )
     .all() as UsageByUserRow[];
 }
 
-export function getUsageByModel(windowSeconds?: number): UsageBreakdownRow[] {
+export function getUsageByModel(window: AdminWindow = 'all'): UsageBreakdownRow[] {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   return db
     .prepare(
       `SELECT model AS key,
@@ -759,11 +760,9 @@ export function getUsageByModel(windowSeconds?: number): UsageBreakdownRow[] {
     .all() as UsageBreakdownRow[];
 }
 
-export function getUsageByEndpoint(windowSeconds?: number): UsageBreakdownRow[] {
+export function getUsageByEndpoint(window: AdminWindow = 'all'): UsageBreakdownRow[] {
   const db = getDb();
-  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
-  const where =
-    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const where = adminWhereClause(window);
   return db
     .prepare(
       `SELECT endpoint AS key,
