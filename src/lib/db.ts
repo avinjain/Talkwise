@@ -615,8 +615,19 @@ export function getAdminOverview(): AdminOverview {
   return { ...all, totalUsers, activeUsers7d, totalConversations };
 }
 
-export function getUsageByUser(): UsageByUserRow[] {
+export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
   const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const usageJoin =
+    n != null
+      ? `LEFT JOIN usage_logs l ON l.user_id = u.id AND l.created_at >= datetime('now', '-' || ${n} || ' seconds')`
+      : 'LEFT JOIN usage_logs l ON l.user_id = u.id';
+  const sessionFilter =
+    n != null
+      ? `AND s.created_at >= datetime('now', '-' || ${n} || ' seconds')`
+      : '';
+  const having = n != null ? 'HAVING COUNT(l.id) > 0' : '';
+
   return db
     .prepare(
       `SELECT u.id AS userId,
@@ -625,11 +636,12 @@ export function getUsageByUser(): UsageByUserRow[] {
               COUNT(l.id) AS requests,
               COALESCE(SUM(l.total_tokens), 0) AS tokens,
               COALESCE(SUM(l.estimated_cost), 0) AS cost,
-              (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id) AS conversations,
+              (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id ${sessionFilter}) AS conversations,
               MAX(l.created_at) AS lastActive
        FROM users u
-       LEFT JOIN usage_logs l ON l.user_id = u.id
+       ${usageJoin}
        GROUP BY u.id
+       ${having}
        ORDER BY cost DESC, requests DESC`
     )
     .all() as UsageByUserRow[];

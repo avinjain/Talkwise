@@ -22,6 +22,10 @@ const USERS = [
   { email: 'subi@demo.com',      name: 'Subi' },
   { email: 'chitra@demo.com',    name: 'Chitra' },
   { email: 'avin@demo.com',      name: 'Avin' },
+  { email: 'parul0130@gmail.com', name: 'Parul' },
+  { email: 'subi.mahapatra@gmail.com', name: 'Subi' },
+  { email: 'mayank.saraswat05@gmail.com', name: 'Mayank' },
+  { email: 'sauravmit@gmail.com', name: 'Saurav' },
 ];
 
 async function main() {

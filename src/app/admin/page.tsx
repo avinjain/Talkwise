@@ -55,12 +55,21 @@ interface UsageResponse {
   overview: Overview;
   windows: { today: Totals; last7d: Totals; last30d: Totals };
   budget: Budget;
-  byUser: UserRow[];
+  byUser: Record<UserWindow, UserRow[]>;
   byModel: BreakdownRow[];
   byEndpoint: BreakdownRow[];
   daily: DayRow[];
   generatedAt: string;
 }
+
+type UserWindow = 'today' | 'last7d' | 'last30d' | 'all';
+
+const USER_WINDOWS: { id: UserWindow; label: string }[] = [
+  { id: 'today', label: 'Today' },
+  { id: 'last7d', label: '7 days' },
+  { id: 'last30d', label: '30 days' },
+  { id: 'all', label: 'All time' },
+];
 
 // ─────────────────────────────────────────────────────────────
 // Formatting helpers
@@ -220,9 +229,7 @@ export default function AdminUsagePage() {
               </Card>
 
               {/* Per user */}
-              <Card title="By user" subtitle="Ranked by total spend">
-                <UserTable rows={data.byUser} />
-              </Card>
+              <ByUserSection byUser={data.byUser} />
 
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card title="By model">
@@ -361,8 +368,55 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
   );
 }
 
-function UserTable({ rows }: { rows: UserRow[] }) {
-  if (rows.length === 0) return <p className="text-sm text-slate-400">No users yet.</p>;
+function ByUserSection({ byUser }: { byUser: Record<UserWindow, UserRow[]> }) {
+  const [window, setWindow] = useState<UserWindow>('last30d');
+  const rows = byUser[window];
+  const label = USER_WINDOWS.find((w) => w.id === window)?.label ?? window;
+  const subtitle =
+    window === 'all'
+      ? 'All registered users, ranked by lifetime AI spend'
+      : window === 'today'
+      ? 'Users with AI activity today, ranked by spend'
+      : `Users with AI activity in the last ${label.toLowerCase()}, ranked by spend`;
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">By user</h2>
+          <p className="text-xs text-slate-400">{subtitle}</p>
+        </div>
+        <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          {USER_WINDOWS.map((w) => (
+            <button
+              key={w.id}
+              type="button"
+              onClick={() => setWindow(w.id)}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                window === w.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-white'
+              }`}
+            >
+              {w.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <UserTable
+        rows={rows}
+        emptyMessage={
+          window === 'all'
+            ? 'No users yet.'
+            : window === 'today'
+            ? 'No AI usage today.'
+            : `No AI usage in the last ${label.toLowerCase()}.`
+        }
+      />
+    </section>
+  );
+}
+
+function UserTable({ rows, emptyMessage = 'No users yet.' }: { rows: UserRow[]; emptyMessage?: string }) {
+  if (rows.length === 0) return <p className="text-sm text-slate-400">{emptyMessage}</p>;
   return (
     <div className="-mx-5 overflow-x-auto">
       <table className="w-full min-w-[640px] text-sm">

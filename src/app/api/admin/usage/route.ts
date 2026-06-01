@@ -43,7 +43,12 @@ export async function GET() {
         monthlyBudgetUsd > 0 ? Math.min(999, (thisMonth.cost / monthlyBudgetUsd) * 100) : 0,
       enforced: (process.env.ADMIN_ENFORCE_BUDGET || '').toLowerCase() === 'true',
     },
-    byUser: getUsageByUser(),
+    byUser: {
+      today: getUsageByUser(DAY),
+      last7d: getUsageByUser(7 * DAY),
+      last30d: getUsageByUser(30 * DAY),
+      all: getUsageByUser(),
+    },
     byModel: getUsageByModel(),
     byEndpoint: getUsageByEndpoint(),
     daily: getUsageByDay(30),

@@ -13,6 +13,10 @@ const ALLOWED_EMAILS = [
   'subi@demo.com',
   'chitra@demo.com',
   'avin@demo.com',
+  'parul0130@gmail.com',
+  'subi.mahapatra@gmail.com',
+  'mayank.saraswat05@gmail.com',
+  'sauravmit@gmail.com',
 ];
 
 export const authOptions: NextAuthOptions = {
