@@ -419,7 +419,7 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
           <span className="text-slate-400">No AI spend in this period ({daily.length} days shown)</span>
         )}
       </p>
-      <div className="flex h-40 items-end gap-1 border-b border-slate-100 pb-5">
+      <div className="flex h-48 items-end gap-0.5 border-b border-slate-100 pb-5">
         {daily.map((d) => {
           const barPx =
             max > 0 ? Math.max(3, Math.round((d.cost / max) * barAreaPx)) : 3;
@@ -427,8 +427,16 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
           return (
             <div
               key={d.day}
-              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"
+              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-0.5"
             >
+              <span
+                className={`max-w-full truncate text-[8px] font-medium tabular-nums leading-none ${
+                  d.cost > 0 ? 'text-slate-600' : 'text-slate-300'
+                }`}
+                title={fmtUsd(d.cost)}
+              >
+                {fmtUsd(d.cost)}
+              </span>
               <div
                 className={`w-full rounded-t transition-colors group-hover:bg-brand-600 ${
                   d.cost > 0 ? 'bg-brand-400' : 'bg-slate-200'
