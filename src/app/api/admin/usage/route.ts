@@ -81,12 +81,6 @@ export async function GET(req: NextRequest) {
     window,
     windowLabel: adminWindowLabel(window),
     overview,
-    funnel: {
-      registered: overview.totalUsers,
-      loggedIn: overview.uniqueLogins,
-      active: overview.activeUsers,
-      practiced: overview.usersWithConversations,
-    },
     budget: {
       monthlyBudgetUsd,
       monthSpendUsd: thisMonth.cost,

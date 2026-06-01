@@ -21,12 +21,6 @@ interface Overview {
   logins: number;
   uniqueLogins: number;
 }
-interface Funnel {
-  registered: number;
-  loggedIn: number;
-  active: number;
-  practiced: number;
-}
 interface UserRow {
   userId: string;
   email: string;
@@ -35,6 +29,7 @@ interface UserRow {
   tokens: number;
   cost: number;
   conversations: number;
+  logins: number;
   lastActive: string | null;
   lastLogin: string | null;
 }
@@ -73,7 +68,6 @@ interface UsageResponse {
   window: AdminWindow;
   windowLabel: string;
   overview: Overview;
-  funnel: Funnel;
   budget: Budget;
   byUser: UserRow[];
   byModel: BreakdownRow[];
@@ -103,16 +97,17 @@ function fmtUsd(n: number): string {
   return `$${v.toFixed(4)}`;
 }
 
+function mostRecent(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return a >= b ? a : b;
+}
+
 function fmtDate(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso.replace(' ', 'T') + (iso.includes('T') ? '' : 'Z'));
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-function pct(part: number, whole: number): number {
-  if (!whole) return 0;
-  return Math.min(100, (part / whole) * 100);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -197,7 +192,7 @@ export default function AdminUsagePage() {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">Admin</p>
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Usage &amp; cost tracking</h1>
               <p className="mt-1 text-sm text-slate-500">
-                Funnel, usage, and budget metrics across all users — everything below respects the time range.
+                Usage and budget metrics across all users — everything below respects the time range.
               </p>
             </div>
             <button
@@ -241,20 +236,16 @@ export default function AdminUsagePage() {
               <SectionHeading title="Budget metrics" hint="Monthly cap is calendar-month; period spend follows the filter." />
               <BudgetCard budget={data.budget} period={period} />
 
-              {/* ── Funnel metrics ── */}
-              <SectionHeading title="Funnel metrics" hint={`Conversion through the product in ${period.toLowerCase()}.`} />
-              <FunnelCard funnel={data.funnel} />
-
               {/* ── Usage metrics ── */}
               <SectionHeading title="Usage metrics" hint={period} />
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 <Metric label="Total logins" value={fmtNum(data.overview.logins)} />
-                <Metric label="Unique logins" value={fmtNum(data.overview.uniqueLogins)} sub="distinct users" />
+                <Metric label="Unique logins" value={fmtNum(data.overview.uniqueLogins)} sub={`of ${fmtNum(data.overview.totalUsers)} users`} />
+                <Metric label="Active users" value={fmtNum(data.overview.activeUsers)} sub="used AI" />
+                <Metric label="Conversations" value={fmtNum(data.overview.totalConversations)} />
+                <Metric label="AI requests" value={fmtNum(data.overview.requests)} />
                 <Metric label="Total tokens" value={fmtTokens(data.overview.tokens)} sub={fmtNum(data.overview.tokens)} />
                 <Metric label="Budget consumed" value={fmtUsd(data.budget.periodSpendUsd)} accent />
-                <Metric label="AI requests" value={fmtNum(data.overview.requests)} />
-                <Metric label="Conversations" value={fmtNum(data.overview.totalConversations)} />
-                <Metric label="Active users" value={fmtNum(data.overview.activeUsers)} sub="used AI" />
                 <Metric
                   label="Avg / request"
                   value={fmtUsd(data.overview.requests ? data.overview.cost / data.overview.requests : 0)}
@@ -268,15 +259,15 @@ export default function AdminUsagePage() {
               {/* ── Breakdowns ── */}
               <SectionHeading title="Breakdowns" hint={period} />
 
-              <Card title="By user" subtitle="Ranked by spend">
+              <Card title="By user" subtitle="Login activity + AI usage, ranked by spend">
                 <UserTable
                   rows={data.byUser}
                   emptyMessage={
                     data.window === 'all'
                       ? 'No users yet.'
                       : data.window === 'today'
-                      ? 'No AI usage today.'
-                      : `No AI usage in ${period.toLowerCase()}.`
+                      ? 'No activity today.'
+                      : `No activity in ${period.toLowerCase()}.`
                   }
                 />
               </Card>
@@ -381,54 +372,6 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Funnel
-// ─────────────────────────────────────────────────────────────
-
-function FunnelCard({ funnel }: { funnel: Funnel }) {
-  const steps = [
-    { label: 'Registered users', value: funnel.registered, hint: 'All-time accounts' },
-    { label: 'Logged in', value: funnel.loggedIn, hint: 'Unique users' },
-    { label: 'Activated (used AI)', value: funnel.active, hint: 'Made an AI request' },
-    { label: 'Practiced', value: funnel.practiced, hint: 'Started a conversation' },
-  ];
-  const top = funnel.registered || 0;
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="space-y-3">
-        {steps.map((s, i) => {
-          const width = pct(s.value, top);
-          const prev = i === 0 ? s.value : steps[i - 1].value;
-          const stepConv = i === 0 ? 100 : pct(s.value, prev);
-          return (
-            <div key={s.label}>
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-slate-700">
-                  {s.label}
-                  <span className="ml-2 text-xs font-normal text-slate-400">{s.hint}</span>
-                </span>
-                <span className="tabular-nums text-slate-500">
-                  <span className="font-semibold text-slate-900">{fmtNum(s.value)}</span>
-                  {i > 0 && <span className="ml-2 text-xs">{stepConv.toFixed(0)}% of prev</span>}
-                </span>
-              </div>
-              <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600"
-                  style={{ width: `${Math.max(2, width)}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-3 text-[11px] text-slate-400">
-        Bars are relative to registered users; “% of prev” shows step-over-step conversion.
-      </p>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // Generic pieces
 // ─────────────────────────────────────────────────────────────
 
@@ -481,31 +424,36 @@ function UserTable({ rows, emptyMessage = 'No users yet.' }: { rows: UserRow[]; 
   if (rows.length === 0) return <p className="text-sm text-slate-400">{emptyMessage}</p>;
   return (
     <div className="-mx-5 overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
+      <table className="w-full min-w-[820px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 text-left text-[11px] uppercase tracking-wider text-slate-400">
             <th className="px-5 py-2 font-semibold">User</th>
+            <th className="px-3 py-2 text-right font-semibold">Logins</th>
             <th className="px-3 py-2 text-right font-semibold">Conversations</th>
             <th className="px-3 py-2 text-right font-semibold">Requests</th>
             <th className="px-3 py-2 text-right font-semibold">Tokens</th>
             <th className="px-3 py-2 text-right font-semibold">Spend</th>
-            <th className="px-5 py-2 text-right font-semibold">Last login</th>
+            <th className="px-5 py-2 text-right font-semibold">Last active</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((u) => (
-            <tr key={u.userId} className="border-b border-slate-50 last:border-0">
-              <td className="px-5 py-2.5">
-                <p className="font-medium text-slate-800">{u.name || '—'}</p>
-                <p className="text-xs text-slate-400">{u.email}</p>
-              </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.conversations)}</td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.requests)}</td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtTokens(u.tokens)}</td>
-              <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtUsd(u.cost)}</td>
-              <td className="px-5 py-2.5 text-right text-xs text-slate-400">{fmtDate(u.lastLogin)}</td>
-            </tr>
-          ))}
+          {rows.map((u) => {
+            const lastActive = mostRecent(u.lastActive, u.lastLogin);
+            return (
+              <tr key={u.userId} className="border-b border-slate-50 last:border-0">
+                <td className="px-5 py-2.5">
+                  <p className="font-medium text-slate-800">{u.name || '—'}</p>
+                  <p className="text-xs text-slate-400">{u.email}</p>
+                </td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.logins)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.conversations)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtNum(u.requests)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-slate-600">{fmtTokens(u.tokens)}</td>
+                <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">{fmtUsd(u.cost)}</td>
+                <td className="px-5 py-2.5 text-right text-xs text-slate-400">{fmtDate(lastActive)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

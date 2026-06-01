@@ -576,6 +576,7 @@ export interface UsageByUserRow {
   tokens: number;
   cost: number;
   conversations: number;
+  logins: number;
   lastActive: string | null;
   lastLogin: string | null;
 }
@@ -711,7 +712,12 @@ export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
     n != null
       ? `AND s.created_at >= datetime('now', '-' || ${n} || ' seconds')`
       : '';
-  const having = n != null ? 'HAVING COUNT(l.id) > 0' : '';
+  const loginFilter =
+    n != null
+      ? `AND ll.created_at >= datetime('now', '-' || ${n} || ' seconds')`
+      : '';
+  // In a window, include anyone who logged in OR used AI; all-time shows everyone.
+  const having = n != null ? 'HAVING requests > 0 OR logins > 0' : '';
 
   return db
     .prepare(
@@ -722,13 +728,14 @@ export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
               COALESCE(SUM(l.total_tokens), 0) AS tokens,
               COALESCE(SUM(l.estimated_cost), 0) AS cost,
               (SELECT COUNT(*) FROM sessions s WHERE s.user_id = u.id ${sessionFilter}) AS conversations,
+              (SELECT COUNT(*) FROM login_logs ll WHERE ll.user_id = u.id ${loginFilter}) AS logins,
               MAX(l.created_at) AS lastActive,
               (SELECT MAX(ll.created_at) FROM login_logs ll WHERE ll.user_id = u.id) AS lastLogin
        FROM users u
        ${usageJoin}
        GROUP BY u.id
        ${having}
-       ORDER BY cost DESC, requests DESC`
+       ORDER BY cost DESC, requests DESC, logins DESC`
     )
     .all() as UsageByUserRow[];
 }
