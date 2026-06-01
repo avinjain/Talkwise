@@ -401,22 +401,39 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
   if (daily.length === 0) {
     return <p className="text-sm text-slate-400">No usage recorded for this period.</p>;
   }
+
   const totalCost = daily.reduce((s, d) => s + d.cost, 0);
-  const max = Math.max(...daily.map((d) => d.cost), 0.0001);
+  const totalRequests = daily.reduce((s, d) => s + d.requests, 0);
+  const max = Math.max(...daily.map((d) => d.cost), 0);
+  const barAreaPx = 128; // bar area inside h-40, leaving room for date labels
+
   return (
     <div>
-      {totalCost === 0 && (
-        <p className="mb-3 text-xs text-slate-400">No AI spend in this period — bars show days with zero cost.</p>
-      )}
-      <div className="flex h-40 items-end gap-1">
+      <p className="mb-3 text-sm text-slate-600">
+        {totalCost > 0 ? (
+          <>
+            <span className="font-semibold text-slate-900">{fmtUsd(totalCost)}</span>
+            <span className="text-slate-400"> total · {fmtNum(totalRequests)} requests · {daily.length} days</span>
+          </>
+        ) : (
+          <span className="text-slate-400">No AI spend in this period ({daily.length} days shown)</span>
+        )}
+      </p>
+      <div className="flex h-40 items-end gap-1 border-b border-slate-100 pb-5">
         {daily.map((d) => {
-          const h = Math.max(2, (d.cost / max) * 100);
+          const barPx =
+            max > 0 ? Math.max(3, Math.round((d.cost / max) * barAreaPx)) : 3;
           const label = d.day.slice(5); // MM-DD
           return (
-            <div key={d.day} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
+            <div
+              key={d.day}
+              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"
+            >
               <div
-                className="w-full rounded-t bg-brand-400 transition-colors group-hover:bg-brand-600"
-                style={{ height: `${h}%` }}
+                className={`w-full rounded-t transition-colors group-hover:bg-brand-600 ${
+                  d.cost > 0 ? 'bg-brand-400' : 'bg-slate-200'
+                }`}
+                style={{ height: `${barPx}px` }}
                 title={`${d.day}: ${fmtUsd(d.cost)} · ${fmtTokens(d.tokens)} tokens · ${fmtNum(d.requests)} reqs`}
               />
               {(daily.length <= 14 || d.cost > 0) && (
