@@ -401,21 +401,31 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
   if (daily.length === 0) {
     return <p className="text-sm text-slate-400">No usage recorded for this period.</p>;
   }
+  const totalCost = daily.reduce((s, d) => s + d.cost, 0);
   const max = Math.max(...daily.map((d) => d.cost), 0.0001);
   return (
-    <div className="flex h-40 items-end gap-1">
-      {daily.map((d) => {
-        const h = Math.max(2, (d.cost / max) * 100);
-        return (
-          <div key={d.day} className="group flex flex-1 flex-col items-center justify-end">
-            <div
-              className="w-full rounded-t bg-brand-400 transition-colors group-hover:bg-brand-600"
-              style={{ height: `${h}%` }}
-              title={`${d.day}: ${fmtUsd(d.cost)} · ${fmtTokens(d.tokens)} tokens · ${fmtNum(d.requests)} reqs`}
-            />
-          </div>
-        );
-      })}
+    <div>
+      {totalCost === 0 && (
+        <p className="mb-3 text-xs text-slate-400">No AI spend in this period — bars show days with zero cost.</p>
+      )}
+      <div className="flex h-40 items-end gap-1">
+        {daily.map((d) => {
+          const h = Math.max(2, (d.cost / max) * 100);
+          const label = d.day.slice(5); // MM-DD
+          return (
+            <div key={d.day} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
+              <div
+                className="w-full rounded-t bg-brand-400 transition-colors group-hover:bg-brand-600"
+                style={{ height: `${h}%` }}
+                title={`${d.day}: ${fmtUsd(d.cost)} · ${fmtTokens(d.tokens)} tokens · ${fmtNum(d.requests)} reqs`}
+              />
+              {(daily.length <= 14 || d.cost > 0) && (
+                <span className="truncate text-[9px] tabular-nums text-slate-400">{label}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

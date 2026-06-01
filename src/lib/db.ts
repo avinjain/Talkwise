@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { adminWindowWhere, type AdminWindow } from './adminWindow';
+import { adminWindowChartDays, adminWindowWhere, type AdminWindow } from './adminWindow';
 
 // Prefer Railway volume mount path when available (persistent storage)
 const DB_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DB_DIR || process.cwd();
@@ -795,21 +795,47 @@ export function getUsageByEndpoint(window: AdminWindow = 'all'): UsageBreakdownR
     .all() as UsageBreakdownRow[];
 }
 
-export function getUsageByDay(days: number): UsageDayRow[] {
+export function getUsageByDay(window: AdminWindow = '30d'): UsageDayRow[] {
   const db = getDb();
-  const n = Math.max(1, Math.min(180, Math.floor(days)));
-  return db
+  const chartDays = adminWindowChartDays(window);
+  const where = window === 'all' ? '' : `WHERE ${adminWindowWhere('created_at', window)}`;
+
+  const rows = db
     .prepare(
       `SELECT date(created_at) AS day,
               COUNT(*) AS requests,
               COALESCE(SUM(total_tokens), 0) AS tokens,
               COALESCE(SUM(estimated_cost), 0) AS cost
        FROM usage_logs
-       WHERE created_at >= datetime('now', '-' || ${n} || ' days')
+       ${where}
        GROUP BY day
        ORDER BY day ASC`
     )
     .all() as UsageDayRow[];
+
+  if (window === 'all') {
+    // All-time: show every day that has usage (cap at 90 most recent for readability).
+    if (rows.length > 90) return rows.slice(-90);
+    return rows;
+  }
+
+  return fillUsageDayBuckets(db, rows, chartDays);
+}
+
+/** Pad a fixed window with zero-cost days so the chart always renders the full range. */
+function fillUsageDayBuckets(
+  db: Database.Database,
+  rows: UsageDayRow[],
+  days: number
+): UsageDayRow[] {
+  const byDay = new Map(rows.map((r) => [r.day, r]));
+  const n = Math.max(1, Math.min(180, Math.floor(days)));
+  const result: UsageDayRow[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const { d: day } = db.prepare(`SELECT date('now', '-${i} days') AS d`).get() as { d: string };
+    result.push(byDay.get(day) ?? { day, requests: 0, tokens: 0, cost: 0 });
+  }
+  return result;
 }
 
 // ── Kickoff state ──

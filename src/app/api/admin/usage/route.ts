@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/admin';
 import {
-  adminWindowChartDays,
   adminWindowLabel,
   parseAdminWindow,
 } from '@/lib/adminWindow';
@@ -67,7 +66,6 @@ export async function GET(req: NextRequest) {
   }
 
   const window = parseAdminWindow(req.nextUrl.searchParams.get('window'));
-  const chartDays = adminWindowChartDays(window);
 
   const monthlyBudgetUsd = Number(process.env.ADMIN_MONTHLY_BUDGET_USD || '50');
   const thisMonth = getUsageThisMonth();
@@ -94,7 +92,7 @@ export async function GET(req: NextRequest) {
     byUser: getUsageByUser(window),
     byModel: getUsageByModel(window),
     byFeature: groupByFeature(byEndpoint),
-    daily: getUsageByDay(chartDays),
+    daily: getUsageByDay(window),
     generatedAt: new Date().toISOString(),
   });
 }
