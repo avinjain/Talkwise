@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/admin';
+import {
+  adminWindowChartDays,
+  adminWindowLabel,
+  adminWindowSeconds,
+  parseAdminWindow,
+} from '@/lib/adminWindow';
 import {
   getAdminOverview,
   getUsageThisMonth,
-  getUsageTotals,
   getUsageByUser,
   getUsageByModel,
   getUsageByEndpoint,
@@ -13,9 +18,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const DAY = 86400;
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   const gate = await checkAdmin();
   if (gate === 'unauthenticated') {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -24,16 +27,17 @@ export async function GET() {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
+  const window = parseAdminWindow(req.nextUrl.searchParams.get('window'));
+  const windowSeconds = adminWindowSeconds(window);
+  const chartDays = adminWindowChartDays(window);
+
   const monthlyBudgetUsd = Number(process.env.ADMIN_MONTHLY_BUDGET_USD || '50');
   const thisMonth = getUsageThisMonth();
 
   return NextResponse.json({
-    overview: getAdminOverview(),
-    windows: {
-      today: getUsageTotals(DAY),
-      last7d: getUsageTotals(7 * DAY),
-      last30d: getUsageTotals(30 * DAY),
-    },
+    window,
+    windowLabel: adminWindowLabel(window),
+    overview: getAdminOverview(windowSeconds),
     budget: {
       monthlyBudgetUsd,
       monthSpendUsd: thisMonth.cost,
@@ -43,15 +47,10 @@ export async function GET() {
         monthlyBudgetUsd > 0 ? Math.min(999, (thisMonth.cost / monthlyBudgetUsd) * 100) : 0,
       enforced: (process.env.ADMIN_ENFORCE_BUDGET || '').toLowerCase() === 'true',
     },
-    byUser: {
-      today: getUsageByUser(DAY),
-      last7d: getUsageByUser(7 * DAY),
-      last30d: getUsageByUser(30 * DAY),
-      all: getUsageByUser(),
-    },
-    byModel: getUsageByModel(),
-    byEndpoint: getUsageByEndpoint(),
-    daily: getUsageByDay(30),
+    byUser: getUsageByUser(windowSeconds),
+    byModel: getUsageByModel(windowSeconds),
+    byEndpoint: getUsageByEndpoint(windowSeconds),
+    daily: getUsageByDay(chartDays),
     generatedAt: new Date().toISOString(),
   });
 }

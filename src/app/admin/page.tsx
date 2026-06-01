@@ -4,22 +4,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Logo from '@/components/Logo';
+import { ADMIN_WINDOWS, type AdminWindow } from '@/lib/adminWindow';
 
 // ─────────────────────────────────────────────────────────────
 // DTOs (mirror /api/admin/usage)
 // ─────────────────────────────────────────────────────────────
 
-interface Totals {
+interface Overview {
   requests: number;
-  promptTokens?: number;
-  completionTokens?: number;
   tokens: number;
   cost: number;
-}
-interface Overview extends Totals {
   totalUsers: number;
-  activeUsers7d: number;
+  activeUsers: number;
   totalConversations: number;
+  logins: number;
+  uniqueLogins: number;
 }
 interface UserRow {
   userId: string;
@@ -52,24 +51,16 @@ interface Budget {
   enforced: boolean;
 }
 interface UsageResponse {
+  window: AdminWindow;
+  windowLabel: string;
   overview: Overview;
-  windows: { today: Totals; last7d: Totals; last30d: Totals };
   budget: Budget;
-  byUser: Record<UserWindow, UserRow[]>;
+  byUser: UserRow[];
   byModel: BreakdownRow[];
   byEndpoint: BreakdownRow[];
   daily: DayRow[];
   generatedAt: string;
 }
-
-type UserWindow = 'today' | 'last7d' | 'last30d' | 'all';
-
-const USER_WINDOWS: { id: UserWindow; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: 'last7d', label: '7 days' },
-  { id: 'last30d', label: '30 days' },
-  { id: 'all', label: 'All time' },
-];
 
 // ─────────────────────────────────────────────────────────────
 // Formatting helpers
@@ -109,6 +100,7 @@ function fmtDate(iso: string | null): string {
 export default function AdminUsagePage() {
   const router = useRouter();
   const { status } = useSession();
+  const [window, setWindow] = useState<AdminWindow>('30d');
   const [data, setData] = useState<UsageResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -118,7 +110,7 @@ export default function AdminUsagePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/usage', { cache: 'no-store' });
+      const res = await fetch(`/api/admin/usage?window=${window}`, { cache: 'no-store' });
       if (res.status === 401) {
         router.replace('/auth?callbackUrl=/admin');
         return;
@@ -134,7 +126,7 @@ export default function AdminUsagePage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, window]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -172,6 +164,8 @@ export default function AdminUsagePage() {
     );
   }
 
+  const period = data?.windowLabel ?? 'Last 30 days';
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-50/60">
       <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
@@ -193,55 +187,80 @@ export default function AdminUsagePage() {
             </button>
           </header>
 
+          {/* Global time filter */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Time range</p>
+              <p className="text-sm font-medium text-slate-800">Showing data for {period.toLowerCase()}</p>
+            </div>
+            <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+              {ADMIN_WINDOWS.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => setWindow(w.id)}
+                  disabled={loading && window === w.id}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                    window === w.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-white'
+                  }`}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
           )}
 
           {data && (
-            <div className="space-y-6">
-              <BudgetCard budget={data.budget} />
+            <div className={`space-y-6 ${loading ? 'opacity-60' : ''}`}>
+              <BudgetCard budget={data.budget} period={period} periodSpend={data.overview.cost} />
 
-              {/* Top-line metrics */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <Metric label="Users" value={fmtNum(data.overview.totalUsers)} sub={`${fmtNum(data.overview.activeUsers7d)} active 7d`} />
+              {/* Top-line metrics — scoped to selected window */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+                <Metric label="Logins" value={fmtNum(data.overview.logins)} sub={`${fmtNum(data.overview.uniqueLogins)} unique users`} />
+                <Metric label="Registered users" value={fmtNum(data.overview.totalUsers)} sub="All time" />
+                <Metric label="Active users" value={fmtNum(data.overview.activeUsers)} sub="Used AI in period" />
                 <Metric label="Conversations" value={fmtNum(data.overview.totalConversations)} />
                 <Metric label="AI requests" value={fmtNum(data.overview.requests)} />
-                <Metric label="Total tokens" value={fmtTokens(data.overview.tokens)} sub={`${fmtNum(data.overview.tokens)}`} />
-                <Metric label="Total spend" value={fmtUsd(data.overview.cost)} accent />
+                <Metric label="Tokens" value={fmtTokens(data.overview.tokens)} />
+                <Metric label="Spend" value={fmtUsd(data.overview.cost)} accent />
                 <Metric
                   label="Avg / request"
                   value={fmtUsd(data.overview.requests ? data.overview.cost / data.overview.requests : 0)}
                 />
               </div>
 
-              {/* Window comparison */}
-              <Card title="Spend by window">
-                <div className="grid grid-cols-3 gap-3">
-                  <WindowStat label="Today" t={data.windows.today} />
-                  <WindowStat label="Last 7 days" t={data.windows.last7d} />
-                  <WindowStat label="Last 30 days" t={data.windows.last30d} />
-                </div>
-              </Card>
-
-              {/* Daily trend */}
-              <Card title="Daily cost (last 30 days)">
+              <Card title="Daily cost" subtitle={`${period} · hover bars for detail`}>
                 <DailyChart daily={data.daily} />
               </Card>
 
-              {/* Per user */}
-              <ByUserSection byUser={data.byUser} />
+              <Card title="By user" subtitle={`${period} · ranked by spend`}>
+                <UserTable
+                  rows={data.byUser}
+                  emptyMessage={
+                    data.window === 'all'
+                      ? 'No users yet.'
+                      : data.window === 'today'
+                      ? 'No AI usage today.'
+                      : `No AI usage in ${period.toLowerCase()}.`
+                  }
+                />
+              </Card>
 
               <div className="grid gap-6 lg:grid-cols-2">
-                <Card title="By model">
+                <Card title="By model" subtitle={period}>
                   <BreakdownTable rows={data.byModel} keyHeader="Model" />
                 </Card>
-                <Card title="By feature" subtitle="Endpoint / AI task">
+                <Card title="By feature" subtitle={`${period} · endpoint / AI task`}>
                   <BreakdownTable rows={data.byEndpoint} keyHeader="Feature" />
                 </Card>
               </div>
 
               <p className="text-center text-xs text-slate-400">
-                Generated {fmtDate(data.generatedAt)} · costs are estimates from model pricing
+                {period} · generated {fmtDate(data.generatedAt)} · costs are estimates from model pricing
               </p>
             </div>
           )}
@@ -258,41 +277,47 @@ export default function AdminUsagePage() {
 // Pieces
 // ─────────────────────────────────────────────────────────────
 
-function BudgetCard({ budget }: { budget: Budget }) {
+function BudgetCard({
+  budget,
+  period,
+  periodSpend,
+}: {
+  budget: Budget;
+  period: string;
+  periodSpend: number;
+}) {
   const pct = Math.min(100, budget.percentUsed);
   const over = budget.percentUsed >= 100;
   const warn = budget.percentUsed >= 80;
   const barColor = over ? 'bg-red-500' : warn ? 'bg-amber-500' : 'bg-emerald-500';
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">This month&rsquo;s AI spend</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Monthly AI budget</p>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                 budget.enforced ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
               }`}
-              title={
-                budget.enforced
-                  ? 'AI requests are blocked once spend reaches the budget.'
-                  : 'Monitoring only — set ADMIN_ENFORCE_BUDGET=true to block AI at the cap.'
-              }
             >
               {budget.enforced ? 'Cap enforced' : 'Monitoring only'}
             </span>
           </div>
           <p className="mt-1 text-3xl font-bold text-slate-900">
             {fmtUsd(budget.monthSpendUsd)}
-            <span className="ml-2 text-sm font-medium text-slate-400">/ {fmtUsd(budget.monthlyBudgetUsd)} budget</span>
+            <span className="ml-2 text-sm font-medium text-slate-400">/ {fmtUsd(budget.monthlyBudgetUsd)} this month</span>
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Selected period ({period.toLowerCase()}): <span className="font-semibold text-slate-700">{fmtUsd(periodSpend)}</span>
           </p>
         </div>
         <div className="text-right">
           <p className={`text-sm font-semibold ${over ? 'text-red-600' : warn ? 'text-amber-600' : 'text-emerald-600'}`}>
-            {budget.percentUsed.toFixed(1)}% used
+            {budget.percentUsed.toFixed(1)}% of monthly budget
           </p>
           <p className="text-xs text-slate-400">
-            {fmtTokens(budget.monthTokens)} tokens · {fmtNum(budget.monthRequests)} requests
+            {fmtTokens(budget.monthTokens)} tokens · {fmtNum(budget.monthRequests)} requests this month
           </p>
         </div>
       </div>
@@ -301,12 +326,9 @@ function BudgetCard({ budget }: { budget: Budget }) {
       </div>
       {over && (
         <p className="mt-2 text-xs font-medium text-red-600">
-          Over budget. Tighten rate limits or model tiers to control spend.
+          Over monthly budget. Tighten rate limits or model tiers to control spend.
         </p>
       )}
-      <p className="mt-2 text-[11px] text-slate-400">
-        Budget set via <code className="rounded bg-slate-100 px-1">ADMIN_MONTHLY_BUDGET_USD</code>.
-      </p>
     </div>
   );
 }
@@ -333,21 +355,9 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
   );
 }
 
-function WindowStat({ label, t }: { label: string; t: Totals }) {
-  return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-bold text-slate-900">{fmtUsd(t.cost)}</p>
-      <p className="mt-0.5 text-[11px] text-slate-500">
-        {fmtTokens(t.tokens)} tokens · {fmtNum(t.requests)} reqs
-      </p>
-    </div>
-  );
-}
-
 function DailyChart({ daily }: { daily: DayRow[] }) {
   if (daily.length === 0) {
-    return <p className="text-sm text-slate-400">No usage recorded yet.</p>;
+    return <p className="text-sm text-slate-400">No usage recorded for this period.</p>;
   }
   const max = Math.max(...daily.map((d) => d.cost), 0.0001);
   return (
@@ -365,53 +375,6 @@ function DailyChart({ daily }: { daily: DayRow[] }) {
         );
       })}
     </div>
-  );
-}
-
-function ByUserSection({ byUser }: { byUser: Record<UserWindow, UserRow[]> }) {
-  const [window, setWindow] = useState<UserWindow>('last30d');
-  const rows = byUser[window];
-  const label = USER_WINDOWS.find((w) => w.id === window)?.label ?? window;
-  const subtitle =
-    window === 'all'
-      ? 'All registered users, ranked by lifetime AI spend'
-      : window === 'today'
-      ? 'Users with AI activity today, ranked by spend'
-      : `Users with AI activity in the last ${label.toLowerCase()}, ranked by spend`;
-
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900">By user</h2>
-          <p className="text-xs text-slate-400">{subtitle}</p>
-        </div>
-        <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-          {USER_WINDOWS.map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              onClick={() => setWindow(w.id)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                window === w.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-white'
-              }`}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <UserTable
-        rows={rows}
-        emptyMessage={
-          window === 'all'
-            ? 'No users yet.'
-            : window === 'today'
-            ? 'No AI usage today.'
-            : `No AI usage in the last ${label.toLowerCase()}.`
-        }
-      />
-    </section>
   );
 }
 
@@ -451,7 +414,7 @@ function UserTable({ rows, emptyMessage = 'No users yet.' }: { rows: UserRow[]; 
 }
 
 function BreakdownTable({ rows, keyHeader }: { rows: BreakdownRow[]; keyHeader: string }) {
-  if (rows.length === 0) return <p className="text-sm text-slate-400">No data yet.</p>;
+  if (rows.length === 0) return <p className="text-sm text-slate-400">No data for this period.</p>;
   const totalCost = rows.reduce((s, r) => s + r.cost, 0) || 1;
   return (
     <div className="space-y-2.5">

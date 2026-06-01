@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { createUser, getUserByEmail } from './db';
+import { createUser, getUserByEmail, logLogin } from './db';
 import { isAdminEmail } from './adminEmails';
 
 // Allowed emails (only these can sign up or log in)
@@ -64,6 +64,12 @@ export const authOptions: NextAuthOptions = {
 
           const valid = await bcrypt.compare(password, user.password_hash);
           if (!valid) throw new Error('Invalid password');
+
+          try {
+            logLogin(user.id, user.email);
+          } catch {
+            /* login still succeeds if logging fails */
+          }
 
           return { id: user.id, email: user.email, name: user.name };
         }

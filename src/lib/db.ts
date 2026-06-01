@@ -76,6 +76,14 @@ function initTables(db: Database.Database) {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
     CREATE TABLE IF NOT EXISTS saved_personas (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -153,6 +161,8 @@ function initTables(db: Database.Database) {
 
     CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_usage_created ON usage_logs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_login_user ON login_logs(user_id);
+    CREATE INDEX IF NOT EXISTS idx_login_created ON login_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_user ON saved_personas(user_id);
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
@@ -526,8 +536,10 @@ export interface UsageTotals {
 
 export interface AdminOverview extends UsageTotals {
   totalUsers: number;
-  activeUsers7d: number;
+  activeUsers: number;
   totalConversations: number;
+  logins: number;
+  uniqueLogins: number;
 }
 
 export interface UsageByUserRow {
@@ -599,20 +611,55 @@ export function getUsageThisMonth(): UsageTotals {
   return row ?? { ...ZERO_TOTALS };
 }
 
-export function getAdminOverview(): AdminOverview {
+export function logLogin(userId: string, email: string) {
   const db = getDb();
-  const all = getUsageTotals();
-  const totalUsers = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
-  const totalConversations = (db.prepare('SELECT COUNT(*) AS c FROM sessions').get() as { c: number }).c;
-  const activeUsers7d = (
-    db
-      .prepare(
-        `SELECT COUNT(DISTINCT user_id) AS c FROM usage_logs
-         WHERE created_at >= datetime('now', '-7 days')`
-      )
-      .get() as { c: number }
+  db.prepare('INSERT INTO login_logs (user_id, email) VALUES (?, ?)').run(userId, email.toLowerCase().trim());
+}
+
+export function getLoginStats(windowSeconds?: number): { logins: number; uniqueUsers: number } {
+  const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS logins, COUNT(DISTINCT user_id) AS uniqueUsers FROM login_logs ${where}`
+    )
+    .get() as { logins: number; uniqueUsers: number };
+  return row ?? { logins: 0, uniqueUsers: 0 };
+}
+
+function countSessions(windowSeconds?: number): number {
+  const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  return (db.prepare(`SELECT COUNT(*) AS c FROM sessions ${where}`).get() as { c: number }).c;
+}
+
+function countActiveUsers(windowSeconds?: number): number {
+  const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
+  return (
+    db.prepare(`SELECT COUNT(DISTINCT user_id) AS c FROM usage_logs ${where}`).get() as { c: number }
   ).c;
-  return { ...all, totalUsers, activeUsers7d, totalConversations };
+}
+
+export function getAdminOverview(windowSeconds?: number): AdminOverview {
+  const db = getDb();
+  const usage = getUsageTotals(windowSeconds);
+  const totalUsers = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+  const loginStats = getLoginStats(windowSeconds);
+  return {
+    ...usage,
+    totalUsers,
+    activeUsers: countActiveUsers(windowSeconds),
+    totalConversations: countSessions(windowSeconds),
+    logins: loginStats.logins,
+    uniqueLogins: loginStats.uniqueUsers,
+  };
 }
 
 export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
@@ -647,8 +694,11 @@ export function getUsageByUser(windowSeconds?: number): UsageByUserRow[] {
     .all() as UsageByUserRow[];
 }
 
-export function getUsageByModel(): UsageBreakdownRow[] {
+export function getUsageByModel(windowSeconds?: number): UsageBreakdownRow[] {
   const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
   return db
     .prepare(
       `SELECT model AS key,
@@ -656,14 +706,18 @@ export function getUsageByModel(): UsageBreakdownRow[] {
               COALESCE(SUM(total_tokens), 0) AS tokens,
               COALESCE(SUM(estimated_cost), 0) AS cost
        FROM usage_logs
+       ${where}
        GROUP BY model
        ORDER BY cost DESC`
     )
     .all() as UsageBreakdownRow[];
 }
 
-export function getUsageByEndpoint(): UsageBreakdownRow[] {
+export function getUsageByEndpoint(windowSeconds?: number): UsageBreakdownRow[] {
   const db = getDb();
+  const n = windowSeconds != null ? Math.floor(Number(windowSeconds)) : null;
+  const where =
+    n != null ? `WHERE created_at >= datetime('now', '-' || ${n} || ' seconds')` : '';
   return db
     .prepare(
       `SELECT endpoint AS key,
@@ -671,6 +725,7 @@ export function getUsageByEndpoint(): UsageBreakdownRow[] {
               COALESCE(SUM(total_tokens), 0) AS tokens,
               COALESCE(SUM(estimated_cost), 0) AS cost
        FROM usage_logs
+       ${where}
        GROUP BY endpoint
        ORDER BY cost DESC`
     )
@@ -687,7 +742,7 @@ export function getUsageByDay(days: number): UsageDayRow[] {
               COALESCE(SUM(total_tokens), 0) AS tokens,
               COALESCE(SUM(estimated_cost), 0) AS cost
        FROM usage_logs
-       WHERE created_at >= datetime('now', '-' || ${`${n}`} || ' days')
+       WHERE created_at >= datetime('now', '-' || ${n} || ' days')
        GROUP BY day
        ORDER BY day ASC`
     )
