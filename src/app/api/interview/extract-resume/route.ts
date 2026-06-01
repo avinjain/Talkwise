@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthUserId } from '@/lib/session';
+import { logUsage } from '@/lib/db';
+import { checkRateLimit } from '@/lib/ratelimit';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse-new');
 import mammoth from 'mammoth';
@@ -32,11 +34,32 @@ export async function POST(req: Request) {
     const userId = await getAuthUserId();
     if (!userId) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
 
+    const rateCheck = checkRateLimit(userId);
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ error: rateCheck.reason }, { status: 429 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     if (!file?.size) return NextResponse.json({ error: 'Resume file is required' }, { status: 400 });
 
     const text = await extractText(file);
+
+    // Count toward per-user rate limits (zero-token local work, not AI spend).
+    try {
+      logUsage({
+        userId,
+        endpoint: '/api/interview/extract-resume',
+        model: 'local',
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        estimatedCost: 0,
+      });
+    } catch {
+      /* non-fatal */
+    }
+
     return NextResponse.json({ text });
   } catch (err) {
     console.error('Resume extract error:', err);

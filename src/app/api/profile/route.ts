@@ -1,8 +1,9 @@
 import { getAuthUserId } from '@/lib/session';
-import { getProfileResult, saveProfileResult } from '@/lib/db';
+import { getProfileResult, saveProfileResult, logUsage } from '@/lib/db';
 import { calculateScores, DIMENSIONS } from '@/lib/personality-test';
 import { getOpenAI, pickModel } from '@/lib/openai';
-import { checkBudget } from '@/lib/ratelimit';
+import { checkRateLimit } from '@/lib/ratelimit';
+import { estimateCost } from '@/lib/costs';
 
 export const runtime = 'nodejs';
 
@@ -134,10 +135,14 @@ export async function POST(req: Request) {
 
     const scores = calculateScores(answers);
 
-    // Generate AI feedback (skipped if the global AI budget is exhausted)
+    const rateCheck = checkRateLimit(userId);
+    if (!rateCheck.allowed) {
+      return Response.json({ error: rateCheck.reason }, { status: 429 });
+    }
+
+    // Generate AI feedback (skipped if rate limit / budget blocks the call)
     let aiFeedback = '';
     try {
-      if (!checkBudget().allowed) throw new Error('AI budget reached');
       const model = pickModel('profile_test');
       const prompt = buildFeedbackPrompt(scores as unknown as Record<string, number>, userContext || {
         role: '', experience: '', goal: '', focus: 'professional',
@@ -158,6 +163,23 @@ export async function POST(req: Request) {
       });
 
       aiFeedback = response.choices[0]?.message?.content || '';
+
+      const usage = response.usage;
+      const promptTokens = usage?.prompt_tokens || 0;
+      const completionTokens = usage?.completion_tokens || 0;
+      try {
+        logUsage({
+          userId,
+          endpoint: '/api/profile',
+          model,
+          promptTokens,
+          completionTokens,
+          totalTokens: promptTokens + completionTokens,
+          estimatedCost: estimateCost(model, promptTokens, completionTokens),
+        });
+      } catch {
+        /* non-fatal */
+      }
     } catch (aiErr) {
       console.error('AI feedback generation failed:', aiErr);
     }

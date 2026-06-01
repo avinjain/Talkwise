@@ -3,21 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { createUser, getUserByEmail, logLogin } from './db';
 import { isAdminEmail } from './adminEmails';
-
-// Allowed emails (only these can sign up or log in)
-const ALLOWED_EMAILS = [
-  'demotrial@demo.com',
-  'baba@demo.com',
-  'aditi@demo.com',
-  'parul@demo.com',
-  'subi@demo.com',
-  'chitra@demo.com',
-  'avin@demo.com',
-  'parul0130@gmail.com',
-  'subi.mahapatra@gmail.com',
-  'mayank.saraswat05@gmail.com',
-  'sauravmit@gmail.com',
-];
+import { isAllowedEmail } from './allowedEmails';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -39,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         const mode = credentials.mode || 'login';
 
         // ── Allowlist check ──
-        if (!ALLOWED_EMAILS.includes(email)) {
+        if (!isAllowedEmail(email)) {
           throw new Error('Access restricted. This email is not authorized.');
         }
 

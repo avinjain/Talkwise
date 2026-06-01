@@ -1,7 +1,8 @@
 import { getAuthUserId } from '@/lib/session';
-import { getMBTIQuestions, clearMBTIQuestions, insertMBTIQuestions } from '@/lib/db';
+import { getMBTIQuestions, clearMBTIQuestions, insertMBTIQuestions, logUsage } from '@/lib/db';
 import { getOpenAI, pickModel } from '@/lib/openai';
-import { checkBudget } from '@/lib/ratelimit';
+import { checkRateLimit } from '@/lib/ratelimit';
+import { estimateCost } from '@/lib/costs';
 
 export const runtime = 'nodejs';
 
@@ -22,9 +23,9 @@ export async function POST() {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const budget = checkBudget();
-    if (!budget.allowed) {
-      return Response.json({ error: budget.reason }, { status: 429 });
+    const rateCheck = checkRateLimit(userId);
+    if (!rateCheck.allowed) {
+      return Response.json({ error: rateCheck.reason }, { status: 429 });
     }
 
     const model = pickModel('mbti_questions');
@@ -66,6 +67,23 @@ Respond with valid JSON only (no markdown, no code fences):
       response_format: { type: 'json_object' },
     });
 
+    const usage = response.usage;
+    const promptTokens = usage?.prompt_tokens || 0;
+    const completionTokens = usage?.completion_tokens || 0;
+    try {
+      logUsage({
+        userId,
+        endpoint: '/api/mbti/generate-questions',
+        model,
+        promptTokens,
+        completionTokens,
+        totalTokens: promptTokens + completionTokens,
+        estimatedCost: estimateCost(model, promptTokens, completionTokens),
+      });
+    } catch {
+      /* non-fatal */
+    }
+
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from ChatGPT');
@@ -91,8 +109,7 @@ Respond with valid JSON only (no markdown, no code fences):
       throw new Error('Too few valid questions generated');
     }
 
-    // Clear existing and insert new
-    clearMBTIQuestions();
+    clearMBTIQuestions(userId);
     const toInsert = filtered.map((q, i) => ({
       id: crypto.randomUUID(),
       dimension: q.dimension,
@@ -101,9 +118,8 @@ Respond with valid JSON only (no markdown, no code fences):
       option_b: q.optionB.trim(),
       question_order: i,
     }));
-    insertMBTIQuestions(toInsert);
+    insertMBTIQuestions(userId, toInsert);
 
-    // Return questions so client can use them immediately (avoids second fetch / serverless DB isolation)
     const questionsForClient = toInsert.map((q) => ({
       id: q.id,
       dimension: q.dimension,
@@ -121,8 +137,12 @@ Respond with valid JSON only (no markdown, no code fences):
   }
 }
 
-// GET /api/mbti/generate-questions — check if questions exist (optional helper)
+// GET /api/mbti/generate-questions — check if this user has stored questions
 export async function GET() {
-  const questions = getMBTIQuestions();
+  const userId = await getAuthUserId();
+  if (!userId) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 });
+  }
+  const questions = getMBTIQuestions(userId);
   return Response.json({ count: questions.length });
 }

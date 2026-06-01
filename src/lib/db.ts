@@ -143,11 +143,13 @@ function initTables(db: Database.Database) {
 
     CREATE TABLE IF NOT EXISTS mbti_questions (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       dimension TEXT NOT NULL,
       question_text TEXT NOT NULL,
       option_a TEXT NOT NULL,
       option_b TEXT NOT NULL,
-      question_order INTEGER DEFAULT 0
+      question_order INTEGER DEFAULT 0,
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS mbti_results (
@@ -161,6 +163,7 @@ function initTables(db: Database.Database) {
 
     CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_usage_created ON usage_logs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_usage_user_created ON usage_logs(user_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_login_user ON login_logs(user_id);
     CREATE INDEX IF NOT EXISTS idx_login_created ON login_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
@@ -168,6 +171,7 @@ function initTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_profile_user ON profile_results(user_id);
     CREATE INDEX IF NOT EXISTS idx_saved_convos_user ON saved_conversations(user_id);
     CREATE INDEX IF NOT EXISTS idx_mbti_results_user ON mbti_results(user_id);
+    CREATE INDEX IF NOT EXISTS idx_mbti_questions_user ON mbti_questions(user_id);
 
     CREATE TABLE IF NOT EXISTS kickoff_states (
       user_id TEXT PRIMARY KEY,
@@ -311,6 +315,27 @@ function initTables(db: Database.Database) {
     }
   } catch (err) {
     console.error('MBTI results migration check failed:', err);
+  }
+
+  // ── Migration: scope mbti_questions per user (was global) ──
+  try {
+    const mbtiQCols = db.pragma('table_info(mbti_questions)') as { name: string }[];
+    const mbtiQColNames = new Set(mbtiQCols.map((c) => c.name));
+    if (!mbtiQColNames.has('user_id')) {
+      try {
+        db.exec('ALTER TABLE mbti_questions ADD COLUMN user_id TEXT');
+        // Legacy global rows cannot be attributed — drop them so users regenerate per-account.
+        db.exec('DELETE FROM mbti_questions WHERE user_id IS NULL');
+        console.log("Migration: added column 'user_id' to mbti_questions (cleared legacy global rows)");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (!msg.includes('duplicate column')) {
+          console.error("Migration failed for column 'user_id' on mbti_questions:", err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('MBTI questions migration check failed:', err);
   }
 
   // ── Migration: add has_completed_onboarding to users ──
@@ -1367,6 +1392,7 @@ export function saveProfileResult(
 
 export interface MBTIQuestionRow {
   id: string;
+  user_id: string;
   dimension: string;
   question_text: string;
   option_a: string;
@@ -1374,33 +1400,36 @@ export interface MBTIQuestionRow {
   question_order: number;
 }
 
-export function getMBTIQuestions(): MBTIQuestionRow[] {
+export function getMBTIQuestions(userId: string): MBTIQuestionRow[] {
   const db = getDb();
   return db.prepare(
-    'SELECT * FROM mbti_questions ORDER BY question_order ASC, id ASC'
-  ).all() as MBTIQuestionRow[];
+    'SELECT * FROM mbti_questions WHERE user_id = ? ORDER BY question_order ASC, id ASC'
+  ).all(userId) as MBTIQuestionRow[];
 }
 
-export function insertMBTIQuestions(questions: Array<{
-  id: string;
-  dimension: string;
-  question_text: string;
-  option_a: string;
-  option_b: string;
-  question_order: number;
-}>) {
+export function insertMBTIQuestions(
+  userId: string,
+  questions: Array<{
+    id: string;
+    dimension: string;
+    question_text: string;
+    option_a: string;
+    option_b: string;
+    question_order: number;
+  }>
+) {
   const db = getDb();
   const stmt = db.prepare(
-    'INSERT OR REPLACE INTO mbti_questions (id, dimension, question_text, option_a, option_b, question_order) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT OR REPLACE INTO mbti_questions (id, user_id, dimension, question_text, option_a, option_b, question_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
   for (const q of questions) {
-    stmt.run(q.id, q.dimension, q.question_text, q.option_a, q.option_b, q.question_order);
+    stmt.run(q.id, userId, q.dimension, q.question_text, q.option_a, q.option_b, q.question_order);
   }
 }
 
-export function clearMBTIQuestions() {
+export function clearMBTIQuestions(userId: string) {
   const db = getDb();
-  db.prepare('DELETE FROM mbti_questions').run();
+  db.prepare('DELETE FROM mbti_questions WHERE user_id = ?').run(userId);
 }
 
 export function getMBTIResult(userId: string): { type_result: string; raw_answers: string; questions_snapshot: string; created_at: string } | undefined {

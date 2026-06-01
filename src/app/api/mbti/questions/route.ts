@@ -1,12 +1,18 @@
+import { getAuthUserId } from '@/lib/session';
 import { getMBTIQuestions } from '@/lib/db';
 import type { MBTIQuestion } from '@/lib/mbti';
 
 export const runtime = 'nodejs';
 
-// GET /api/mbti/questions — return stored MBTI questions
+// GET /api/mbti/questions — return stored MBTI questions for the current user
 export async function GET() {
   try {
-    const rows = getMBTIQuestions();
+    const userId = await getAuthUserId();
+    if (!userId) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const rows = getMBTIQuestions(userId);
     const questions: MBTIQuestion[] = rows.map((r) => ({
       id: r.id,
       dimension: r.dimension as MBTIQuestion['dimension'],
