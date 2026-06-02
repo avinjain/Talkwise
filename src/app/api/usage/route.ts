@@ -1,5 +1,6 @@
 import { getAuthUserId } from '@/lib/session';
 import { getUserUsageToday, getUserUsageAllTime } from '@/lib/db';
+import { roundUsd } from '@/lib/formatUsd';
 
 export async function GET() {
   try {
@@ -15,12 +16,12 @@ export async function GET() {
       today: {
         requests: today.totalRequests,
         tokens: today.totalTokens,
-        cost: Math.round(today.totalCost * 10000) / 10000,
+        cost: roundUsd(today.totalCost),
       },
       allTime: {
         requests: allTime.totalRequests,
         tokens: allTime.totalTokens,
-        cost: Math.round(allTime.totalCost * 10000) / 10000,
+        cost: roundUsd(allTime.totalCost),
       },
       limits: {
         requestsPerMinute: 15,

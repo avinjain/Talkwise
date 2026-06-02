@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Logo from '@/components/Logo';
+import { fmtUsd } from '@/lib/formatUsd';
 import { ADMIN_WINDOWS, type AdminWindow } from '@/lib/adminWindow';
 
 // ─────────────────────────────────────────────────────────────
@@ -88,13 +89,6 @@ function fmtTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
   return String(n);
-}
-
-function fmtUsd(n: number): string {
-  const v = n || 0;
-  if (v >= 1) return `$${v.toFixed(2)}`;
-  if (v >= 0.01) return `$${v.toFixed(3)}`;
-  return `$${v.toFixed(4)}`;
 }
 
 function mostRecent(a: string | null, b: string | null): string | null {

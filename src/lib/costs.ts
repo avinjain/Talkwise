@@ -1,4 +1,6 @@
 // Pricing per 1M tokens (as of early 2026)
+import { roundUsd } from './formatUsd';
+
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'gpt-4o': { input: 2.5, output: 10 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
@@ -19,5 +21,5 @@ export function estimateCost(
   const pricing = MODEL_PRICING[model] || DEFAULT_PRICING;
   const inputCost = (promptTokens / 1_000_000) * pricing.input;
   const outputCost = (completionTokens / 1_000_000) * pricing.output;
-  return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000; // 6 decimal places
+  return roundUsd(inputCost + outputCost);
 }

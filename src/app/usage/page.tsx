@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Logo from '@/components/Logo';
+import { fmtUsd } from '@/lib/formatUsd';
 interface UsageBlock {
   requests: number;
   tokens: number;
@@ -132,7 +133,7 @@ function UsageGroup({
       <div className="grid grid-cols-3 gap-3">
         <Stat label="Requests" value={requests.toLocaleString()} />
         <Stat label="Tokens" value={tokens.toLocaleString()} />
-        <Stat label="Cost" value={`$${cost.toFixed(4)}`} />
+        <Stat label="Cost" value={fmtUsd(cost)} />
       </div>
     </section>
   );
